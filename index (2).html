@@ -1,0 +1,964 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>NATURE KOBE ご注文</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--g:#1d4a38;--g2:#2b6650;--gl:#e7efe9;--gold:#a8843a;--goldl:#f5eedf;--bg:#f5f3ee;--card:#fff;--ink:#1d2320;--mut:#6a716c;--line:#e2ddd2;--red:#b23b2c;--redl:#fbecea;--amb:#9a6a12;--ambl:#fdf3dd;--blue:#2a5b86;--bluel:#e8f0f8;--ok:#2d7a4c;--okl:#e6f3eb}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Noto Sans JP',system-ui,-apple-system,sans-serif;font-size:16px;line-height:1.6}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+a{color:var(--g2)}
+.serif{font-family:'Noto Serif JP',serif}
+.wrap{max-width:720px;margin:0 auto;padding:0 16px}
+.wide{max-width:1100px}
+/* header */
+.brand{background:var(--g);color:#fff;padding:18px 0 16px;text-align:center}
+.brand .logo{font-family:'Noto Serif JP',serif;letter-spacing:.28em;font-size:20px;font-weight:700}
+.brand .logo span{color:#d9bd7c}
+.brand .sub{font-size:12px;opacity:.8;letter-spacing:.1em;margin-top:2px}
+.topbar{background:var(--g);color:#fff;position:sticky;top:0;z-index:20}
+.topbar .tin{display:flex;align-items:center;gap:12px;padding:10px 16px;max-width:1100px;margin:0 auto}
+.topbar .logo{font-family:'Noto Serif JP',serif;letter-spacing:.2em;font-weight:700;font-size:15px;white-space:nowrap}
+.topbar .logo span{color:#d9bd7c}
+.topbar .ttl{font-size:13px;opacity:.85}
+.topbar .sp{flex:1}
+.tabs{display:flex;gap:4px;overflow-x:auto;padding:0 12px;max-width:1100px;margin:0 auto;scrollbar-width:none}
+.tabs button{background:none;border:0;color:#cfe0d6;padding:10px 12px;border-bottom:3px solid transparent;white-space:nowrap;font-size:14px}
+.tabs button.on{color:#fff;border-bottom-color:#d9bd7c;font-weight:700}
+/* card etc */
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin:12px 0}
+h1{font-size:20px;margin:18px 0 4px}
+h2{font-size:17px;margin:20px 0 8px}
+h3{font-size:15px;margin:0 0 8px;color:var(--g)}
+.mut{color:var(--mut)}
+.sm{font-size:13px}
+.xs{font-size:12px}
+.b{font-weight:700}
+.row{display:flex;gap:8px;align-items:center}
+.row.wrapf{flex-wrap:wrap}
+.grow{flex:1;min-width:0}
+.right{text-align:right}
+.num{font-variant-numeric:tabular-nums}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:#fff;border-radius:10px;padding:10px 14px;min-height:44px;font-weight:500;font-size:15px}
+.btn.pri{background:var(--g);border-color:var(--g);color:#fff}
+.btn.gold{background:var(--gold);border-color:var(--gold);color:#fff}
+.btn.danger{color:var(--red);border-color:#e7c2bc}
+.btn.sm{min-height:34px;padding:5px 10px;font-size:13px;border-radius:8px}
+.btn.block{width:100%}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--g2)}
+.chip{display:inline-block;font-size:12px;padding:2px 9px;border-radius:99px;background:#eee;color:#444;white-space:nowrap;line-height:1.7}
+.c-受付{background:var(--bluel);color:var(--blue)}
+.c-発注済{background:var(--ambl);color:var(--amb)}
+.c-発送済{background:var(--okl);color:var(--ok)}
+.c-キャンセル{background:#eee;color:#888;text-decoration:line-through}
+.c-paid{background:var(--okl);color:var(--ok)}
+.c-unpaid{background:var(--redl);color:var(--red)}
+.c-warn{background:var(--ambl);color:var(--amb);font-weight:700}
+.c-gray{background:#f0eee9;color:#6a716c}
+label.f{display:block;margin:12px 0 4px;font-size:14px;font-weight:500}
+label.f .req{color:#fff;background:var(--red);font-size:11px;padding:0 6px;border-radius:4px;margin-left:6px;vertical-align:1px}
+label.f .opt{color:var(--mut);font-size:12px;margin-left:6px;font-weight:400}
+.in,select.in,textarea.in{width:100%;border:1px solid #cfc9bc;border-radius:10px;padding:10px 12px;background:#fff;min-height:46px;font-size:16px}
+textarea.in{min-height:80px;resize:vertical}
+.in:focus{outline:2px solid var(--g2);outline-offset:0;border-color:var(--g2)}
+.in.err{border-color:var(--red);background:#fff8f7}
+.seg{display:flex;gap:8px;flex-wrap:wrap}
+.seg label{flex:1;min-width:120px;border:1.5px solid #cfc9bc;border-radius:10px;padding:11px 12px;display:flex;gap:8px;align-items:center;background:#fff;cursor:pointer;min-height:48px}
+.seg label.on{border-color:var(--g);background:var(--gl);font-weight:700}
+.seg input{accent-color:var(--g);width:18px;height:18px}
+.tog{display:flex;align-items:center;gap:10px;padding:10px 0;cursor:pointer}
+.tog input{width:22px;height:22px;accent-color:var(--g)}
+.hint{font-size:13px;color:var(--mut);margin:4px 0 0}
+.errbox{background:var(--redl);color:var(--red);border-radius:10px;padding:10px 12px;margin:10px 0;font-size:14px}
+.warnbox{background:var(--ambl);color:#6d4a07;border-radius:10px;padding:10px 12px;margin:10px 0;font-size:14px}
+.okbox{background:var(--okl);color:#1f5a37;border-radius:10px;padding:10px 12px;margin:10px 0;font-size:14px}
+hr.sep{border:0;border-top:1px solid var(--line);margin:14px 0}
+/* customer */
+.steps{display:flex;gap:6px;margin:14px 0 4px}
+.steps div{flex:1;text-align:center;font-size:12px;color:var(--mut);padding-bottom:6px;border-bottom:3px solid var(--line)}
+.steps div.on{color:var(--g);border-color:var(--g);font-weight:700}
+.steps div.done{color:var(--g2);border-color:#9fbfae}
+.cat{margin:18px 0}
+.cat>h3{font-family:'Noto Serif JP',serif;font-size:16px;border-left:4px solid var(--gold);padding-left:8px;margin-bottom:6px}
+.prod{background:#fff;border:1px solid var(--line);border-radius:12px;margin:8px 0;overflow:hidden}
+.prod.has{border-color:#9fbfae;box-shadow:0 0 0 1px #9fbfae}
+.prow{display:flex;align-items:center;gap:10px;padding:12px 14px}
+.prow .nm{font-weight:700}
+.prow .pr{font-size:14px;color:var(--mut)}
+.prow .pr b{color:var(--ink);font-weight:500}
+.var{font-size:11px;color:var(--amb);background:var(--ambl);padding:1px 6px;border-radius:4px;margin-left:4px;white-space:nowrap}
+.line{display:flex;align-items:center;gap:8px;padding:8px 14px;border-top:1px dashed var(--line);background:#fbfaf6;flex-wrap:wrap}
+.line select,.line input{border:1px solid #cfc9bc;border-radius:8px;padding:6px 8px;min-height:40px;background:#fff;font-size:16px}
+.line input.g{width:88px}
+.stepper{display:inline-flex;align-items:center;border:1px solid #cfc9bc;border-radius:8px;overflow:hidden;background:#fff}
+.stepper button{border:0;background:#f3f1ec;width:38px;height:40px;font-size:20px;line-height:1}
+.stepper span{min-width:36px;text-align:center;font-weight:700}
+.line .amt{margin-left:auto;font-weight:700;min-width:80px;text-align:right}
+.line .del{border:0;background:none;color:var(--mut);font-size:13px;padding:6px}
+.addmore{display:block;width:100%;border:0;border-top:1px dashed var(--line);background:#fbfaf6;color:var(--g2);padding:8px;font-size:14px}
+.bar{position:sticky;bottom:0;background:#fff;border-top:1px solid var(--line);box-shadow:0 -4px 16px rgba(0,0,0,.06);padding:10px 0 calc(10px + env(safe-area-inset-bottom));z-index:10;margin-top:20px}
+.bar .in2{display:flex;align-items:center;gap:12px}
+.bar .tot{font-size:22px;font-weight:700}
+.bar .tot small{font-size:12px;font-weight:400;color:var(--mut)}
+.summary td{padding:5px 0;vertical-align:top}
+.summary{width:100%;border-collapse:collapse;font-size:15px}
+.summary tr.t td{border-top:1px solid var(--line);padding-top:8px}
+.summary tr.g td{font-size:18px;font-weight:700}
+.kv{display:grid;grid-template-columns:110px 1fr;gap:4px 10px;font-size:15px}
+.kv dt{color:var(--mut)}
+.kv dd{margin:0;word-break:break-all}
+/* admin */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}
+.stat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.stat .l{font-size:12px;color:var(--mut)}
+.stat .v{font-size:19px;font-weight:700}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.filters select{max-width:100%;text-overflow:ellipsis}
+.filters select,.filters input{border:1px solid #cfc9bc;border-radius:10px;padding:8px 10px;min-height:42px;background:#fff;font-size:15px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:4px 0;scrollbar-width:none}
+.chips button{border:1px solid var(--line);background:#fff;border-radius:99px;padding:5px 12px;font-size:13px;white-space:nowrap}
+.chips button.on{background:var(--g);color:#fff;border-color:var(--g)}
+.olist{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px;margin:10px 0 40px}
+.ocard{min-width:0;overflow:hidden;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer;text-align:left;width:100%;display:block}
+.ocard:hover{border-color:#9fbfae}
+.ocard .top{display:flex;align-items:baseline;gap:8px}
+.ocard .nm{font-weight:700;font-size:16px}
+.ocard .tt{margin-left:auto;font-weight:700;font-size:16px}
+.ocard .meta{font-size:12px;color:var(--mut);margin:2px 0 6px}
+.ocard .chipsr{display:flex;gap:4px;flex-wrap:wrap}
+.ocard .items{font-size:12px;color:var(--mut);margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ocard.cancel{opacity:.55}
+/* sheet */
+.ov{position:fixed;inset:0;background:rgba(20,28,24,.45);z-index:50;display:flex;justify-content:flex-end}
+.sheet{background:var(--bg);width:min(760px,100%);height:100%;overflow-y:auto;display:flex;flex-direction:column}
+.sheet .hd{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--line);padding:10px 16px;display:flex;align-items:center;gap:10px;z-index:2}
+.sheet .hd .t{font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sheet .bd{padding:4px 16px 24px;flex:1}
+.sheet .ft{position:sticky;bottom:0;background:#fff;border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom));display:flex;gap:8px;flex-wrap:wrap}
+.itm{border-top:1px solid var(--line);padding:10px 0}
+.itm select,.itm input{border:1px solid #cfc9bc;border-radius:8px;padding:6px 8px;min-height:40px;background:#fff;font-size:15px;min-width:0}
+.itm .r1{display:flex;gap:6px}.itm .r1 select{flex:1}
+.itm .r2{display:flex;gap:6px;align-items:center;margin-top:6px;flex-wrap:wrap}
+.itm .r2 input{width:80px}.itm .r2 .amt{margin-left:auto;font-weight:700}
+.itm .lb{font-size:12px;color:var(--mut)}
+.it-table{width:100%;border-collapse:collapse;font-size:14px}
+.it-table th{font-size:12px;color:var(--mut);font-weight:500;text-align:left;padding:4px}
+.it-table td{padding:4px;vertical-align:middle;border-top:1px solid var(--line)}
+.it-table input,.it-table select{width:100%;border:1px solid #cfc9bc;border-radius:8px;padding:6px;min-height:38px;background:#fff;font-size:15px}
+.it-table .w-g{width:78px}.it-table .w-c{width:58px}.it-table .w-p{width:92px}.it-table .w-a{width:88px;text-align:right;font-weight:700}
+.x{border:0;background:none;color:var(--mut);font-size:18px;padding:4px 8px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.agg{width:100%;border-collapse:collapse;font-size:14px}
+.agg th,.agg td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.agg th{font-size:12px;color:var(--mut);font-weight:500}
+.agg td.n{text-align:right;font-weight:700;white-space:nowrap}
+.plist .pi{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)}
+.plist .pi input{width:22px;height:22px;accent-color:var(--g);margin-top:2px}
+.store{font-weight:700;padding:2px 10px;border-radius:6px;font-size:14px}
+.store.冷凍{background:#e3eefa;color:#1f4f82}
+.store.冷蔵{background:#e7f5ec;color:#246b41}
+.store.none{background:var(--redl);color:var(--red)}
+.qr{display:flex;justify-content:center;padding:10px;background:#fff}
+.urlbox{font-size:13px;background:#f3f1ec;border-radius:8px;padding:8px 10px;word-break:break-all;margin:6px 0}
+.ptable input{width:100%;border:1px solid #cfc9bc;border-radius:8px;padding:6px;min-height:38px;font-size:15px}
+.ptable td{padding:4px}
+/* toast */
+#toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#1d2320;color:#fff;padding:10px 18px;border-radius:99px;font-size:14px;z-index:99;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;text-align:center}
+#toast.show{opacity:.95}
+#toast.err{background:var(--red)}
+.loading{padding:60px 0;text-align:center;color:var(--mut)}
+.demo{background:#6d4a07;color:#fff;font-size:12px;text-align:center;padding:4px}
+/* print */
+#print{display:none}
+@media print{
+  body>*:not(#print){display:none!important}
+  #print{display:block}
+  body{background:#fff}
+  @page{size:A4;margin:14mm}
+}
+.rc{font-family:'Noto Serif JP',serif;color:#111;max-width:180mm;margin:0 auto;page-break-after:always}
+.rc h1{text-align:center;font-size:30px;letter-spacing:.6em;margin:0 0 18px;padding-left:.6em}
+.rc .no{display:flex;justify-content:space-between;font-size:13px;margin-bottom:22px}
+.rc .to{font-size:22px;border-bottom:1px solid #111;padding-bottom:4px;display:inline-block;min-width:60%;margin-bottom:24px}
+.rc .amt{font-size:30px;text-align:center;background:#f4f1ea;border:1px solid #111;padding:14px;margin:0 0 10px;letter-spacing:.05em}
+.rc .tadashi{font-size:15px;margin:14px 0 4px}
+.rc .bd2{display:flex;justify-content:space-between;align-items:flex-end;margin-top:26px;gap:20px}
+.rc table{border-collapse:collapse;font-size:13px}
+.rc table td{border:1px solid #111;padding:5px 10px}
+.rc .iss{font-size:14px;text-align:right;line-height:1.7}
+.rc .iss b{font-size:17px}
+.pk{font-family:'Noto Sans JP',sans-serif;font-size:12px;color:#111}
+.pk h1{font-size:18px;margin:0 0 8px}
+.pk table{width:100%;border-collapse:collapse;margin-bottom:14px}
+.pk th,.pk td{border:1px solid #999;padding:4px 6px;text-align:left;vertical-align:top}
+@media (max-width:640px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .olist{grid-template-columns:1fr}
+  .g2{grid-template-columns:1fr}
+  .kv{grid-template-columns:92px 1fr}
+  .hide-sm{display:none}
+  .it-table .w-p{width:76px}
+}
+</style>
+</head>
+<body>
+<div id="app"><div class="loading">読み込み中…</div></div>
+<div id="ov" class="ov" hidden onclick="if(event.target===this)closeSheet()"><div class="sheet" id="sheet"></div></div>
+<div id="toast"></div>
+<div id="print"></div>
+<script id="demo"></script>
+<script>
+/* ===== 設定：GASのウェブアプリURL ===== */
+const API_URL = 'https://script.google.com/macros/s/AKfycbyb0FqyJm6nmEuCcrbT5idhrX2Uq6jwxrMnl9gjKZ1Bqe_1L0Zy37wxHkO7-ZushUoW/exec';
+
+/* ===== 共通 ===== */
+const DEMO = !!window.__DEMO;
+const $ = (s, r = document) => r.querySelector(s);
+const h = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const yen = n => '¥' + Math.round(+n || 0).toLocaleString('ja-JP');
+const gl = g => { g = +g || 0; return g >= 1000 ? (+(g / 1000).toFixed(2)) + 'kg' : g + 'g'; };
+const clone = o => JSON.parse(JSON.stringify(o));
+const today = () => { const d = new Date(), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; };
+const jdate = s => { if (!s) return ''; const m = String(s).match(/(\d{4})-(\d{1,2})-(\d{1,2})/); return m ? `${+m[1]}年${+m[2]}月${+m[3]}日` : s; };
+const mdw = s => { const m = String(s || '').match(/(\d{4})-(\d{1,2})-(\d{1,2})/); if (!m) return s || ''; const d = new Date(+m[1], +m[2] - 1, +m[3]); return `${+m[2]}月${+m[3]}日（${'日月火水木金土'[d.getDay()]}）`; };
+const _mem = {};
+const ls = { get(k) { try { const v = localStorage.getItem(k); if (v != null) return v; } catch (e) {} return k in _mem ? _mem[k] : null; }, set(k, v) { _mem[k] = v; try { localStorage.setItem(k, v); } catch (e) {} }, del(k) { delete _mem[k]; try { localStorage.removeItem(k); } catch (e) {} } };
+const baseUrl = () => location.origin + location.pathname;
+let toastT;
+function toast(msg, err) { const t = $('#toast'); t.textContent = msg; t.className = 'show' + (err ? ' err' : ''); clearTimeout(toastT); toastT = setTimeout(() => t.className = '', err ? 4200 : 2200); }
+async function copy(text, label) {
+  try { await navigator.clipboard.writeText(text); toast((label || '') + 'コピーしました'); }
+  catch (e) { const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); toast((label || '') + 'コピーしました'); } catch (e2) { toast('コピーできませんでした', true); } ta.remove(); }
+}
+async function api(action, data) {
+  data = Object.assign({ action }, data || {});
+  if (DEMO) return await demoApi(action, data);
+  if (!API_URL) throw new Error('API_URLが設定されていません');
+  const res = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(data) });
+  const j = await res.json();
+  if (!j.ok) throw new Error(j.error || 'エラーが発生しました');
+  return j;
+}
+/* 金額計算（GASと同じ） */
+function computeOrder(o, S, prods, trust) {
+  const pm = {}; (prods || []).forEach(p => pm[p.id] = p);
+  let sub = 0;
+  o.items = (o.items || []).filter(it => +it.g > 0 && +it.count > 0 && (trust || pm[it.pid])).map(it => {
+    const p = pm[it.pid];
+    const unit = trust && it.unitPrice !== '' && it.unitPrice != null ? +it.unitPrice : (p ? p.price : 0);
+    const amount = Math.round(unit * (+it.g) * (+it.count) / 1000);
+    sub += amount;
+    return { pid: String(it.pid || ''), name: p ? (p.cat + ' ' + p.name) : String(it.name || ''), unitPrice: unit, variable: p ? p.variable : !!it.variable, g: +it.g, count: +it.count, amount, note: String(it.note || '') };
+  });
+  o.extras = (trust ? (o.extras || []) : []).filter(x => x && String(x.name || '').trim()).map(x => ({ name: String(x.name), amount: +x.amount || 0, note: String(x.note || '') }));
+  o.extras.forEach(x => sub += x.amount);
+  o.subtotal = sub;
+  o.shipping = trust && o.shipping !== '' && o.shipping != null ? +o.shipping : (+S.shippingFee || 0);
+  o.taxRate = trust && o.taxRate !== '' && o.taxRate != null ? +o.taxRate : (+S.taxRate || 10);
+  o.tax = Math.floor((sub + o.shipping) * o.taxRate / 100);
+  o.total = sub + o.shipping + o.tax;
+  return o;
+}
+const lineAmt = (price, g, count) => Math.round((+price || 0) * (+g || 0) * (+count || 0) / 1000);
+function zipLookup(zip, cb) {
+  const z = String(zip || '').replace(/[^0-9]/g, '');
+  if (z.length !== 7) { toast('郵便番号は7桁で入力してください', true); return; }
+  const name = 'zipcb' + Date.now();
+  const s = document.createElement('script');
+  const timer = setTimeout(() => { cleanup(); toast('住所を取得できませんでした。手入力してください', true); }, 6000);
+  function cleanup() { clearTimeout(timer); delete window[name]; s.remove(); }
+  window[name] = r => { cleanup(); if (r && r.results && r.results[0]) { const a = r.results[0]; cb(a.address1 + a.address2 + a.address3); } else toast('該当する住所が見つかりません', true); };
+  s.src = 'https://zipcloud.ibsnet.co.jp/api/search?zipcode=' + z + '&callback=' + name;
+  s.onerror = () => { cleanup(); toast('住所を取得できませんでした。手入力してください', true); };
+  document.body.appendChild(s);
+}
+function openSheet(html) { $('#sheet').innerHTML = html; $('#ov').hidden = false; document.body.style.overflow = 'hidden'; $('#sheet').scrollTop = 0; }
+function closeSheet() { $('#ov').hidden = true; document.body.style.overflow = ''; }
+function brandBar(title, right, tabs) {
+  return `${DEMO ? '<div class="demo">プレビュー（デモデータ）：ここでの操作は保存されません</div>' : ''}<div class="topbar"><div class="tin"><div class="logo">NATURE <span>KOBE</span></div><div class="ttl">${h(title)}</div><div class="sp"></div>${right || ''}</div>${tabs || ''}</div>`;
+}
+const GOPTS = [100, 150, 200, 250, 300, 400, 500, 700, 1000, 1500, 2000];
+
+/* ===== ルーティング ===== */
+function route() {
+  const q = new URLSearchParams(location.search);
+  if (q.get('e')) return Customer.init(q.get('e'));
+  const hs = location.hash.slice(1);
+  if (hs.startsWith('shop')) return Shop.init();
+  if (hs.startsWith('admin')) return Admin.init();
+  $('#app').innerHTML = `${DEMO ? '<div class="demo">プレビュー（デモデータ）</div>' : ''}<div class="brand"><div class="logo">NATURE <span>KOBE</span></div><div class="sub">但馬牛・神戸ビーフ</div></div>
+  <div class="wrap"><div class="card"><h3>画面を選んでください</h3>
+  ${DEMO ? `<p><a class="btn block pri" href="?e=e-demo-open">① お客さんの注文画面（QRコードの先）</a></p>` : ''}
+  <p><a class="btn block" href="#admin">${DEMO ? '② ' : ''}管理画面（栗原さん・牛尾さん）</a></p>
+  <p><a class="btn block" href="#shop">${DEMO ? '③ ' : ''}精肉店の発送画面</a></p>
+  ${DEMO ? '<p class="hint">デモのパスワード：管理 <b>demo</b>／精肉店 <b>demo-shop</b></p>' : ''}</div></div>`;
+}
+window.addEventListener('hashchange', route);
+
+/* ===================================================================
+   お客さんの注文画面
+   =================================================================== */
+const Customer = {
+  C: null,
+  async init(eid) {
+    $('#app').innerHTML = '<div class="loading">読み込み中…</div>';
+    try {
+      const r = await api('public', { e: eid });
+      const draft = (() => { try { return JSON.parse(ls.get('nk-draft-' + eid) || 'null'); } catch (e) { return null; } })();
+      this.C = { eid, ev: r.event, products: r.products, S: r.settings, step: 1, cart: {}, err: '', sending: false,
+        info: { name: '', email: '', phone: '', zip: '', address: '', storage: '', payment: '', receipt: false, receiptTo: '', shipOn: false, shipName: '', shipPhone: '', shipZip: '', shipAddress: '', note: '', clientKey: 'c' + Date.now() + Math.random().toString(36).slice(2, 7) } };
+      if (draft) { this.C.cart = draft.cart || {}; Object.assign(this.C.info, draft.info || {}); }
+      this.render();
+    } catch (e) {
+      $('#app').innerHTML = `<div class="brand"><div class="logo">NATURE <span>KOBE</span></div></div><div class="wrap"><div class="errbox">${h(e.message)}</div></div>`;
+    }
+  },
+  save() { const C = this.C; ls.set('nk-draft-' + C.eid, JSON.stringify({ cart: C.cart, info: C.info })); },
+  items() {
+    const C = this.C, out = [];
+    C.products.forEach(p => (C.cart[p.id] || []).forEach(l => { if (+l.g > 0 && +l.count > 0) out.push({ pid: p.id, p, g: +l.g, count: +l.count, amount: lineAmt(p.price, l.g, l.count) }); }));
+    return out;
+  },
+  totals() {
+    const S = this.C.S, its = this.items();
+    const sub = its.reduce((a, b) => a + b.amount, 0), ship = +S.shippingFee || 0, rate = +S.taxRate || 10;
+    const tax = Math.floor((sub + ship) * rate / 100);
+    return { sub, ship, rate, tax, total: sub + ship + tax, count: its.length, variable: its.some(i => i.p.variable) };
+  },
+  render() {
+    const C = this.C;
+    const steps = ['商品を選ぶ', 'お客様情報', '確認'];
+    let body = '';
+    if (C.step === 4) return this.renderDone();
+    if (!C.ev.open) {
+      $('#app').innerHTML = this.head() + `<div class="wrap"><div class="card"><p class="b">このイベントのご注文受付は終了しました。</p><p class="mut sm">ご不明な点はスタッフまでお声がけください。</p></div></div>`;
+      return;
+    }
+    if (C.step === 1) body = this.renderItems();
+    if (C.step === 2) body = this.renderInfo();
+    if (C.step === 3) body = this.renderConfirm();
+    $('#app').innerHTML = this.head() + `<div class="wrap"><div class="steps">${steps.map((s, i) => `<div class="${i + 1 === C.step ? 'on' : i + 1 < C.step ? 'done' : ''}">${i + 1}. ${s}</div>`).join('')}</div>${body}</div>${this.bar()}`;
+  },
+  head() {
+    const ev = this.C.ev;
+    return `${DEMO ? '<div class="demo">プレビュー（デモデータ）：ここでの注文は保存されません</div>' : ''}<div class="brand"><div class="logo">NATURE <span>KOBE</span></div><div class="sub">但馬牛・神戸ビーフ ご注文</div></div>
+    <div class="wrap"><h1 class="serif">${h(ev.name)}</h1><div class="mut sm">${h(jdate(ev.date))}${ev.venue ? '　' + h(ev.venue) : ''}　ご参加の皆さま限定</div></div>`;
+  },
+  renderItems() {
+    const C = this.C, cats = [];
+    C.products.forEach(p => { if (!cats.includes(p.cat)) cats.push(p.cat); });
+    return `<p class="sm mut" style="margin:12px 0 0">量（g）と個数を選ぶと金額が自動で計算されます。表示価格は<b>税抜・1kgあたり</b>です。</p>` +
+      cats.map(cat => `<div class="cat"><h3>${h(cat)}</h3>${C.products.filter(p => p.cat === cat).map(p => this.prodHtml(p)).join('')}</div>`).join('') +
+      `<p class="xs mut">※<span class="var">価格変動</span>の商品は、部位・入荷状況により価格が変わる場合があります。確定額はメールでご連絡します。<br>※${h(C.S.deliveryNote || '')}</p>`;
+  },
+  prodHtml(p) {
+    const lines = this.C.cart[p.id] || [];
+    return `<div class="prod ${lines.length ? 'has' : ''}" id="prod-${p.id}">
+      <div class="prow"><div class="grow"><div class="nm">${h(p.name)}${p.variable ? '<span class="var">価格変動</span>' : ''}</div><div class="pr"><b>${yen(p.price)}${p.variable ? '〜' : ''}</b> / kg（100gあたり ${yen(p.price / 10)}）</div></div>
+      ${lines.length ? '' : `<button class="btn sm pri" onclick="Customer.add('${p.id}')">＋ 追加</button>`}</div>
+      ${lines.map((l, i) => this.lineHtml(p, l, i)).join('')}
+      ${lines.length ? `<button class="addmore" onclick="Customer.add('${p.id}')">＋ 別の量でも追加</button>` : ''}</div>`;
+  },
+  lineHtml(p, l, i) {
+    const custom = l.custom || !GOPTS.includes(+l.g);
+    return `<div class="line">
+      <select aria-label="量" onchange="Customer.setG('${p.id}',${i},this.value)">${GOPTS.map(g => `<option value="${g}" ${!custom && +l.g === g ? 'selected' : ''}>${gl(g)}</option>`).join('')}<option value="custom" ${custom ? 'selected' : ''}>その他（g入力）</option></select>
+      ${custom ? `<input class="g" type="number" inputmode="numeric" min="50" step="50" value="${h(l.g)}" oninput="Customer.setCustomG('${p.id}',${i},this.value)" aria-label="グラム"><span class="sm">g</span>` : ''}
+      <span class="mut">×</span>
+      <span class="stepper"><button onclick="Customer.cnt('${p.id}',${i},-1)" aria-label="減らす">−</button><span>${l.count}</span><button onclick="Customer.cnt('${p.id}',${i},1)" aria-label="増やす">＋</button></span>
+      <span class="amt num" id="amt-${p.id}-${i}">${yen(lineAmt(p.price, l.g, l.count))}</span>
+      <button class="del" onclick="Customer.del('${p.id}',${i})">削除</button></div>`;
+  },
+  rerenderProd(pid) {
+    const p = this.C.products.find(x => x.id === pid);
+    const el = document.getElementById('prod-' + pid);
+    if (el) el.outerHTML = this.prodHtml(p);
+    this.updateBar(); this.save();
+  },
+  add(pid) { const C = this.C; (C.cart[pid] = C.cart[pid] || []).push({ g: 200, count: 1 }); this.rerenderProd(pid); },
+  del(pid, i) { const C = this.C; C.cart[pid].splice(i, 1); if (!C.cart[pid].length) delete C.cart[pid]; this.rerenderProd(pid); },
+  setG(pid, i, v) { const l = this.C.cart[pid][i]; if (v === 'custom') { l.custom = true; } else { l.custom = false; l.g = +v; } this.rerenderProd(pid); },
+  setCustomG(pid, i, v) {
+    const l = this.C.cart[pid][i], p = this.C.products.find(x => x.id === pid);
+    l.g = Math.max(0, Math.round(+v || 0)); l.custom = true;
+    const a = document.getElementById(`amt-${pid}-${i}`); if (a) a.textContent = yen(lineAmt(p.price, l.g, l.count));
+    this.updateBar(); this.save();
+  },
+  cnt(pid, i, d) { const l = this.C.cart[pid][i]; l.count = Math.max(1, Math.min(99, l.count + d)); this.rerenderProd(pid); },
+  bar() {
+    const C = this.C, t = this.totals();
+    const next = C.step === 1 ? `<button class="btn pri" id="nextbtn" onclick="Customer.go(2)" ${t.count ? '' : 'disabled'}>次へ</button>`
+      : C.step === 2 ? `<button class="btn" onclick="Customer.go(1)">戻る</button><button class="btn pri" onclick="Customer.toConfirm()">確認へ</button>`
+        : `<button class="btn" onclick="Customer.go(2)">戻る</button><button class="btn gold" id="sendbtn" onclick="Customer.submit()" ${C.sending ? 'disabled' : ''}>${C.sending ? '送信中…' : '注文する'}</button>`;
+    return `<div class="bar" id="bar"><div class="wrap in2"><div class="grow"><div class="xs mut" id="bar-sub">${t.count ? `${t.count}点　税抜 ${yen(t.sub)}` : '商品を選んでください'}</div><div class="tot num" id="bar-tot">${yen(t.total)}<small> 税込</small></div></div>${next}</div></div>`;
+  },
+  updateBar() {
+    const t = this.totals();
+    const s = $('#bar-sub'), tt = $('#bar-tot'), nb = $('#nextbtn');
+    if (s) s.textContent = t.count ? `${t.count}点　税抜 ${yen(t.sub)}` : '商品を選んでください';
+    if (tt) tt.innerHTML = `${yen(t.total)}<small> 税込</small>`;
+    if (nb) nb.disabled = !t.count;
+  },
+  go(step) { this.C.step = step; this.C.err = ''; this.render(); window.scrollTo(0, 0); },
+  set(k, v) { this.C.info[k] = v; this.save(); },
+  setRe(k, v) { this.C.info[k] = v; this.save(); const y = window.scrollY; this.render(); window.scrollTo(0, y); },
+  renderInfo() {
+    const f = this.C.info;
+    const inp = (k, label, opt = {}) => `<label class="f" for="f-${k}">${label}${opt.req === false ? '<span class="opt">任意</span>' : '<span class="req">必須</span>'}</label>
+      <input class="in" id="f-${k}" type="${opt.type || 'text'}" ${opt.im ? `inputmode="${opt.im}"` : ''} ${opt.ac ? `autocomplete="${opt.ac}"` : ''} placeholder="${h(opt.ph || '')}" value="${h(f[k])}" oninput="Customer.set('${k}',this.value)">${opt.hint ? `<div class="hint">${opt.hint}</div>` : ''}`;
+    const radio = (k, opts) => `<div class="seg">${opts.map(o => `<label class="${f[k] === o[0] ? 'on' : ''}"><input type="radio" name="${k}" ${f[k] === o[0] ? 'checked' : ''} onchange="Customer.setRe('${k}','${o[0]}')">${o[1]}</label>`).join('')}</div>`;
+    return `${this.C.err ? `<div class="errbox">${h(this.C.err)}</div>` : ''}
+    <div class="card"><h3>ご注文者さま</h3>
+      ${inp('name', 'お名前', { ac: 'name', ph: '例）神戸 花子' })}
+      ${inp('email', 'メールアドレス', { type: 'email', im: 'email', ac: 'email', ph: 'example@mail.com', hint: 'ご注文確認・発送のご連絡をお送りします' })}
+      ${inp('phone', '電話番号', { type: 'tel', im: 'tel', ac: 'tel', ph: '090-1234-5678' })}
+      <label class="f" for="f-zip">郵便番号<span class="req">必須</span></label>
+      <div class="row"><input class="in" id="f-zip" style="max-width:180px" inputmode="numeric" autocomplete="postal-code" placeholder="123-4567" value="${h(f.zip)}" oninput="Customer.set('zip',this.value)"><button class="btn" onclick="Customer.zip('zip','address')">住所を自動入力</button></div>
+      ${inp('address', 'ご住所', { ac: 'street-address', ph: '都道府県から建物名・部屋番号まで' })}
+    </div>
+    <div class="card"><h3>お届け先</h3>
+      <label class="tog"><input type="checkbox" ${f.shipOn ? 'checked' : ''} onchange="Customer.setRe('shipOn',this.checked)">ご注文者さまと別の住所に送る（ギフトなど）</label>
+      ${f.shipOn ? `${inp('shipName', 'お届け先のお名前')}${inp('shipPhone', 'お届け先の電話番号', { type: 'tel', im: 'tel', req: false })}
+        <label class="f">お届け先の郵便番号<span class="req">必須</span></label>
+        <div class="row"><input class="in" id="f-shipZip" style="max-width:180px" inputmode="numeric" placeholder="123-4567" value="${h(f.shipZip)}" oninput="Customer.set('shipZip',this.value)"><button class="btn" onclick="Customer.zip('shipZip','shipAddress')">住所を自動入力</button></div>
+        ${inp('shipAddress', 'お届け先のご住所')}` : '<p class="hint" style="margin:0">上のご住所にお届けします</p>'}
+    </div>
+    <div class="card"><h3>ご希望の保存状態<span class="req" style="font-size:11px;color:#fff;background:var(--red);padding:0 6px;border-radius:4px;margin-left:6px;vertical-align:2px">必須</span></h3>${radio('storage', [['冷凍', '冷凍'], ['冷蔵', '冷蔵']])}</div>
+    <div class="card"><h3>お支払い方法<span class="req" style="font-size:11px;color:#fff;background:var(--red);padding:0 6px;border-radius:4px;margin-left:6px;vertical-align:2px">必須</span></h3>${radio('payment', [['振込', '銀行振込'], ['当日現金', '本日 現金でお支払い']])}
+      ${f.payment === '振込' ? `<p class="hint">振込先はご注文完了画面と確認メールでご案内します。</p>` : f.payment === '当日現金' ? `<p class="hint">この場でスタッフにお支払いください。</p>` : ''}</div>
+    <div class="card"><h3>領収書</h3>
+      <label class="tog"><input type="checkbox" ${f.receipt ? 'checked' : ''} onchange="Customer.setRe('receipt',this.checked)">領収書が必要</label>
+      ${f.receipt ? `<label class="f">宛名<span class="opt">空欄ならお名前で発行します</span></label><input class="in" placeholder="例）株式会社〇〇" value="${h(f.receiptTo)}" oninput="Customer.set('receiptTo',this.value)">` : ''}
+    </div>
+    <div class="card"><h3>備考<span class="opt" style="font-size:12px;color:var(--mut);font-weight:400;margin-left:6px">任意</span></h3>
+      <textarea class="in" placeholder="例）月曜か火曜に届くと助かります／すき焼き用に" oninput="Customer.set('note',this.value)">${h(f.note)}</textarea></div>`;
+  },
+  zip(zk, ak) { zipLookup(this.C.info[zk], addr => { this.C.info[ak] = addr; const el = $('#f-' + ak); if (el) { el.value = addr; el.focus(); } this.save(); toast('住所を入力しました。番地・建物名を続けて入力してください'); }); },
+  validate() {
+    const f = this.C.info, miss = [];
+    if (!f.name.trim()) miss.push('お名前');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())) miss.push('メールアドレス');
+    if (!f.phone.trim()) miss.push('電話番号');
+    if (!f.zip.trim()) miss.push('郵便番号');
+    if (!f.address.trim()) miss.push('ご住所');
+    if (f.shipOn && !f.shipName.trim()) miss.push('お届け先のお名前');
+    if (f.shipOn && !f.shipZip.trim()) miss.push('お届け先の郵便番号');
+    if (f.shipOn && !f.shipAddress.trim()) miss.push('お届け先のご住所');
+    if (!f.storage) miss.push('保存状態');
+    if (!f.payment) miss.push('お支払い方法');
+    return miss;
+  },
+  toConfirm() {
+    const miss = this.validate();
+    if (miss.length) { this.C.err = '次の項目を入力してください：' + miss.join('、'); this.render(); window.scrollTo(0, 0); return; }
+    this.go(3);
+  },
+  renderConfirm() {
+    const C = this.C, f = C.info, t = this.totals(), its = this.items();
+    return `${C.err ? `<div class="errbox">${h(C.err)}</div>` : ''}
+    <div class="card"><h3>ご注文内容</h3><table class="summary">
+      ${its.map(i => `<tr><td>${h(i.p.cat)} ${h(i.p.name)}${i.p.variable ? '<span class="var">価格変動</span>' : ''}<div class="xs mut">${gl(i.g)} × ${i.count}</div></td><td class="right num">${yen(i.amount)}</td></tr>`).join('')}
+      <tr class="t"><td>小計（税抜）</td><td class="right num">${yen(t.sub)}</td></tr>
+      ${t.ship ? `<tr><td>送料</td><td class="right num">${yen(t.ship)}</td></tr>` : ''}
+      <tr><td>消費税（${t.rate}%）</td><td class="right num">${yen(t.tax)}</td></tr>
+      <tr class="g"><td>合計（税込）</td><td class="right num">${yen(t.total)}</td></tr></table>
+      ${t.variable ? '<p class="xs mut">※価格変動の商品は、確定額が変わる場合があります。確定しましたらメールでご連絡します。</p>' : ''}
+      <button class="btn sm" onclick="Customer.go(1)">商品を変更</button></div>
+    <div class="card"><h3>お客様情報</h3><dl class="kv">
+      <dt>お名前</dt><dd>${h(f.name)} 様</dd><dt>メール</dt><dd>${h(f.email)}</dd><dt>電話</dt><dd>${h(f.phone)}</dd>
+      <dt>ご住所</dt><dd>〒${h(f.zip)}<br>${h(f.address)}</dd>
+      <dt>お届け先</dt><dd>${f.shipOn ? `${h(f.shipName)} 様<br>〒${h(f.shipZip)} ${h(f.shipAddress)}${f.shipPhone ? '<br>' + h(f.shipPhone) : ''}` : 'ご住所と同じ'}</dd>
+      <dt>保存状態</dt><dd>${h(f.storage)}</dd><dt>お支払い</dt><dd>${f.payment === '振込' ? '銀行振込' : '本日 現金'}</dd>
+      <dt>領収書</dt><dd>${f.receipt ? '必要（宛名：' + h(f.receiptTo || f.name) + ' 様）' : '不要'}</dd>
+      ${f.note ? `<dt>備考</dt><dd>${h(f.note)}</dd>` : ''}</dl>
+      <button class="btn sm" onclick="Customer.go(2)" style="margin-top:10px">お客様情報を変更</button></div>
+    <p class="sm mut">${h(C.S.deliveryNote || '')}</p>`;
+  },
+  async submit() {
+    const C = this.C, f = C.info;
+    if (C.sending) return;
+    C.sending = true; C.err = ''; this.render();
+    const order = { eventId: C.ev.id, clientKey: f.clientKey, name: f.name, email: f.email, phone: f.phone, zip: f.zip, address: f.address,
+      shipTo: f.shipOn ? { on: true, name: f.shipName, phone: f.shipPhone, zip: f.shipZip, address: f.shipAddress } : { on: false },
+      storage: f.storage, payment: f.payment, receipt: f.receipt, receiptTo: f.receiptTo, note: f.note,
+      items: this.items().map(i => ({ pid: i.pid, g: i.g, count: i.count })) };
+    try {
+      const r = await api('submit', { order });
+      C.done = r.order; C.step = 4; C.sending = false;
+      ls.del('nk-draft-' + C.eid);
+      this.render(); window.scrollTo(0, 0);
+    } catch (e) { C.sending = false; C.err = e.message; this.render(); window.scrollTo(0, 0); }
+  },
+  renderDone() {
+    const C = this.C, o = C.done;
+    $('#app').innerHTML = this.head() + `<div class="wrap"><div class="card" style="text-align:center;padding:26px 16px">
+      <div style="font-size:40px;color:var(--g)">✓</div><h2 style="margin:4px 0">ご注文ありがとうございます</h2>
+      <p class="mut sm">注文番号</p><p class="b" style="font-size:20px;margin:0">${h(o.id)}</p>
+      <p style="font-size:22px;font-weight:700;margin:12px 0 0">${yen(o.total)} <span class="sm mut">（税込）</span></p></div>
+      ${o.payment === '振込' ? `<div class="card"><h3>お振込先</h3>${C.S.bankInfo ? `<p style="white-space:pre-wrap;margin:0">${h(C.S.bankInfo)}</p>` : '<p class="mut">振込先は確認メールでご案内します。</p>'}<p class="hint">お振込み手数料はお客様のご負担でお願いいたします。</p></div>`
+        : `<div class="card"><h3>お支払い</h3><p style="margin:0">この画面をスタッフにお見せいただき、現金でお支払いください。</p></div>`}
+      <div class="card"><p style="margin:0">ご注文の確認メールを <b>${h(o.email)}</b> にお送りします。<br>${h(C.S.deliveryNote || '')}発送の際は伝票番号をメールでお知らせします。</p></div>
+      <p class="center"><button class="btn block" onclick="location.reload()">続けて別の注文をする</button></p></div>`;
+  }
+};
+
+/* ===================================================================
+   管理画面（栗原さん・牛尾さん）
+   =================================================================== */
+const STATUSES = ['受付', '発注済', '発送済', 'キャンセル'];
+const CARRIERS = ['ヤマト運輸', '佐川急便', '日本郵便', 'その他'];
+function trackUrl(carrier, no) {
+  const n = String(no || '').replace(/[^0-9A-Za-z]/g, '');
+  if (!n) return '';
+  if (carrier === 'ヤマト運輸') return 'https://jizen.kuronekoyamato.co.jp/jizen/servlet/crjz.b.NQ0010?id=' + n;
+  if (carrier === '佐川急便') return 'https://k2k.sagawa-exp.co.jp/p/web/okurijosearch.do?okurijoNo=' + n;
+  if (carrier === '日本郵便') return 'https://trackings.post.japanpost.jp/services/srv/search/direct?reqCodeNo1=' + n + '&locale=ja';
+  return '';
+}
+function aggregate(orders) {
+  const m = {};
+  orders.forEach(o => (o.items || []).forEach(i => {
+    const k = i.name; m[k] = m[k] || { name: k, total: 0, packs: {} };
+    m[k].total += i.g * i.count; m[k].packs[i.g] = (m[k].packs[i.g] || 0) + i.count;
+  }));
+  return Object.values(m).map(x => Object.assign(x, { packStr: Object.keys(x.packs).sort((a, b) => a - b).map(g => `${gl(g)}×${x.packs[g]}`).join('、') }));
+}
+function aggTable(orders) {
+  const a = aggregate(orders);
+  const ex = []; orders.forEach(o => (o.extras || []).forEach(x => ex.push(x.name + '（' + o.name + '様）')));
+  return `<table class="agg"><tr><th>商品</th><th>パック内訳</th><th class="right">合計</th></tr>${a.map(x => `<tr><td>${h(x.name)}</td><td>${h(x.packStr)}</td><td class="n">${gl(x.total)}</td></tr>`).join('')}</table>${ex.length ? `<p class="sm">その他：${h(ex.join('／'))}</p>` : ''}`;
+}
+function shipName(o) { return o.shipTo && o.shipTo.on ? (o.shipTo.name || '（お名前未記入）') : o.name; }
+function shipAddr(o) { return o.shipTo && o.shipTo.on ? `〒${o.shipTo.zip || ''} ${o.shipTo.address || ''}` : `〒${o.zip || '（未記入）'} ${o.address || ''}`; }
+function shipTel(o) { return o.shipTo && o.shipTo.on ? (o.shipTo.phone || o.phone) : o.phone; }
+
+const Admin = {
+  A: null, E: null,
+  pass() { return ls.get('nk-admin-pass') || ''; },
+  async init() {
+    if (!this.pass()) return this.login();
+    $('#app').innerHTML = brandBar('注文管理') + '<div class="loading">読み込み中…</div>';
+    try {
+      const r = await api('admin', { pass: this.pass() });
+      const evs = r.events;
+      this.A = Object.assign(this.A || { tab: 'orders', ev: evs[0] ? evs[0].id : 'all', st: 'all', q: '' }, { events: evs, products: r.products, settings: r.settings, orders: r.orders });
+      this.render();
+    } catch (e) { ls.del('nk-admin-pass'); this.login(e.message); }
+  },
+  login(err) {
+    $('#app').innerHTML = brandBar('注文管理') + `<div class="wrap" style="max-width:420px"><div class="card"><h3>管理画面ログイン</h3>
+      ${err ? `<div class="errbox">${h(err)}</div>` : ''}
+      <label class="f">パスワード</label><input class="in" id="pw" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')Admin.doLogin()">
+      <p><button class="btn pri block" onclick="Admin.doLogin()">ログイン</button></p>${DEMO ? '<p class="hint">デモのパスワード：demo</p>' : ''}</div></div>`;
+    setTimeout(() => $('#pw') && $('#pw').focus(), 50);
+  },
+  doLogin() { ls.set('nk-admin-pass', $('#pw').value.trim()); this.init(); },
+  logout() { ls.del('nk-admin-pass'); this.A = null; this.login(); },
+  tab(t) { this.A.tab = t; this.render(); window.scrollTo(0, 0); },
+  render() {
+    const A = this.A;
+    const tabs = [['orders', '注文一覧'], ['hatchu', '精肉店へ発注'], ['events', 'イベント・QR'], ['settings', '商品・設定']];
+    let body = '';
+    if (A.tab === 'orders') body = this.renderOrders();
+    if (A.tab === 'hatchu') body = this.renderHatchu();
+    if (A.tab === 'events') body = this.renderEvents();
+    if (A.tab === 'settings') body = this.renderSettings();
+    $('#app').innerHTML = brandBar('注文管理', `<button class="btn sm gold" onclick="Admin.newOrder()">＋ 注文を入力</button>`,
+      `<div class="tabs">${tabs.map(t => `<button class="${A.tab === t[0] ? 'on' : ''}" onclick="Admin.tab('${t[0]}')">${t[1]}</button>`).join('')}</div>`) +
+      `<div class="wrap wide">${body}</div>`;
+  },
+  evName(id) { const e = this.A.events.find(x => x.id === id); return e ? e.name : id; },
+  evSelect(val, onchange, withAll) {
+    return `<select onchange="${onchange}">${withAll ? `<option value="all" ${val === 'all' ? 'selected' : ''}>すべてのイベント</option>` : ''}${this.A.events.map(e => `<option value="${h(e.id)}" ${val === e.id ? 'selected' : ''}>${h(e.date)} ${h(e.name)}</option>`).join('')}</select>`;
+  },
+  filtered() {
+    const A = this.A, q = A.q.trim();
+    return A.orders.filter(o => (A.ev === 'all' || o.eventId === A.ev)).filter(o => {
+      if (A.st === 'all') return o.status !== 'キャンセル';
+      if (A.st === '未入金') return !o.paid && o.status !== 'キャンセル';
+      if (A.st === '要確認') return !!(o.checks || '').trim() && o.status !== 'キャンセル';
+      if (A.st === 'メール未') return o.status !== 'キャンセル' && (!o.email || !(o.mail && o.mail.confirm));
+      return o.status === A.st;
+    }).filter(o => !q || [o.id, o.name, o.phone, o.email, o.address, o.memo].join(' ').includes(q))
+      .sort((a, b) => (a.id < b.id ? -1 : 1));
+  },
+  renderOrders() {
+    const A = this.A;
+    const base = A.orders.filter(o => (A.ev === 'all' || o.eventId === A.ev) && o.status !== 'キャンセル');
+    const list = this.filtered();
+    const sum = k => base.reduce((a, o) => a + (+o[k] || 0), 0);
+    const unpaid = base.filter(o => !o.paid).reduce((a, o) => a + o.total, 0);
+    const cnt = st => st === 'all' ? base.length : st === '未入金' ? base.filter(o => !o.paid).length : st === '要確認' ? base.filter(o => (o.checks || '').trim()).length : st === 'メール未' ? base.filter(o => !o.email || !(o.mail && o.mail.confirm)).length : A.orders.filter(o => (A.ev === 'all' || o.eventId === A.ev) && o.status === st).length;
+    const chips = ['all', '受付', '発注済', '発送済', '未入金', '要確認', 'メール未', 'キャンセル'];
+    return `<div class="filters">${this.evSelect(A.ev, "Admin.A.ev=this.value;Admin.render()", true)}<input type="search" placeholder="名前・電話・番号で検索" value="${h(A.q)}" oninput="Admin.A.q=this.value;Admin.refreshList()" style="flex:1;min-width:180px"></div>
+      <div class="stats"><div class="stat"><div class="l">注文数</div><div class="v">${base.length}件</div></div><div class="stat"><div class="l">税抜合計</div><div class="v num">${yen(sum('subtotal'))}</div></div><div class="stat"><div class="l">税込合計</div><div class="v num">${yen(sum('total'))}</div></div><div class="stat"><div class="l">未入金</div><div class="v num" style="color:var(--red)">${yen(unpaid)}</div></div></div>
+      <div class="chips">${chips.map(c => `<button class="${A.st === c ? 'on' : ''}" onclick="Admin.A.st='${c}';Admin.render()">${c === 'all' ? 'すべて' : c === 'メール未' ? '確認メール未送信' : c} ${cnt(c)}</button>`).join('')}</div>
+      <div class="olist" id="olist">${this.cards(list)}</div>`;
+  },
+  refreshList() { const el = $('#olist'); if (el) el.innerHTML = this.cards(this.filtered()); },
+  cards(list) {
+    if (!list.length) return '<p class="mut">該当する注文はありません</p>';
+    return list.map(o => `<button class="ocard ${o.status === 'キャンセル' ? 'cancel' : ''}" onclick="Admin.open('${o.id}')">
+      <div class="top"><span class="nm">${h(o.name)} 様</span><span class="tt num">${yen(o.total)}</span></div>
+      <div class="meta">${h(o.id)}　${h(o.memo || o.source || '')}${o.storage ? '　' + h(o.storage) : ''}</div>
+      <div class="chipsr"><span class="chip c-${o.status}">${o.status}</span>${o.paid ? '<span class="chip c-paid">入金済</span>' : '<span class="chip c-unpaid">未入金</span>'}${o.payment ? `<span class="chip c-gray">${o.payment}</span>` : ''}${o.receipt ? '<span class="chip c-gray">領収書</span>' : ''}${!o.email ? '<span class="chip c-warn">メールなし</span>' : (o.mail && o.mail.confirm ? '' : '<span class="chip c-gray">確認メール未</span>')}${o.status === '発送済' && o.email && !(o.mail && o.mail.ship) ? '<span class="chip c-warn">発送メール未</span>' : ''}${(o.checks || '').trim() ? '<span class="chip c-warn">要確認</span>' : ''}</div>
+      <div class="items">${h((o.items || []).map(i => i.name.replace(/^\S+\s/, '') + ' ' + gl(i.g) + (i.count > 1 ? '×' + i.count : '')).join('、'))}</div></button>`).join('');
+  },
+  /* ---- 注文の編集 ---- */
+  newOrder() {
+    const A = this.A, ev = A.ev !== 'all' ? A.ev : (A.events[0] || {}).id;
+    this.E = { id: '', eventId: ev, source: 'スタッフ', name: '', email: '', phone: '', zip: '', address: '', shipTo: { on: false }, storage: '', payment: '', receipt: false, receiptTo: '', note: '', items: [], extras: [], status: '受付', paid: false, paidAt: '', mail: { confirm: false, ship: false }, checks: '', memo: '', shipDate: '', carrier: 'ヤマト運輸', tracking: '' };
+    this.addItem(true); this.renderEdit();
+  },
+  open(id) { this.E = clone(this.A.orders.find(o => o.id === id)); this.E.shipTo = this.E.shipTo || { on: false }; this.E.mail = this.E.mail || { confirm: false, ship: false }; this.renderEdit(); },
+  calcE() { const E = this.E; const tmp = clone(E); computeOrder(tmp, this.A.settings, this.A.products, true); return tmp; },
+  renderEdit() {
+    const E = this.E, A = this.A, t = this.calcE();
+    const pOpts = sel => A.products.map(p => `<option value="${p.id}" ${sel === p.id ? 'selected' : ''}>${h(p.cat)} ${h(p.name)}</option>`).join('') + `<option value="" ${!sel ? 'selected' : ''}>（自由入力）</option>`;
+    const fld = (path, label, opt = {}) => `<label class="f">${label}</label><input class="in" type="${opt.type || 'text'}" value="${h(this.get(path))}" oninput="Admin.setE('${path}',this.value)" placeholder="${h(opt.ph || '')}">`;
+    const segE = (path, opts) => `<div class="seg">${opts.map(o => `<label class="${this.get(path) === o ? 'on' : ''}"><input type="radio" ${this.get(path) === o ? 'checked' : ''} onchange="Admin.setE('${path}','${o}',1)">${o}</label>`).join('')}</div>`;
+    openSheet(`<div class="hd"><button class="x" onclick="closeSheet()" aria-label="閉じる">✕</button><div class="t">${E.id ? h(E.id) + '　' + h(E.name) + ' 様' : '新しい注文'}</div><span class="chip c-${E.status}">${E.status}</span></div>
+    <div class="bd">
+      ${(E.checks || '').trim() ? `<div class="warnbox"><b>要確認</b><br>${h(E.checks)}</div>` : ''}
+      <div class="card"><h3>状態</h3>${segE('status', STATUSES)}
+        <div class="g2"><div><label class="f">お支払い方法</label><select class="in" onchange="Admin.setE('payment',this.value)"><option value="">未設定</option>${['振込', '当日現金'].map(p => `<option ${E.payment === p ? 'selected' : ''}>${p}</option>`).join('')}</select></div>
+        <div><label class="f">入金</label><label class="tog" style="padding:6px 0"><input type="checkbox" ${E.paid ? 'checked' : ''} onchange="Admin.setPaid(this.checked)">入金済み ${E.paid && E.paidAt ? `<span class="sm mut">（${h(E.paidAt)}）</span>` : ''}</label></div></div>
+        ${E.paid ? fld('paidAt', '入金日', { type: 'date' }) : ''}
+      </div>
+      <div class="card"><h3>商品</h3>
+        ${E.items.map((it, i) => `<div class="itm"><div class="r1"><select onchange="Admin.setItem(${i},'pid',this.value,1)">${pOpts(it.pid)}</select><button class="x" onclick="Admin.delItem(${i})" aria-label="削除">✕</button></div>
+          ${!it.pid ? `<div class="r1" style="margin-top:6px"><input style="flex:1" placeholder="商品名" value="${h(it.name || '')}" oninput="Admin.setItem(${i},'name',this.value)"></div>` : ''}
+          <div class="r2"><input type="number" inputmode="numeric" value="${h(it.g)}" oninput="Admin.setItem(${i},'g',this.value)" aria-label="グラム"><span class="lb">g ×</span><input style="width:58px" type="number" inputmode="numeric" value="${h(it.count)}" oninput="Admin.setItem(${i},'count',this.value)" aria-label="個数"><span class="lb">個　単価/kg</span><input style="width:92px" type="number" inputmode="numeric" value="${h(it.unitPrice)}" oninput="Admin.setItem(${i},'unitPrice',this.value)" aria-label="単価"><span class="amt num" id="ia-${i}">${yen(lineAmt(it.unitPrice, it.g, it.count))}</span></div>
+          <div class="r1" style="margin-top:6px"><input style="flex:1" placeholder="メモ（例：すき焼き用）" value="${h(it.note || '')}" oninput="Admin.setItem(${i},'note',this.value)"></div></div>`).join('')}
+        <button class="btn sm" style="margin-top:8px" onclick="Admin.addItem()">＋ 商品を追加</button>
+        <p class="hint">価格変動（〜）の商品は、確定したら単価を書き換えてください。</p>
+        <h3 style="margin-top:16px">その他（テールなど表にない品）</h3>
+        ${(E.extras || []).map((x, i) => `<div class="row" style="margin:6px 0"><input class="in grow" placeholder="品名" value="${h(x.name)}" oninput="Admin.setExtra(${i},'name',this.value)"><input class="in" style="width:120px" type="number" inputmode="numeric" placeholder="金額(税抜)" value="${h(x.amount)}" oninput="Admin.setExtra(${i},'amount',this.value)"><button class="x" onclick="Admin.delExtra(${i})">✕</button></div>`).join('')}
+        <button class="btn sm" onclick="Admin.addExtra()">＋ その他を追加</button>
+        <div class="g2" style="margin-top:8px"><div>${fld('shipping', '送料（税抜）', { type: 'number' })}</div><div>${fld('taxRate', '消費税率（%）', { type: 'number' })}</div></div>
+        <table class="summary" style="margin-top:12px" id="etot">${this.totHtml(t)}</table>
+      </div>
+      <div class="card"><h3>お客様</h3>
+        ${fld('name', 'お名前')}${fld('email', 'メールアドレス', { type: 'email' })}${fld('phone', '電話番号', { type: 'tel' })}
+        <div class="g2"><div>${fld('zip', '郵便番号')}</div><div><label class="f">&nbsp;</label><button class="btn" onclick="Admin.zipE('zip','address')">住所を自動入力</button></div></div>${fld('address', 'ご住所')}
+        <label class="tog"><input type="checkbox" ${E.shipTo.on ? 'checked' : ''} onchange="Admin.setE('shipTo.on',this.checked,1)">別の住所に送る</label>
+        ${E.shipTo.on ? `${fld('shipTo.name', 'お届け先のお名前')}${fld('shipTo.phone', 'お届け先の電話')}${fld('shipTo.zip', 'お届け先の郵便番号')}${fld('shipTo.address', 'お届け先の住所')}` : ''}
+        <label class="f">保存状態</label>${segE('storage', ['冷凍', '冷蔵'])}
+        <label class="tog"><input type="checkbox" ${E.receipt ? 'checked' : ''} onchange="Admin.setE('receipt',this.checked,1)">領収書が必要</label>
+        ${E.receipt ? fld('receiptTo', '領収書の宛名', { ph: E.name }) : ''}
+        <label class="f">備考（お客様から）</label><textarea class="in" oninput="Admin.setE('note',this.value)">${h(E.note)}</textarea>
+      </div>
+      <div class="card"><h3>発送</h3>
+        <div class="g2"><div>${fld('shipDate', '発送日', { type: 'date' })}</div><div><label class="f">配送業者</label><select class="in" onchange="Admin.setE('carrier',this.value)">${CARRIERS.map(c => `<option ${E.carrier === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div></div>
+        ${fld('tracking', '伝票番号', { ph: '精肉店が入力します' })}
+        <div class="row wrapf" style="margin-top:10px"><label class="tog"><input type="checkbox" ${E.mail.confirm ? 'checked' : ''} onchange="Admin.setE('mail.confirm',this.checked)">確認メール送信済み</label><label class="tog"><input type="checkbox" ${E.mail.ship ? 'checked' : ''} onchange="Admin.setE('mail.ship',this.checked)">発送メール送信済み</label></div>
+      </div>
+      <div class="card"><h3>社内メモ</h3>
+        <label class="f">要確認（解決したら消してください）</label><textarea class="in" oninput="Admin.setE('checks',this.value)">${h(E.checks)}</textarea>
+        <label class="f">メモ</label><input class="in" value="${h(E.memo)}" oninput="Admin.setE('memo',this.value)">
+        <label class="f">イベント</label><select class="in" onchange="Admin.setE('eventId',this.value)">${A.events.map(e => `<option value="${h(e.id)}" ${E.eventId === e.id ? 'selected' : ''}>${h(e.date)} ${h(e.name)}</option>`).join('')}</select>
+        ${E.id ? `<p class="xs mut">受付：${h(E.createdAt)}（${h(E.source)}）${E.orderedAt ? '　発注：' + h(E.orderedAt) : ''}</p>` : ''}
+      </div>
+    </div>
+    <div class="ft"><button class="btn pri" style="flex:1" id="savebtn" onclick="Admin.saveE()">保存</button>
+      ${E.id ? `<button class="btn" onclick="Admin.mail('confirm')">確認メール</button><button class="btn" onclick="Admin.mail('ship')">発送メール</button><button class="btn" onclick="Admin.receipt()">領収書PDF</button>` : ''}</div>`);
+  },
+  totHtml(t) {
+    return `<tr><td>小計（税抜）</td><td class="right num">${yen(t.subtotal)}</td></tr>${t.shipping ? `<tr><td>送料</td><td class="right num">${yen(t.shipping)}</td></tr>` : ''}<tr><td>消費税（${t.taxRate}%）</td><td class="right num">${yen(t.tax)}</td></tr><tr class="g t"><td>合計（税込）</td><td class="right num">${yen(t.total)}</td></tr>`;
+  },
+  get(path) { return path.split('.').reduce((o, k) => (o == null ? '' : o[k]), this.E) ?? ''; },
+  setE(path, v, re) {
+    const ks = path.split('.'); let o = this.E;
+    ks.slice(0, -1).forEach(k => { o[k] = o[k] || {}; o = o[k]; });
+    o[ks[ks.length - 1]] = v;
+    if (path === 'shipping' || path === 'taxRate') this.updTot();
+    if (re) this.rerenderEdit();
+  },
+  rerenderEdit() { const s = $('#sheet').scrollTop; this.renderEdit(); $('#sheet').scrollTop = s; },
+  setPaid(on) { this.E.paid = on; if (on && !this.E.paidAt) this.E.paidAt = today(); if (!on) this.E.paidAt = ''; this.rerenderEdit(); },
+  updTot() { const el = $('#etot'); if (el) el.innerHTML = this.totHtml(this.calcE()); },
+  setItem(i, k, v, re) {
+    const it = this.E.items[i];
+    if (k === 'pid') { it.pid = v; const p = this.A.products.find(x => x.id === v); if (p) { it.unitPrice = p.price; it.name = p.cat + ' ' + p.name; it.variable = p.variable; } }
+    else it[k] = (k === 'g' || k === 'count' || k === 'unitPrice') ? (v === '' ? '' : +v) : v;
+    if (re) return this.rerenderEdit();
+    const a = document.getElementById('ia-' + i); if (a) a.textContent = yen(lineAmt(it.unitPrice, it.g, it.count));
+    this.updTot();
+  },
+  addItem(silent) { const p = this.A.products[0]; this.E.items.push({ pid: p ? p.id : '', name: p ? p.cat + ' ' + p.name : '', unitPrice: p ? p.price : 0, g: 200, count: 1, note: '' }); if (!silent) this.rerenderEdit(); },
+  delItem(i) { this.E.items.splice(i, 1); this.rerenderEdit(); },
+  addExtra() { (this.E.extras = this.E.extras || []).push({ name: '', amount: 0, note: '' }); this.rerenderEdit(); },
+  setExtra(i, k, v) { this.E.extras[i][k] = k === 'amount' ? (+v || 0) : v; this.updTot(); },
+  delExtra(i) { this.E.extras.splice(i, 1); this.rerenderEdit(); },
+  zipE(zk, ak) { zipLookup(this.E[zk], a => { this.E[ak] = a; this.rerenderEdit(); toast('住所を入力しました。番地を続けてください'); }); },
+  async saveE(silent) {
+    const E = this.E;
+    if (!String(E.name || '').trim()) { toast('お名前を入力してください', true); return false; }
+    const b = $('#savebtn'); if (b) { b.disabled = true; b.textContent = '保存中…'; }
+    try {
+      const r = await api('saveOrder', { pass: this.pass(), order: E });
+      const i = this.A.orders.findIndex(o => o.id === r.order.id);
+      if (i < 0) this.A.orders.push(r.order); else this.A.orders[i] = r.order;
+      this.E = clone(r.order); this.E.shipTo = this.E.shipTo || { on: false }; this.E.mail = this.E.mail || { confirm: false, ship: false };
+      if (!silent) { toast('保存しました'); closeSheet(); }
+      this.render(); return true;
+    } catch (e) { toast(e.message, true); if (b) { b.disabled = false; b.textContent = '保存'; } return false; }
+  },
+  /* ---- メール文 ---- */
+  mailText(kind) {
+    const o = this.calcE(), E = this.E, S = this.A.settings, ev = this.A.events.find(x => x.id === E.eventId) || {};
+    const sig = (S.mailSignature || '').trim() || [S.sellerName, S.sellerAddress, S.sellerTel ? 'TEL ' + S.sellerTel : '', S.sellerEmail].filter(Boolean).join('\n');
+    const lines = o.items.map(i => `・${i.name} ${gl(i.g)}×${i.count}　${yen(i.amount)}${i.note ? '（' + i.note + '）' : ''}`).concat((o.extras || []).map(x => `・${x.name}　${x.amount ? yen(x.amount) : '価格確定後にご連絡'}`));
+    const dest = E.shipTo && E.shipTo.on ? `${shipAddr(E)}\n${shipName(E)} 様` : `〒${E.zip} ${E.address}\n${E.name} 様`;
+    const variable = o.items.some(i => i.variable) || (o.extras || []).some(x => !x.amount);
+    if (kind === 'confirm') {
+      const pay = E.payment === '振込' ? `銀行振込\n${S.bankInfo ? S.bankInfo + '\n' : '（振込先は別途ご案内いたします）\n'}※お振込み手数料はお客様のご負担でお願いいたします。` : E.payment === '当日現金' ? `当日現金${E.paid ? '（お支払い済み）' : ''}` : '別途ご案内いたします';
+      return {
+        subject: `【${S.sellerName || 'NATURE KOBE'}】ご注文ありがとうございます（注文番号 ${E.id}）`,
+        body: `${E.name} 様\n\nこのたびは${ev.name ? '「' + ev.name + '」にて、' : ''}但馬牛・神戸ビーフをご注文いただき、誠にありがとうございます。\n以下の内容でご注文を承りました。\n\n■注文番号：${E.id}\n\n■ご注文内容\n${lines.join('\n')}\n\n小計（税抜）　${yen(o.subtotal)}\n${o.shipping ? '送料　' + yen(o.shipping) + '\n' : ''}消費税（${o.taxRate}%）　${yen(o.tax)}\n合計（税込）　${yen(o.total)}\n${variable ? '※価格変動の商品は、部位・入荷状況により金額が変わる場合がございます。確定しましたら改めてご連絡いたします。\n' : ''}\n■お届け先\n${dest}\n\n■保存状態：${E.storage || '（ご希望をお知らせください）'}\n■お支払い方法：${pay}\n${E.receipt ? `■領収書：ご用意いたします（宛名：${E.receiptTo || E.name} 様）\n` : ''}${E.note ? `■備考：${E.note}\n` : ''}\n${S.deliveryNote || ''}\n発送の際は、配送伝票番号をあらためてご連絡いたします。\n\nご不明な点がございましたら、本メールにご返信ください。\n今後ともよろしくお願いいたします。\n\n${sig}`
+      };
+    }
+    const future = E.shipDate && E.shipDate > today();
+    const url = trackUrl(E.carrier, E.tracking);
+    return {
+      subject: `【${S.sellerName || 'NATURE KOBE'}】商品${future ? 'の発送日' : 'を発送いたしました'}のお知らせ（注文番号 ${E.id}）`,
+      body: `${E.name} 様\n\nこのたびはご注文いただき、誠にありがとうございます。\nご注文の商品を${E.shipDate ? mdw(E.shipDate) : '（発送日）'}に${future ? '発送予定です' : '発送いたしました'}。\n\n■配送業者：${E.carrier || ''}（${E.storage === '冷蔵' ? 'クール便・冷蔵' : 'クール便・冷凍'}）\n■お問い合わせ伝票番号：${E.tracking || '（伝票番号）'}\n${url ? '■配送状況の確認：' + url + '\n' : ''}\n■お届け先\n${dest}\n\n■ご注文内容\n${lines.join('\n')}\n合計（税込）　${yen(o.total)}\n\nお届け日時のご変更は、上記の伝票番号で配送業者へお問い合わせください。\nお受け取り後は、お早めに${E.storage === '冷蔵' ? '冷蔵庫' : '冷凍庫'}で保存してください。\n\n今後ともよろしくお願いいたします。\n\n${sig}`
+    };
+  },
+  async mail(kind) {
+    const E = this.E;
+    if (kind === 'ship' && (!E.shipDate || !E.tracking)) toast('発送日・伝票番号がまだ入っていません', true);
+    const m = this.mailText(kind);
+    this._m = { kind, m };
+    const gmail = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(E.email || '')}&su=${encodeURIComponent(m.subject)}&body=${encodeURIComponent(m.body)}`;
+    const mailto = `mailto:${encodeURIComponent(E.email || '')}?subject=${encodeURIComponent(m.subject)}&body=${encodeURIComponent(m.body)}`;
+    openSheet(`<div class="hd"><button class="x" onclick="Admin.renderEdit()" aria-label="戻る">←</button><div class="t">${kind === 'confirm' ? '確認メール' : '発送メール'}：${h(E.name)} 様</div></div>
+      <div class="bd">${!E.email ? '<div class="warnbox">メールアドレスが登録されていません。電話などでメールアドレスを聞いて、お客様欄に入力してください。</div>' : ''}
+      <div class="card"><label class="f">宛先</label><div class="row"><input class="in" readonly value="${h(E.email || '')}"><button class="btn" onclick="copy(Admin.E.email||'','宛先を')">コピー</button></div>
+      <label class="f">件名</label><div class="row"><input class="in" id="msub" value="${h(m.subject)}"><button class="btn" onclick="copy($('#msub').value,'件名を')">コピー</button></div>
+      <label class="f">本文（ここで直せます）</label><textarea class="in" id="mbody" style="min-height:380px;font-size:14px">${h(m.body)}</textarea>
+      <p><button class="btn pri block" onclick="copy($('#mbody').value,'本文を')">本文をコピー</button></p>
+      <div class="row wrapf"><a class="btn" target="_blank" rel="noopener" href="${h(gmail)}" onclick="this.href=Admin.gmailHref()">Gmailで開く</a><a class="btn" href="${h(mailto)}" onclick="this.href=Admin.mailtoHref()">メールアプリで開く</a></div>
+      <p class="hint">送ったら下の「送信済みにする」を押すと、一覧の「未送信」表示が消えます。</p></div></div>
+      <div class="ft"><button class="btn gold" style="flex:1" onclick="Admin.markSent('${kind}')">送信済みにする</button><button class="btn" onclick="Admin.renderEdit()">戻る</button></div>`);
+  },
+  gmailHref() { return `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(this.E.email || '')}&su=${encodeURIComponent($('#msub').value)}&body=${encodeURIComponent($('#mbody').value)}`; },
+  mailtoHref() { return `mailto:${encodeURIComponent(this.E.email || '')}?subject=${encodeURIComponent($('#msub').value)}&body=${encodeURIComponent($('#mbody').value)}`; },
+  async markSent(kind) { this.E.mail = this.E.mail || {}; this.E.mail[kind] = true; if (await this.saveE(true)) { toast('送信済みにしました'); this.renderEdit(); } },
+  /* ---- 領収書 ---- */
+  receipt() {
+    const E = this.E, o = this.calcE(), S = this.A.settings;
+    if (!E.paid) toast('まだ入金済みになっていません（発行はできます）', true);
+    const d = E.paidAt || today();
+    $('#print').innerHTML = `<div class="rc"><h1>領収書</h1>
+      <div class="no"><span>No. ${h(E.id)}</span><span>発行日　${h(jdate(d))}</span></div>
+      <div class="to">${h(E.receiptTo || E.name)}　様</div>
+      <div class="amt">金額　${yen(o.total)} −<span style="font-size:15px">（税込）</span></div>
+      <div class="tadashi">但し　但馬牛・神戸ビーフ代として</div><div class="tadashi">上記正に領収いたしました。</div>
+      <div class="bd2"><table><tr><td colspan="2">内訳</td></tr><tr><td>税抜金額</td><td class="right">${yen(o.subtotal + o.shipping)}</td></tr><tr><td>消費税額（${o.taxRate}%）</td><td class="right">${yen(o.tax)}</td></tr></table>
+      <div class="iss"><b>${h(S.sellerName || 'NATURE KOBE')}</b><br>${h(S.sellerAddress || '')}${S.sellerTel ? '<br>TEL ' + h(S.sellerTel) : ''}</div></div></div>`;
+    setTimeout(() => window.print(), 50);
+  },
+  /* ---- 精肉店へ発注 ---- */
+  renderHatchu() {
+    const A = this.A;
+    A.hEv = A.hEv || (A.ev !== 'all' ? A.ev : (A.events[0] || {}).id);
+    const list = A.orders.filter(o => o.eventId === A.hEv && o.status === '受付');
+    A.hSel = A.hSel && A.hSelEv === A.hEv ? A.hSel.filter(id => list.some(o => o.id === id)) : list.map(o => o.id);
+    A.hSelEv = A.hEv;
+    const sel = list.filter(o => A.hSel.includes(o.id));
+    const warn = sel.filter(o => (o.checks || '').trim() || !o.storage || !o.zip);
+    const ordered = A.orders.filter(o => o.eventId === A.hEv && o.status === '発注済');
+    return `<div class="filters">${this.evSelect(A.hEv, "Admin.A.hEv=this.value;Admin.A.hSel=null;Admin.render()")}</div>
+      <div class="card"><h3>1. 発注する注文を選ぶ（受付の注文 ${list.length}件）</h3>
+      ${list.length ? `<div class="row"><button class="btn sm" onclick="Admin.A.hSel=${h(JSON.stringify(list.map(o => o.id)))};Admin.render()">全部選ぶ</button><button class="btn sm" onclick="Admin.A.hSel=[];Admin.render()">全部外す</button></div>
+      <div class="plist">${list.map(o => `<label class="pi"><input type="checkbox" ${A.hSel.includes(o.id) ? 'checked' : ''} onchange="Admin.hToggle('${o.id}',this.checked)"><div class="grow"><b>${h(o.name)} 様</b> <span class="store ${o.storage || 'none'}">${h(o.storage || '保存状態なし')}</span> ${(o.checks || '').trim() ? '<span class="chip c-warn">要確認</span>' : ''}<div class="xs mut">${h(o.id)}　${h(shipAddr(o))}</div><div class="xs">${h(o.items.map(i => i.name.replace(/^\S+\s/, '') + ' ' + gl(i.g) + '×' + i.count).join('、'))}</div></div></label>`).join('')}</div>` : '<p class="mut">受付状態の注文はありません（発注済みは下に表示）</p>'}
+      </div>
+      ${sel.length ? `<div class="card"><h3>2. 発注内容（${sel.length}件の合計）</h3>${aggTable(sel)}
+      ${warn.length ? `<div class="warnbox">要確認・保存状態なし・郵便番号なしの注文が ${warn.length}件あります：${h(warn.map(o => o.name).join('、'))}<br>精肉店に送る前に確認をおすすめします。</div>` : ''}
+      <div class="row wrapf" style="margin-top:10px"><button class="btn" onclick="Admin.copyHatchu()">発注文をコピー（LINE・メール用）</button><button class="btn" onclick="Admin.printPick()">発注書を印刷・PDF</button></div>
+      <hr class="sep"><h3>3. 精肉店に送ったら</h3><p class="sm mut">「発注済」にすると、精肉店の画面に表示され、発送日・伝票番号を入力してもらえるようになります。</p>
+      <button class="btn gold block" onclick="Admin.doHatchu()">選んだ ${sel.length}件を「発注済」にする</button></div>` : ''}
+      <div class="card"><h3>精肉店の画面</h3><p class="sm">精肉店にはこのURLとパスワードを伝えてください。</p><div class="urlbox">${h(baseUrl())}#shop</div><button class="btn sm" onclick="copy('${h(baseUrl())}#shop','URLを')">URLをコピー</button></div>
+      ${ordered.length ? `<div class="card"><h3>発注済・発送待ち（${ordered.length}件）</h3>${ordered.map(o => `<div class="sm" style="padding:4px 0;border-bottom:1px solid var(--line)"><a href="javascript:void 0" onclick="Admin.open('${o.id}')">${h(o.name)} 様</a>　<span class="mut">${h(o.id)}　発注 ${h(o.orderedAt || '')}</span>${o.status === '発注済' && o.tracking ? '' : ''}</div>`).join('')}</div>` : ''}`;
+  },
+  hToggle(id, on) { const A = this.A; A.hSel = A.hSel.filter(x => x !== id); if (on) A.hSel.push(id); this.render(); },
+  hSelOrders() { const A = this.A; return A.orders.filter(o => A.hSel.includes(o.id) && o.status === '受付').sort((a, b) => a.id < b.id ? -1 : 1); },
+  hatchuText() {
+    const sel = this.hSelOrders(), S = this.A.settings, ev = this.A.events.find(e => e.id === this.A.hEv) || {};
+    const agg = aggregate(sel);
+    let t = `${S.shopName || '精肉店'} ご担当者様\n\n${S.sellerName || 'NATURE KOBE'}です。いつもありがとうございます。\n「${ev.name || ''}」のご注文分（${sel.length}件）を発注いたします。\n\n【合計】\n${agg.map(x => `・${x.name}　${gl(x.total)}（${x.packStr}）`).join('\n')}\n`;
+    sel.forEach((o, i) => {
+      t += `\n――――――――――\n${i + 1}. ${o.id}　${o.storage || '保存状態未定'}\n送り先：${shipName(o)} 様\n${shipAddr(o)}\nTEL ${shipTel(o) || '（なし）'}\n${o.items.map(it => `・${it.name} ${gl(it.g)}×${it.count}${it.note ? '（' + it.note + '）' : ''}`).join('\n')}${(o.extras || []).map(x => `\n・${x.name}`).join('')}${o.note ? `\n備考：${o.note}` : ''}\n`;
+    });
+    t += `\n発送されましたら、発送画面に発送日と伝票番号の入力をお願いいたします。\n${baseUrl()}#shop\n`;
+    return t;
+  },
+  copyHatchu() { copy(this.hatchuText(), '発注文を'); },
+  printPick() {
+    const sel = this.hSelOrders(), ev = this.A.events.find(e => e.id === this.A.hEv) || {}, S = this.A.settings;
+    $('#print').innerHTML = `<div class="pk"><h1>発注書　${h(ev.name || '')}</h1><p>${h(S.shopName || '')} 御中　／　${h(S.sellerName || '')}　／　作成 ${h(jdate(today()))}　／　${sel.length}件</p>
+      <h2 style="font-size:14px">合計</h2><table><tr><th>商品</th><th>パック内訳</th><th>合計</th></tr>${aggregate(sel).map(x => `<tr><td>${h(x.name)}</td><td>${h(x.packStr)}</td><td>${gl(x.total)}</td></tr>`).join('')}</table>
+      <h2 style="font-size:14px">注文ごと</h2><table><tr><th style="width:18%">注文番号</th><th style="width:34%">送り先</th><th>内容</th><th style="width:8%">保存</th></tr>
+      ${sel.map(o => `<tr><td>${h(o.id)}</td><td>${h(shipName(o))} 様<br>${h(shipAddr(o))}<br>TEL ${h(shipTel(o) || '')}</td><td>${o.items.map(it => h(`${it.name} ${gl(it.g)}×${it.count}${it.note ? '（' + it.note + '）' : ''}`)).join('<br>')}${(o.extras || []).map(x => '<br>' + h(x.name)).join('')}${o.note ? '<br>備考：' + h(o.note) : ''}</td><td>${h(o.storage || '')}</td></tr>`).join('')}</table></div>`;
+    setTimeout(() => window.print(), 50);
+  },
+  async doHatchu() {
+    const ids = this.hSelOrders().map(o => o.id);
+    if (!ids.length) return;
+    try {
+      const r = await api('bulkStatus', { pass: this.pass(), ids, status: '発注済' });
+      r.orders.forEach(o => { const i = this.A.orders.findIndex(x => x.id === o.id); if (i >= 0) this.A.orders[i] = o; });
+      this.A.hSel = null; toast(ids.length + '件を発注済にしました'); this.render();
+    } catch (e) { toast(e.message, true); }
+  },
+  /* ---- イベント ---- */
+  renderEvents() {
+    const A = this.A;
+    return `<div class="card"><h3>新しいイベントを作る</h3><p class="sm mut">イベントごとに注文用のURLとQRコードができます。会場でQRを見せて、お客さんのスマホから注文してもらえます。</p>
+      <div class="g2"><div><label class="f">イベント名</label><input class="in" id="nev-name" placeholder="例）〇〇ワインショップ試食会"></div><div><label class="f">日付</label><input class="in" id="nev-date" type="date" value="${today()}"></div></div>
+      <label class="f">会場</label><input class="in" id="nev-venue" placeholder="例）農と発酵zen">
+      <p><button class="btn pri" onclick="Admin.addEvent()">作成する（受付開始）</button></p></div>
+      ${A.events.map(e => {
+        const url = baseUrl() + '?e=' + encodeURIComponent(e.id); const n = A.orders.filter(o => o.eventId === e.id && o.status !== 'キャンセル');
+        return `<div class="card"><div class="row"><div class="grow"><b>${h(e.name)}</b><div class="sm mut">${h(jdate(e.date))}　${h(e.venue)}　注文 ${n.length}件 ${yen(n.reduce((a, o) => a + o.total, 0))}</div></div>
+          <span class="chip ${e.open ? 'c-paid' : 'c-gray'}">${e.open ? '受付中' : '受付終了'}</span></div>
+          <div class="urlbox">${h(url)}</div>
+          <div class="row wrapf"><button class="btn sm" onclick="copy('${h(url)}','URLを')">URLをコピー</button><button class="btn sm" onclick="Admin.qr('${h(e.id)}')">QRコード</button><a class="btn sm" href="${h(url)}" target="_blank" rel="noopener">注文画面を開く</a>
+          <button class="btn sm" onclick="Admin.toggleEvent('${h(e.id)}')">${e.open ? '受付を締め切る' : '受付を再開する'}</button><button class="btn sm ghost" onclick="Admin.editEvent('${h(e.id)}')">名前・日付を変更</button></div></div>`;
+      }).join('')}`;
+  },
+  async saveEvent(ev) {
+    try { const r = await api('saveEvent', { pass: this.pass(), event: ev }); this.A.events = r.events; toast('保存しました'); this.render(); }
+    catch (e) { toast(e.message, true); }
+  },
+  addEvent() {
+    const name = $('#nev-name').value.trim(); if (!name) { toast('イベント名を入力してください', true); return; }
+    this.saveEvent({ name, date: $('#nev-date').value, venue: $('#nev-venue').value.trim(), open: true });
+  },
+  toggleEvent(id) { const e = clone(this.A.events.find(x => x.id === id)); e.open = !e.open; this.saveEvent(e); },
+  editEvent(id) {
+    const e = this.A.events.find(x => x.id === id);
+    openSheet(`<div class="hd"><button class="x" onclick="closeSheet()">✕</button><div class="t">イベントを変更</div></div><div class="bd"><div class="card">
+      <label class="f">イベント名</label><input class="in" id="ee-name" value="${h(e.name)}"><label class="f">日付</label><input class="in" id="ee-date" type="date" value="${h(e.date)}"><label class="f">会場</label><input class="in" id="ee-venue" value="${h(e.venue)}"></div></div>
+      <div class="ft"><button class="btn pri" style="flex:1" onclick="Admin.saveEvent(Object.assign({},Admin.A.events.find(x=>x.id==='${h(id)}'),{name:$('#ee-name').value,date:$('#ee-date').value,venue:$('#ee-venue').value}));closeSheet()">保存</button></div>`);
+  },
+  qr(id) {
+    const e = this.A.events.find(x => x.id === id), url = baseUrl() + '?e=' + encodeURIComponent(id);
+    openSheet(`<div class="hd"><button class="x" onclick="closeSheet()">✕</button><div class="t">QRコード</div></div><div class="bd" style="text-align:center">
+      <div class="card"><div class="logo serif" style="letter-spacing:.25em;color:var(--g);font-weight:700">NATURE KOBE</div><p class="b" style="margin:6px 0">${h(e.name)}</p><p class="sm">スマホで読み取って、そのままご注文いただけます</p>
+      <div class="qr" id="qrbox">QRを作成中…</div><div class="urlbox">${h(url)}</div></div>
+      <button class="btn" onclick="Admin.printQr()">QRを印刷・PDF</button></div>`);
+    const draw = () => { $('#qrbox').innerHTML = ''; new QRCode($('#qrbox'), { text: url, width: 240, height: 240, correctLevel: QRCode.CorrectLevel.M }); };
+    if (window.QRCode) return draw();
+    const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+    s.onload = draw; s.onerror = () => { $('#qrbox').textContent = 'QRを作成できませんでした（URLをコピーしてQR作成サービスをご利用ください）'; };
+    document.head.appendChild(s);
+  },
+  printQr() { $('#print').innerHTML = `<div style="text-align:center;font-family:'Noto Serif JP',serif;padding-top:30mm">${$('#sheet .bd .card').innerHTML}</div>`; setTimeout(() => window.print(), 50); },
+  /* ---- 商品・設定 ---- */
+  renderSettings() {
+    const A = this.A, S = A.settings;
+    this._P = this._P || clone(A.products);
+    const P = this._P;
+    const sf = (k, label, ph, ta) => `<label class="f">${label}</label>${ta ? `<textarea class="in" oninput="Admin.A.settings['${k}']=this.value" placeholder="${h(ph || '')}">${h(S[k] || '')}</textarea>` : `<input class="in" value="${h(S[k] || '')}" placeholder="${h(ph || '')}" oninput="Admin.A.settings['${k}']=this.value">`}`;
+    return `<div class="card"><h3>商品と価格（税抜・1kgあたり）</h3><p class="sm mut">変更はこれからの注文に反映されます（すでに入った注文の金額は変わりません）。</p>
+      <div style="overflow-x:auto"><table class="ptable" style="width:100%;min-width:560px"><tr class="xs mut"><td>区分</td><td>商品名</td><td>単価/kg</td><td>価格変動〜</td><td>販売中</td><td></td></tr>
+      ${P.map((p, i) => `<tr><td style="width:110px"><input value="${h(p.cat)}" oninput="Admin._P[${i}].cat=this.value"></td><td><input value="${h(p.name)}" oninput="Admin._P[${i}].name=this.value"></td><td style="width:110px"><input type="number" value="${h(p.price)}" oninput="Admin._P[${i}].price=+this.value"></td>
+        <td style="width:80px;text-align:center"><input type="checkbox" style="width:20px;height:20px;min-height:0" ${p.variable ? 'checked' : ''} onchange="Admin._P[${i}].variable=this.checked"></td><td style="width:70px;text-align:center"><input type="checkbox" style="width:20px;height:20px;min-height:0" ${p.active !== false ? 'checked' : ''} onchange="Admin._P[${i}].active=this.checked"></td>
+        <td style="width:96px;white-space:nowrap"><button class="x" onclick="Admin.mvP(${i},-1)">↑</button><button class="x" onclick="Admin.mvP(${i},1)">↓</button></td></tr>`).join('')}</table></div>
+      <div class="row wrapf" style="margin-top:8px"><button class="btn sm" onclick="Admin._P.push({id:'',cat:'その他',name:'',price:0,variable:false,active:true});Admin.render()">＋ 商品を追加</button><span class="grow"></span><button class="btn pri" onclick="Admin.saveProducts()">商品を保存</button></div>
+      <p class="hint">販売をやめる商品は「販売中」のチェックを外してください（過去の注文のために残ります）。</p></div>
+      <div class="card"><h3>販売者・お支払い・メール</h3>
+      <div class="g2"><div>${sf('taxRate', '消費税率（%）')}</div><div>${sf('shippingFee', '送料（税抜・1注文あたり、無料は0）')}</div></div>
+      ${sf('sellerName', '販売者名（領収書・メールに表示）')}${sf('sellerAddress', '販売者の住所（領収書に表示）')}
+      <div class="g2"><div>${sf('sellerTel', '電話番号')}</div><div>${sf('sellerEmail', 'メールアドレス')}</div></div>
+      ${sf('bankInfo', '振込先（完了画面とメールに表示）', '例）〇〇銀行 〇〇支店 普通 1234567 ナチュールコウベ', true)}
+      ${sf('deliveryNote', '発送の目安（注文画面・メールに表示）')}
+      ${sf('shopName', '精肉店名（発注文の宛名）')}
+      ${sf('mailSignature', 'メールの署名（空欄なら販売者名・住所・電話で作成）', '', true)}
+      <p><button class="btn pri" onclick="Admin.saveSettings()">設定を保存</button></p></div>
+      <div class="card"><h3>ログイン</h3><button class="btn" onclick="Admin.logout()">この端末からログアウト</button></div>`;
+  },
+  mvP(i, d) { const P = this._P, j = i + d; if (j < 0 || j >= P.length) return; [P[i], P[j]] = [P[j], P[i]]; this.render(); },
+  async saveProducts() {
+    try { const r = await api('saveProducts', { pass: this.pass(), products: this._P.filter(p => p.name.trim()) }); this.A.products = r.products; this._P = clone(r.products); toast('商品を保存しました'); this.render(); }
+    catch (e) { toast(e.message, true); }
+  },
+  async saveSettings() {
+    try { const r = await api('saveSettings', { pass: this.pass(), settings: this.A.settings }); this.A.settings = r.settings; toast('設定を保存しました'); }
+    catch (e) { toast(e.message, true); }
+  }
+};
+
+/* ===================================================================
+   精肉店の発送画面
+   =================================================================== */
+const Shop = {
+  D: null,
+  pass() { return ls.get('nk-shop-pass') || ''; },
+  async init() {
+    if (!this.pass()) return this.login();
+    $('#app').innerHTML = brandBar('発送管理') + '<div class="loading">読み込み中…</div>';
+    try {
+      const r = await api('shop', { pass: this.pass() });
+      this.D = Object.assign(this.D || { f: '未発送', ev: 'all' }, { orders: r.orders, events: r.events, settings: r.settings || {} });
+      this.render();
+    } catch (e) { ls.del('nk-shop-pass'); this.login(e.message); }
+  },
+  login(err) {
+    $('#app').innerHTML = brandBar('発送管理') + `<div class="wrap" style="max-width:420px"><div class="card"><h3>精肉店用ログイン</h3>
+      ${err ? `<div class="errbox">${h(err)}</div>` : ''}<label class="f">パスワード</label><input class="in" id="pw" type="password" onkeydown="if(event.key==='Enter')Shop.doLogin()">
+      <p><button class="btn pri block" onclick="Shop.doLogin()">ログイン</button></p>${DEMO ? '<p class="hint">デモのパスワード：demo-shop（先に管理画面で「発注済」にした注文が表示されます）</p>' : ''}</div></div>`;
+  },
+  doLogin() { ls.set('nk-shop-pass', $('#pw').value.trim()); this.init(); },
+  render() {
+    const D = this.D;
+    const inEv = D.orders.filter(o => D.ev === 'all' || o.eventId === D.ev);
+    const pending = inEv.filter(o => o.status === '発注済');
+    const list = inEv.filter(o => D.f === 'すべて' || (D.f === '未発送' ? o.status === '発注済' : o.status === '発送済')).sort((a, b) => a.id < b.id ? -1 : 1);
+    const evName = id => (D.events.find(e => e.id === id) || {}).name || '';
+    $('#app').innerHTML = brandBar('発送管理' + (D.settings.shopName ? '（' + D.settings.shopName + '）' : ''), `<button class="btn sm" onclick="Shop.init()">更新</button>`) + `
+    <div class="wrap wide">
+      <div class="filters"><select onchange="Shop.D.ev=this.value;Shop.render()"><option value="all">すべてのイベント</option>${D.events.map(e => `<option value="${h(e.id)}" ${D.ev === e.id ? 'selected' : ''}>${h(e.date)} ${h(e.name)}</option>`).join('')}</select></div>
+      <div class="chips" style="margin-top:8px">${['未発送', '発送済', 'すべて'].map(f => `<button class="${D.f === f ? 'on' : ''}" onclick="Shop.D.f='${f}';Shop.render()">${f} ${f === '未発送' ? pending.length : f === '発送済' ? inEv.length - pending.length : inEv.length}</button>`).join('')}</div>
+      ${pending.length ? `<details class="card" ${D.f === '未発送' ? 'open' : ''}><summary class="b" style="cursor:pointer">未発送の合計（${pending.length}件）</summary>${aggTable(pending)}</details>` : ''}
+      <p class="sm mut">発送したら「発送日」と「伝票番号」を入れて保存してください。お客様への連絡はこちらで行います。</p>
+      ${list.length ? list.map(o => this.card(o, evName(o.eventId))).join('') : '<p class="mut">該当する注文はありません</p>'}
+    </div>`;
+  },
+  card(o, evn) {
+    return `<div class="card" id="sc-${o.id}"><div class="row wrapf"><b style="font-size:17px">${h(shipName(o))} 様</b><span class="store ${o.storage || 'none'}">${h(o.storage || '保存状態 未定')}</span><span class="chip c-${o.status}">${o.status === '発注済' ? '未発送' : '発送済'}</span></div>
+      <div class="xs mut">${h(o.id)}　${h(evn)}${o.shipTo && o.shipTo.on ? `　（ご注文者：${h(o.name)} 様）` : ''}</div>
+      <div style="margin:8px 0" class="sm">${h(shipAddr(o))}<br>TEL ${h(shipTel(o) || '（なし）')}</div>
+      <table class="agg">${o.items.map(i => `<tr><td>${h(i.name)}${i.note ? `<div class="xs mut">${h(i.note)}</div>` : ''}</td><td class="n">${gl(i.g)} × ${i.count}</td></tr>`).join('')}${(o.extras || []).map(x => `<tr><td colspan="2">${h(x.name)}</td></tr>`).join('')}</table>
+      ${o.note ? `<div class="warnbox">備考：${h(o.note)}</div>` : ''}
+      <div class="g2" style="margin-top:6px"><div><label class="f">発送日</label><input class="in" type="date" id="sd-${o.id}" value="${h(o.shipDate)}"></div>
+      <div><label class="f">配送業者</label><select class="in" id="sca-${o.id}">${CARRIERS.map(c => `<option ${(o.carrier || 'ヤマト運輸') === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div></div>
+      <label class="f">伝票番号</label><input class="in" id="st-${o.id}" inputmode="numeric" value="${h(o.tracking)}" placeholder="例）1234-5678-9012">
+      <p><button class="btn ${o.status === '発送済' ? '' : 'pri'} block" onclick="Shop.save('${o.id}')">${o.status === '発送済' ? '修正して保存' : '発送済みにする'}</button></p></div>`;
+  },
+  async save(id) {
+    const shipDate = $('#sd-' + id).value, carrier = $('#sca-' + id).value, tracking = $('#st-' + id).value.trim();
+    if (!shipDate || !tracking) { toast('発送日と伝票番号を入力してください', true); return; }
+    try {
+      const r = await api('shopUpdate', { pass: this.pass(), id, shipDate, carrier, tracking });
+      const i = this.D.orders.findIndex(o => o.id === id); this.D.orders[i] = r.order;
+      toast('保存しました'); this.render();
+    } catch (e) { toast(e.message, true); }
+  }
+};
+
+route();
+</script>
+</body>
+</html>
