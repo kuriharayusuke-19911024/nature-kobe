@@ -670,7 +670,7 @@ const Admin = {
       </div>
     </div>
     <div class="ft"><button class="btn pri" style="flex:1" id="savebtn" onclick="Admin.saveE()">保存</button>
-      ${E.id ? `<button class="btn" onclick="Admin.mail('confirm')">確認メール</button><button class="btn" onclick="Admin.mail('ship')">発送メール</button><button class="btn" onclick="Admin.receipt()">領収書PDF</button>` : ''}</div>`);
+      ${E.id ? `<button class="btn" onclick="Admin.mail('confirm')">確認メール</button><button class="btn" onclick="Admin.mail('ship')">発送メール</button><button class="btn" onclick="Admin.receipt()">領収書PDF</button><button class="btn danger" onclick="Admin.askDelOrder()">削除</button>` : ''}</div>`);
   },
   totHtml(t) {
     return `<tr><td>小計（税抜）</td><td class="right num">${yen(t.subtotal)}</td></tr>${t.shipping ? `<tr><td>送料</td><td class="right num">${yen(t.shipping)}</td></tr>` : ''}<tr><td>消費税（${t.taxRate}%）</td><td class="right num">${yen(t.tax)}</td></tr><tr class="g t"><td>合計（税込）</td><td class="right num">${yen(t.total)}</td></tr>`;
@@ -827,23 +827,48 @@ const Admin = {
     return `<div class="card"><h3>新しいイベントを作る</h3><p class="sm mut">イベントごとに注文用のURLとQRコードができます。会場でQRを見せて、お客さんのスマホから注文してもらえます。</p>
       <div class="g2"><div><label class="f">イベント名</label><input class="in" id="nev-name" placeholder="例）〇〇ワインショップ試食会"></div><div><label class="f">日付</label><input class="in" id="nev-date" type="date" value="${today()}"></div></div>
       <label class="f">会場</label><input class="in" id="nev-venue" placeholder="例）農と発酵zen">
-      <p><button class="btn pri" onclick="Admin.addEvent()">作成する（受付開始）</button></p></div>
+      <p><button class="btn pri" id="nev-btn" onclick="Admin.addEvent()">作成する（受付開始）</button></p></div>
       ${A.events.map(e => {
         const url = baseUrl() + '?e=' + encodeURIComponent(e.id); const n = A.orders.filter(o => o.eventId === e.id && o.status !== 'キャンセル');
         return `<div class="card"><div class="row"><div class="grow"><b>${h(e.name)}</b><div class="sm mut">${h(jdate(e.date))}　${h(e.venue)}　注文 ${n.length}件 ${yen(n.reduce((a, o) => a + o.total, 0))}</div></div>
           <span class="chip ${e.open ? 'c-paid' : 'c-gray'}">${e.open ? '受付中' : '受付終了'}</span></div>
           <div class="urlbox">${h(url)}</div>
           <div class="row wrapf"><button class="btn sm" onclick="copy('${h(url)}','URLを')">URLをコピー</button><button class="btn sm" onclick="Admin.qr('${h(e.id)}')">QRコード</button><a class="btn sm" href="${h(url)}" target="_blank" rel="noopener">注文画面を開く</a>
-          <button class="btn sm" onclick="Admin.toggleEvent('${h(e.id)}')">${e.open ? '受付を締め切る' : '受付を再開する'}</button><button class="btn sm ghost" onclick="Admin.editEvent('${h(e.id)}')">名前・日付を変更</button></div></div>`;
+          <button class="btn sm" onclick="Admin.toggleEvent('${h(e.id)}')">${e.open ? '受付を締め切る' : '受付を再開する'}</button><button class="btn sm ghost" onclick="Admin.editEvent('${h(e.id)}')">名前・日付を変更</button><button class="btn sm danger" onclick="Admin.askDelEvent('${h(e.id)}')">削除</button></div></div>`;
       }).join('')}`;
   },
   async saveEvent(ev) {
     try { const r = await api('saveEvent', { pass: this.pass(), event: ev }); this.A.events = r.events; toast('保存しました'); this.render(); }
     catch (e) { toast(e.message, true); }
   },
-  addEvent() {
+  async addEvent() {
     const name = $('#nev-name').value.trim(); if (!name) { toast('イベント名を入力してください', true); return; }
-    this.saveEvent({ name, date: $('#nev-date').value, venue: $('#nev-venue').value.trim(), open: true });
+    if (this._adding) return; this._adding = true;
+    const b = $('#nev-btn'); if (b) { b.disabled = true; b.textContent = '作成中…'; }
+    try { await this.saveEvent({ name, date: $('#nev-date').value, venue: $('#nev-venue').value.trim(), open: true }); } finally { this._adding = false; }
+  },
+  confirmBox(title, msg, okLabel, onOk) {
+    this._onOk = onOk;
+    openSheet(`<div class="hd"><button class="x" onclick="closeSheet()">✕</button><div class="t">${h(title)}</div></div><div class="bd"><div class="card"><p style="margin:0;white-space:pre-wrap">${h(msg)}</p><p class="hint">削除すると元に戻せません。</p></div></div>
+      <div class="ft"><button class="btn danger" style="flex:1" id="okbtn" onclick="Admin._doOk()">${h(okLabel)}</button><button class="btn" onclick="closeSheet()">やめる</button></div>`);
+  },
+  async _doOk() { const b = $('#okbtn'); if (b) { b.disabled = true; b.textContent = '削除中…'; } try { await this._onOk(); } catch (e) { toast(e.message, true); if (b) { b.disabled = false; b.textContent = '削除する'; } } },
+  askDelEvent(id) {
+    const e = this.A.events.find(x => x.id === id), n = this.A.orders.filter(o => o.eventId === id).length;
+    this.confirmBox('イベントを削除', `「${e.name}」（${e.date}）を削除します。` + (n ? `\nこのイベントの注文 ${n}件 も一緒に削除されます。` : '\nこのイベントに注文はありません。'), '削除する', async () => {
+      const r = await api('deleteEvent', { pass: this.pass(), id });
+      this.A.events = r.events; this.A.orders = r.orders;
+      if (this.A.ev === id) this.A.ev = 'all'; if (this.A.hEv === id) this.A.hEv = null;
+      closeSheet(); toast('削除しました'); this.render();
+    });
+  },
+  askDelOrder() {
+    const E = this.E;
+    this.confirmBox('注文を削除', `${E.id}　${E.name} 様（${yen(this.calcE().total)}）の注文を削除します。\n取り消しの場合は「キャンセル」にする方法もあります（記録が残ります）。`, '削除する', async () => {
+      await api('deleteOrder', { pass: this.pass(), id: E.id });
+      this.A.orders = this.A.orders.filter(o => o.id !== E.id);
+      closeSheet(); toast('削除しました'); this.render();
+    });
   },
   toggleEvent(id) { const e = clone(this.A.events.find(x => x.id === id)); e.open = !e.open; this.saveEvent(e); },
   editEvent(id) {
