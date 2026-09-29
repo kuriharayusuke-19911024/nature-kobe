@@ -1,0 +1,658 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>うすなが牧場 月次報告</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Shippori+Mincho+B1:wght@600;800&display=swap">
+<style>
+/* Layout: sticky header with month switcher + scrollable tab row; each tab is a single column of sections, tables scroll inside their own box. */
+:root{
+  --bg:#eef2ee; --surface:#ffffff; --surface-2:#f6f8f5; --ink:#1b2621; --muted:#5a6a62; --line:#d6ded8;
+  --accent:#1f5c46; --accent-ink:#ffffff; --straw:#b8862a; --straw-bg:#fbf3df;
+  --good:#2c7a4b; --good-bg:#e3f2e8; --warn:#9a6a12; --warn-bg:#fbefd6; --bad:#b0412e; --bad-bg:#f9e4df; --none:#6b7770; --none-bg:#eceeec;
+  --shadow:0 1px 2px rgba(20,40,30,.06),0 4px 16px rgba(20,40,30,.06);
+  --f-body:"BIZ UDPGothic","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,system-ui,sans-serif;
+  --f-disp:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111814; --surface:#18211c; --surface-2:#1d2822; --ink:#e4ebe6; --muted:#9aaba1; --line:#2b3831;
+  --accent:#6cc39a; --accent-ink:#0f1b15; --straw:#e0b659; --straw-bg:#2d2715;
+  --good:#71d19b; --good-bg:#1a3326; --warn:#e8bb5c; --warn-bg:#342a14; --bad:#f08a76; --bad-bg:#3a1f1a; --none:#9aa59f; --none-bg:#242d28;
+  --shadow:0 1px 2px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111814; --surface:#18211c; --surface-2:#1d2822; --ink:#e4ebe6; --muted:#9aaba1; --line:#2b3831;
+  --accent:#6cc39a; --accent-ink:#0f1b15; --straw:#e0b659; --straw-bg:#2d2715;
+  --good:#71d19b; --good-bg:#1a3326; --warn:#e8bb5c; --warn-bg:#342a14; --bad:#f08a76; --bad-bg:#3a1f1a; --none:#9aa59f; --none-bg:#242d28;
+  --shadow:0 1px 2px rgba(0,0,0,.3); color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6;font-variant-numeric:tabular-nums}
+button,input,select,textarea{font:inherit;color:inherit}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
+.top-in{max-width:1100px;margin:0 auto;padding:10px 16px 0;display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px}
+.brand{display:flex;flex-direction:column;line-height:1.2;margin-right:auto}
+.brand small{color:var(--muted);font-size:12px;letter-spacing:.08em}
+.brand b{font-family:var(--f-disp);font-size:20px;font-weight:800;letter-spacing:.04em}
+.month{display:flex;align-items:center;gap:4px}
+.month button{width:36px;height:36px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);cursor:pointer}
+.month input{height:36px;border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:0 8px}
+.tabs{max-width:1100px;margin:0 auto;display:flex;gap:2px;overflow-x:auto;padding:6px 12px 0;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:none;border:0;background:none;padding:8px 12px 10px;cursor:pointer;color:var(--muted);border-bottom:3px solid transparent;font-weight:700;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tabs button:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+main{max-width:1100px;margin:0 auto;padding:16px 16px 80px;display:flex;flex-direction:column;gap:18px}
+.banner{background:var(--straw-bg);border:1px solid var(--straw);color:var(--ink);border-radius:10px;padding:10px 14px;font-size:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.banner b{color:var(--straw)}
+h1.pg{font-family:var(--f-disp);font-size:26px;font-weight:800;margin:0;text-wrap:balance}
+h2{font-size:17px;margin:0;text-wrap:balance}
+.sec{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.sec-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sec-h h2{margin-right:auto}
+.sub{color:var(--muted);font-size:13px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat{background:var(--surface-2);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.stat .l{font-size:12px;color:var(--muted);letter-spacing:.04em}
+.stat .v{font-size:22px;font-weight:700}
+.stat .v small{font-size:13px;font-weight:400;color:var(--muted);margin-left:2px}
+.stat .t{font-size:12px;color:var(--muted)}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 12px;cursor:pointer;font-weight:700;font-size:14px;white-space:nowrap}
+.btn:hover{background:var(--surface-2)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.ai{background:var(--straw-bg);border-color:var(--straw);color:var(--ink)}
+.btn.dng{color:var(--bad);border-color:var(--bad)}
+.btn.sm{padding:3px 9px;font-size:13px}
+.btn:disabled{opacity:.5;cursor:default}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:7px 10px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+th{background:var(--surface-2);font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.04em}
+tr:last-child td{border-bottom:0}
+td.n,th.n{text-align:right}
+td.wrap{white-space:normal;min-width:140px}
+.pill{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:1px 10px;font-size:12px;font-weight:700;white-space:nowrap}
+.p-good{background:var(--good-bg);color:var(--good)} .p-warn{background:var(--warn-bg);color:var(--warn)} .p-bad{background:var(--bad-bg);color:var(--bad)} .p-none{background:var(--none-bg);color:var(--none)}
+.kgroup{display:flex;flex-direction:column;gap:0}
+.kpi{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) minmax(0,1.2fr) auto;gap:8px;align-items:center;padding:8px 2px;border-bottom:1px dashed var(--line)}
+.kpi:last-child{border-bottom:0}
+.kpi .nm{font-size:14px}
+.kpi .val{font-weight:700;text-align:right;font-size:16px}
+.kpi .tg{color:var(--muted);font-size:12px;text-align:right}
+.kg-h{font-size:12px;font-weight:700;color:var(--accent);letter-spacing:.1em;margin-top:8px;padding-bottom:4px;border-bottom:2px solid var(--line)}
+.checks{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.checks li{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-radius:8px;background:var(--surface-2);font-size:14px}
+.dot{flex:none;width:10px;height:10px;border-radius:50%;margin-top:6px}
+.d-good{background:var(--good)} .d-warn{background:var(--warn)} .d-bad{background:var(--bad)}
+.ai-out{white-space:pre-wrap;background:var(--surface-2);border-radius:10px;padding:12px;font-size:14px;min-height:48px}
+.empty{color:var(--muted);font-size:14px;padding:14px;text-align:center;background:var(--surface-2);border-radius:10px}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px}
+.two>*{min-width:0}
+.farm{border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.farm h3{margin:0;font-size:15px}
+.status-badge{font-size:13px}
+/* modal */
+.modal{position:fixed;inset:0;z-index:50;background:rgba(10,20,15,.45);display:flex;align-items:flex-end;justify-content:center;padding:env(safe-area-inset-top,0px) 0 0}
+@media (min-width:700px){.modal{align-items:center;padding:24px}}
+.sheet{background:var(--surface);width:100%;max-width:640px;max-height:92vh;overflow:auto;border-radius:14px 14px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:12px}
+@media (min-width:700px){.sheet{border-radius:14px}}
+.sheet h2{font-size:18px}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.fld{display:flex;flex-direction:column;gap:3px;min-width:0}
+.fld label{font-size:12px;color:var(--muted);font-weight:700}
+.fld input,.fld select,.fld textarea{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface);width:100%}
+.fld.full{grid-column:1/-1}
+.sheet-f{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;position:sticky;bottom:calc(-18px - env(safe-area-inset-bottom,0px));background:var(--surface);padding-block:10px}
+.sheet-f .dl{margin-right:auto}
+.cert{border:2px solid var(--ink);padding:18px;border-radius:4px;display:flex;flex-direction:column;gap:10px;background:var(--surface)}
+.cert h3{font-family:var(--f-disp);text-align:center;font-size:20px;margin:0;letter-spacing:.3em}
+.cert dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0}
+.cert dt{color:var(--muted);font-size:13px}
+.cert dd{margin:0;font-weight:700}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;z-index:60;max-width:calc(100% - 32px)}
+.muted{color:var(--muted)}
+.bar{height:8px;border-radius:4px;background:var(--none-bg);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent)}
+@media (max-width:520px){.kpi{grid-template-columns:minmax(0,1fr) auto;}.kpi .tg{grid-column:1;text-align:left}.kpi .val{grid-row:1;grid-column:2}.kpi .nm{grid-row:1;grid-column:1}.kpi>span:last-child{grid-column:2;justify-self:end}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style></head><body style="margin:0">
+
+<header class="top">
+  <div class="top-in">
+    <div class="brand"><small>神戸うすなが牧場</small><b>月次報告</b></div>
+    <div class="month">
+      <button id="mPrev" aria-label="前の月">‹</button>
+      <input type="month" id="mPick" aria-label="対象の月">
+      <button id="mNext" aria-label="次の月">›</button>
+    </div>
+  </div>
+  <nav class="tabs" role="tablist" id="tabs">
+    <button data-tab="report">月次報告</button>
+    <button data-tab="breed">繁殖・分娩</button>
+    <button data-tab="semen">精液</button>
+    <button data-tab="grow">育成</button>
+    <button data-tab="carcass">枝肉</button>
+    <button data-tab="stock">在庫・発注</button>
+    <button data-tab="invoice">請求書</button>
+    <button data-tab="goals">目標・設定</button>
+  </nav>
+</header>
+<main id="view"><div class="empty">データを読み込んでいます…</div></main>
+<div class="modal" id="modal" hidden><div class="sheet" id="sheet"></div></div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function(){
+const D={"ai": {"a074": {"date": "2026-09-01", "cowId": "1418983584", "method": "AI", "tech": "授精師B", "semenId": "s4", "result": "未判定", "sample": true}, "a034": {"date": "2026-04-19", "cowId": "1370530508", "method": "AI", "tech": "授精師B", "semenId": "s1", "result": "受胎", "sample": true}, "a075": {"date": "2026-09-17", "cowId": "1437482299", "method": "ET凍結", "tech": "授精師A", "embryo": "自家産 凍結胚", "result": "未判定", "sample": true}, "a003": {"date": "2025-07-02", "cowId": "1436213743", "method": "AI", "tech": "授精師A", "result": "受胎", "semenId": "s1", "sample": true}, "a002": {"date": "2025-07-27", "cowId": "1443849730", "method": "AI", "tech": "授精師B", "result": "受胎", "semenId": "s3", "sample": true}, "a021": {"date": "2025-12-23", "cowId": "1394000295", "method": "ET凍結", "tech": "授精師B", "result": "受胎", "embryo": "自家産 凍結胚", "sample": true}, "a026": {"date": "2026-01-10", "cowId": "1492368309", "method": "AI", "tech": "授精師B", "result": "受胎", "semenId": "s1", "sample": true}, "a029": {"date": "2026-04-08", "cowId": "1404944761", "method": "ET新鮮", "tech": "授精師B", "embryo": "自家産 新鮮胚", "result": "受胎", "sample": true}, "a072": {"date": "2026-09-18", "cowId": "1366704687", "method": "AI", "tech": "授精師A", "semenId": "s2", "result": "未判定", "sample": true}, "a006": {"date": "2025-08-21", "cowId": "1468425323", "method": "ET凍結", "tech": "授精師A", "result": "受胎", "embryo": "自家産 凍結胚", "sample": true}, "a049": {"date": "2026-06-06", "cowId": "1359805474", "method": "AI", "tech": "授精師B", "semenId": "s5", "result": "受胎", "sample": true}, "a031": {"date": "2026-04-27", "cowId": "1447698437", "method": "ET新鮮", "tech": "授精師B", "embryo": "自家産 新鮮胚", "result": "不受胎", "sample": true}, "a014": {"date": "2025-10-25", "cowId": "1384328238", "method": "AI", "tech": "授精師B", "result": "受胎", "semenId": "s2", "sample": true}, "a011": {"date": "2025-09-19", "cowId": "1471507028", "method": "AI", "tech": "授精師B", "result": "受胎", "semenId": "s1", "sample": true}, "a050": {"date": "2026-06-26", "cowId": "1364260138", "method": "AI", "tech": "授精師B", "semenId": "s5", "result": "不受胎", "sample": true}, "a018": {"date": "2025-11-03", "cowId": "1331693041", "method": "ET凍結", "tech": "授精師B", "result": "受胎", "embryo": "自家産 凍結胚", "sample": true}, "a042": {"date": "2026-05-20", "cowId": "1339876217", "method": "ET新鮮", "tech": "授精師B", "embryo": "自家産 新鮮胚", "result": "不受胎", "sample": true}, "a067": {"date": "2026-08-27", "cowId": "1335101495", "method": "ET凍結", "tech": "授精師A", "embryo": "自家産 凍結胚", "result": "未判定", "sample": true}, "a064": {"date": "2026-08-08", "cowId": "1387507088", "method": "ET凍結", "tech": "授精師B", "embryo": "自家産 凍結胚", "result": "受胎", "sample": true}, "a044": {"date": "2026-05-15", "cowId": "1429878376", "method": "ET新鮮", "tech": "授精師B", "embryo": "自家産 新鮮胚", "result": "受胎", "sample": true}, "a037": {"date": "2026-05-25", "cowId": "1405328410", "method": "ET凍結", "tech": "授精師B", "embryo": "自家産 凍結胚", "result": "受胎", "sample": true}, "a045": {"date": "2026-06-04", "cowId": "1498736518", "method": "AI", "tech": "授精師B", "semenId": "s3", "result": "不受胎", "sample": true}, "a062": {"date": "2026-08-26", "cowId": "1441353023", "method": "AI", "tech": "授精師A", "semenId": "s3", "result": "未判定", "sample": true}, "a032": {"date": "2026-04-12", "cowId": "1361941887", "method": "ET新鮮", "tech": "授精師A", "embryo": "自家産 新鮮胚", "result": "受胎", "sample": true}, "a027": {"date": "2026-01-15", "cowId": "1395419170", "method": "AI", "tech": "授精師A", "result": "受胎", "semenId": "s2", "sample": true}, "a007": {"date": "2025-08-19", "cowId": "1457180079", "method": "AI", "tech": "授精師A", "result": "受胎", "semenId": "s1", "sample": true}, "a052": {"date": "2026-06-01", "cowId": "1426765976", "method": "AI", "tech": "授精師B", "semenId": "s1", "result": "不受胎", "sample": true}, "a004": {"date": "2025-07-14", "cowId": "1412252233", "method": "AI", "tech": "授精師A", "result": "受胎", "semenId": "s1", "sample": true}, "a015": {"date": "2025-10-10", "cowId": "1366686503", "method": "AI", "tech": "授精師A", "result": "受胎", "semenId": "s1", "sample": true}, "a061": {"date": "2026-08-05", "cowId": "1447179285", "method": "ET凍結", "tech": "授精師A", "embryo": "自家産 凍結胚", "result": "受胎", "sample": true}, "a025": {"date": "2026-01-21", "cowId": "1455141259", "method": "ET凍結", "tech": "授精師B", "result": "受胎", "embryo": "自家産 凍結胚", "sample": true}, "a046": {"date": "2026-06-06", "cowId": "1306199711", "method": "ET凍結", "tech": "授精師A", "embryo": "自家産 凍結胚", "result": "不受胎", "sample": true}, "a048": {"date": "2026-06-21", "cowId": "1486883900", "method": "AI", "tech": "授精師B", "semenId": "s4", "result": "受胎", "sample": true}, "a066": {"date": "2026-08-22", "cowId": "1438716931", "method": "ET凍結", "tech": "授精師B", "embryo": "自家産 凍結胚", "result": "未判定", "sample": true}, "a019": {"date": "2025-11-06", "cowId": "1391819906", "method": "AI", "tech": "授精師B", "result": "受胎", "semenId": "s2", "sample": true}, "a036": {"date": "2026-04-17", "cowId": "1475816220", "method": "ET凍結", "tech": "授精師A", "embryo": "自家産 凍結胚", "result": "受胎", "sample": true}, "a017": {"date": "2025-11-11", "cowId": "1495808978", "method": "AI", "tech": "授精師B", "result": "受胎", "semenId": "s3", "sample": true}, "a043": {"date": "2026-05-20", "cowId": "1427279065", "method": "AI", "tech": "授精師A", "semenId": "s1", "result": "不受胎", "sample": true}, "a024": {"date": "2025-12-02", "cowId": "1496269088", "method": "ET凍結", "tech": "授精師B", "result": "受胎", "embryo": "自家産 凍結胚", "sample": true}, "a012": {"date": "2025-09-18", "cowId": "1491155778", "method": "AI", "tech": "授精師A", "result": "受胎", "semenId": "s3", "sample": true}, "a001": {"date": "2025-07-11", "cowId": "1340493267", "method": "AI", "tech": "授精師A", "result": "受胎", "semenId": "s1", "sample": true}, "a033": {"date": "2026-04-05", "cowId": "1476769224", "method": "AI", "tech": "授精師A", "semenId": "s1", "result": "受胎", "sample": true}, "a020": {"date": "2025-11-02", "cowId": "1479372829", "method": "AI", "tech": "授精師B", "result": "受胎", "semenId": "s2", "sample": true}, "a030": {"date": "2026-04-15", "cowId": "1447489153", "method": "ET新鮮", "tech": "授精師B", "embryo": "自家産 新鮮胚", "result": "不受胎", "sample": true}, "a058": {"date": "2026-07-11", "cowId": "1493763351", "method": "AI", "tech": "授精師B", "semenId": "s3", "result": "受胎", "sample": true}, "a055": {"date": "2026-07-11", "cowId": "1429561259", "method": "AI", "tech": "授精師A", "semenId": "s3", "result": "不受胎", "sample": true}, "a053": {"date": "2026-07-12", "cowId": "1494113182", "method": "ET新鮮", "tech": "授精師B", "embryo": "自家産 新鮮胚", "result": "不受胎", "sample": true}, "a059": {"date": "2026-07-03", "cowId": "1345635009", "method": "AI", "tech": "授精師A", "semenId": "s1", "result": "受胎", "sample": true}, "a009": {"date": "2025-09-05", "cowId": "1445139262", "method": "AI", "tech": "授精師B", "result": "受胎", "semenId": "s3", "sample": true}, "a070": {"date": "2026-09-16", "cowId": "1494667586", "method": "ET凍結", "tech": "授精師A", "embryo": "自家産 凍結胚", "result": "未判定", "sample": true}, "a035": {"date": "2026-04-18", "cowId": "1463695279", "method": "AI", "tech": "授精師B", "semenId": "s1", "result": "不受胎", "sample": true}, "a028": {"date": "2026-01-02", "cowId": "1358574703", "method": "AI", "tech": "授精師A", "result": "受胎", "semenId": "s3", "sample": true}, "a071": {"date": "2026-09-18", "cowId": "1387505166", "method": "AI", "tech": "授精師B", "semenId": "s1", "result": "未判定", "sample": true}, "a040": {"date": "2026-05-02", "cowId": "1300062620", "method": "AI", "tech": "授精師A", "semenId": "s4", "result": "受胎", "sample": true}, "a005": {"date": "2025-08-18", "cowId": "1413956002", "method": "AI", "tech": "授精師A", "result": "受胎", "semenId": "s1", "sample": true}, "a039": {"date": "2026-05-03", "cowId": "1418279875", "method": "AI", "tech": "授精師A", "semenId": "s1", "result": "受胎", "sample": true}, "a068": {"date": "2026-08-17", "cowId": "1305021048", "method": "ET凍結", "tech": "授精師B", "embryo": "自家産 凍結胚", "result": "不受胎", "sample": true}, "a047": {"date": "2026-06-17", "cowId": "1339353318", "method": "AI", "tech": "授精師A", "semenId": "s4", "result": "受胎", "sample": true}, "a056": {"date": "2026-07-12", "cowId": "1477324611", "method": "AI", "tech": "授精師A", "semenId": "s3", "result": "不受胎", "sample": true}, "a057": {"date": "2026-07-25", "cowId": "1428320937", "method": "AI", "tech": "授精師A", "semenId": "s3", "result": "不受胎", "sample": true}, "a054": {"date": "2026-07-12", "cowId": "1359179904", "method": "AI", "tech": "授精師A", "semenId": "s1", "result": "受胎", "sample": true}, "a023": {"date": "2025-12-16", "cowId": "1487110804", "method": "ET凍結", "tech": "授精師A", "result": "受胎", "embryo": "自家産 凍結胚", "sample": true}, "a013": {"date": "2025-10-07", "cowId": "1433255250", "method": "ET凍結", "tech": "授精師B", "result": "受胎", "embryo": "自家産 凍結胚", "sample": true}, "a069": {"date": "2026-09-20", "cowId": "1340212298", "method": "AI", "tech": "授精師A", "semenId": "s1", "result": "未判定", "sample": true}, "a065": {"date": "2026-08-27", "cowId": "1316348932", "method": "AI", "tech": "授精師B", "semenId": "s3", "result": "未判定", "sample": true}, "a038": {"date": "2026-05-04", "cowId": "1470265808", "method": "ET新鮮", "tech": "授精師B", "embryo": "自家産 新鮮胚", "result": "受胎", "sample": true}, "a076": {"date": "2026-09-23", "cowId": "1421425648", "method": "AI", "tech": "授精師B", "semenId": "s4", "result": "未判定", "sample": true}, "a008": {"date": "2025-08-02", "cowId": "1449428595", "method": "AI", "tech": "授精師B", "result": "受胎", "semenId": "s2", "sample": true}, "a016": {"date": "2025-10-19", "cowId": "1380597509", "method": "ET凍結", "tech": "授精師B", "result": "受胎", "embryo": "自家産 凍結胚", "sample": true}, "a063": {"date": "2026-08-07", "cowId": "1307514509", "method": "AI", "tech": "授精師B", "semenId": "s1", "result": "受胎", "sample": true}, "a041": {"date": "2026-05-12", "cowId": "1306845343", "method": "ET凍結", "tech": "授精師A", "embryo": "自家産 凍結胚", "result": "不受胎", "sample": true}, "a010": {"date": "2025-09-27", "cowId": "1483073705", "method": "AI", "tech": "授精師A", "result": "受胎", "semenId": "s3", "sample": true}, "a022": {"date": "2025-12-19", "cowId": "1422461686", "method": "AI", "tech": "授精師A", "result": "受胎", "semenId": "s2", "sample": true}, "a060": {"date": "2026-07-15", "cowId": "1464167966", "method": "AI", "tech": "授精師B", "semenId": "s5", "result": "不受胎", "sample": true}, "a051": {"date": "2026-06-07", "cowId": "1432280118", "method": "ET凍結", "tech": "授精師B", "embryo": "自家産 凍結胚", "result": "不受胎", "sample": true}, "a073": {"date": "2026-09-02", "cowId": "1436288437", "method": "AI", "tech": "授精師B", "semenId": "s4", "result": "未判定", "sample": true}}, "cattle": {"g011": {"earTag": "1520796182", "farm": "平野", "birthDate": "2025-12-25", "introDate": "2026-03-16", "introWeight": 110, "status": "出荷", "shipDate": "2026-09-22", "shipWeight": 299, "note": "", "sample": true}, "g033": {"earTag": "1579932527", "farm": "淡路", "birthDate": "2025-12-26", "introDate": "2026-03-21", "introWeight": 107, "status": "出荷", "shipDate": "2026-09-18", "shipWeight": 266, "note": "", "sample": true}, "g006": {"earTag": "1570811367", "farm": "平野", "birthDate": "2025-10-02", "introDate": "2026-01-10", "introWeight": 108, "status": "出荷", "shipDate": "2026-06-21", "shipWeight": 259, "note": "", "sample": true}, "g017": {"earTag": "1623204043", "farm": "平野", "birthDate": "2026-03-29", "introDate": "2026-07-01", "introWeight": 97, "status": "飼養中", "note": "", "sample": true}, "g003": {"earTag": "1690907576", "farm": "平野", "birthDate": "2025-08-04", "introDate": "2025-10-23", "introWeight": 116, "status": "出荷", "shipDate": "2026-05-19", "shipWeight": 320, "note": "", "sample": true}, "g036": {"earTag": "1634380074", "farm": "淡路", "birthDate": "2026-02-01", "introDate": "2026-05-03", "introWeight": 118, "status": "飼養中", "note": "", "sample": true}, "g018": {"earTag": "1603843813", "farm": "平野", "birthDate": "2026-05-14", "introDate": "2026-08-15", "introWeight": 100, "status": "飼養中", "note": "", "sample": true}, "g027": {"earTag": "1575333111", "farm": "淡路", "birthDate": "2025-09-03", "introDate": "2025-12-05", "introWeight": 114, "status": "出荷", "shipDate": "2026-06-03", "shipWeight": 285, "note": "", "sample": true}, "g001": {"earTag": "1637702344", "farm": "平野", "birthDate": "2025-07-12", "introDate": "2025-10-04", "introWeight": 96, "status": "出荷", "shipDate": "2026-04-20", "shipWeight": 298, "note": "", "sample": true}, "g021": {"earTag": "1688800598", "farm": "平野", "birthDate": "2026-05-13", "introDate": "2026-08-09", "introWeight": 104, "status": "飼養中", "note": "", "sample": true}, "g023": {"earTag": "1592331098", "farm": "淡路", "birthDate": "2025-07-20", "introDate": "2025-10-20", "introWeight": 103, "status": "出荷", "shipDate": "2026-04-22", "shipWeight": 259, "note": "", "sample": true}, "g014": {"earTag": "1685807043", "farm": "平野", "birthDate": "2026-04-12", "introDate": "2026-07-09", "introWeight": 100, "status": "飼養中", "note": "", "sample": true}, "g039": {"earTag": "1649216314", "farm": "淡路", "birthDate": "2026-01-01", "introDate": "2026-04-06", "introWeight": 97, "status": "飼養中", "note": "", "sample": true}, "g032": {"earTag": "1513147136", "farm": "淡路", "birthDate": "2025-12-08", "introDate": "2026-03-02", "introWeight": 111, "status": "出荷", "shipDate": "2026-09-20", "shipWeight": 287, "note": "", "sample": true}, "g037": {"earTag": "1621597523", "farm": "淡路", "birthDate": "2026-04-17", "introDate": "2026-07-18", "introWeight": 118, "status": "飼養中", "note": "", "sample": true}, "g007": {"earTag": "1643666607", "farm": "平野", "birthDate": "2025-09-28", "introDate": "2025-12-19", "introWeight": 114, "status": "出荷", "shipDate": "2026-07-01", "shipWeight": 302, "note": "", "sample": true}, "g020": {"earTag": "1661964757", "farm": "平野", "birthDate": "2026-03-15", "introDate": "2026-06-12", "introWeight": 116, "status": "飼養中", "note": "", "sample": true}, "g030": {"earTag": "1648754307", "farm": "淡路", "birthDate": "2025-10-18", "introDate": "2026-01-26", "introWeight": 105, "status": "出荷", "shipDate": "2026-08-01", "shipWeight": 283, "note": "", "sample": true}, "g024": {"earTag": "1590804367", "farm": "淡路", "birthDate": "2025-08-14", "introDate": "2025-11-05", "introWeight": 116, "status": "出荷", "shipDate": "2026-05-13", "shipWeight": 273, "note": "", "sample": true}, "g026": {"earTag": "1658155904", "farm": "淡路", "birthDate": "2025-09-26", "introDate": "2025-12-23", "introWeight": 104, "status": "出荷", "shipDate": "2026-06-24", "shipWeight": 266, "note": "", "sample": true}, "g016": {"earTag": "1583664529", "farm": "平野", "birthDate": "2026-01-17", "introDate": "2026-04-18", "introWeight": 119, "status": "飼養中", "note": "", "sample": true}, "g041": {"earTag": "1602767261", "farm": "淡路", "birthDate": "2026-01-16", "introDate": "2026-04-24", "introWeight": 105, "status": "飼養中", "note": "", "sample": true}, "g031": {"earTag": "1621026922", "farm": "淡路", "birthDate": "2025-11-23", "introDate": "2026-02-13", "introWeight": 96, "status": "出荷", "shipDate": "2026-08-18", "shipWeight": 270, "note": "", "sample": true}, "g038": {"earTag": "1647044997", "farm": "淡路", "birthDate": "2026-04-16", "introDate": "2026-07-14", "introWeight": 100, "status": "飼養中", "note": "", "sample": true}, "g019": {"earTag": "1538048223", "farm": "平野", "birthDate": "2026-02-05", "introDate": "2026-05-03", "introWeight": 114, "status": "飼養中", "note": "", "sample": true}, "g010": {"earTag": "1628583311", "farm": "平野", "birthDate": "2025-11-15", "introDate": "2026-02-17", "introWeight": 107, "status": "出荷", "shipDate": "2026-08-24", "shipWeight": 286, "note": "", "sample": true}, "g004": {"earTag": "1535726932", "farm": "平野", "birthDate": "2025-08-03", "introDate": "2025-11-11", "introWeight": 101, "status": "出荷", "shipDate": "2026-05-22", "shipWeight": 273, "note": "", "sample": true}, "g040": {"earTag": "1652905599", "farm": "淡路", "birthDate": "2026-02-08", "introDate": "2026-05-12", "introWeight": 100, "status": "飼養中", "note": "", "sample": true}, "g042": {"earTag": "1572541956", "farm": "淡路", "birthDate": "2026-05-02", "introDate": "2026-08-07", "introWeight": 103, "status": "飼養中", "note": "", "sample": true}, "g029": {"earTag": "1614822631", "farm": "淡路", "birthDate": "2025-10-09", "introDate": "2026-01-07", "introWeight": 100, "status": "出荷", "shipDate": "2026-07-14", "shipWeight": 266, "note": "", "sample": true}, "g043": {"earTag": "1516658974", "farm": "淡路", "birthDate": "2026-03-02", "introDate": "2026-06-05", "introWeight": 102, "status": "死亡", "deathDate": "2026-08-17", "note": "肺炎（例）", "sample": true}, "g009": {"earTag": "1561937757", "farm": "平野", "birthDate": "2025-12-05", "introDate": "2026-03-03", "introWeight": 101, "status": "出荷", "shipDate": "2026-08-26", "shipWeight": 279, "note": "", "sample": true}, "g025": {"earTag": "1503146496", "farm": "淡路", "birthDate": "2025-08-26", "introDate": "2025-11-17", "introWeight": 118, "status": "出荷", "shipDate": "2026-05-27", "shipWeight": 282, "note": "", "sample": true}, "g044": {"earTag": "1633720021", "farm": "平野", "birthDate": "2026-04-10", "introDate": "2026-07-12", "introWeight": 108, "status": "死亡", "deathDate": "2026-09-08", "note": "下痢（例）", "sample": true}, "g035": {"earTag": "1532143138", "farm": "淡路", "birthDate": "2026-03-11", "introDate": "2026-06-16", "introWeight": 99, "status": "飼養中", "note": "", "sample": true}, "g013": {"earTag": "1503347178", "farm": "平野", "birthDate": "2026-05-22", "introDate": "2026-08-19", "introWeight": 107, "status": "飼養中", "note": "", "sample": true}, "g028": {"earTag": "1571330821", "farm": "淡路", "birthDate": "2025-10-14", "introDate": "2026-01-11", "introWeight": 111, "status": "出荷", "shipDate": "2026-07-04", "shipWeight": 259, "note": "", "sample": true}, "g022": {"earTag": "1631988668", "farm": "淡路", "birthDate": "2025-06-30", "introDate": "2025-10-03", "introWeight": 105, "status": "出荷", "shipDate": "2026-04-16", "shipWeight": 271, "note": "", "sample": true}, "g002": {"earTag": "1635391073", "farm": "平野", "birthDate": "2025-07-20", "introDate": "2025-10-24", "introWeight": 98, "status": "出荷", "shipDate": "2026-04-21", "shipWeight": 272, "note": "", "sample": true}, "g005": {"earTag": "1513631237", "farm": "平野", "birthDate": "2025-09-21", "introDate": "2025-12-13", "introWeight": 104, "status": "出荷", "shipDate": "2026-06-21", "shipWeight": 287, "note": "", "sample": true}, "g034": {"earTag": "1609040969", "farm": "淡路", "birthDate": "2026-03-23", "introDate": "2026-06-24", "introWeight": 111, "status": "飼養中", "note": "", "sample": true}, "g015": {"earTag": "1624731985", "farm": "平野", "birthDate": "2026-04-07", "introDate": "2026-07-10", "introWeight": 107, "status": "飼養中", "note": "", "sample": true}, "g008": {"earTag": "1567697684", "farm": "平野", "birthDate": "2025-09-23", "introDate": "2025-12-28", "introWeight": 97, "status": "出荷", "shipDate": "2026-07-03", "shipWeight": 285, "note": "", "sample": true}, "g012": {"earTag": "1581716353", "farm": "平野", "birthDate": "2025-12-28", "introDate": "2026-03-28", "introWeight": 101, "status": "出荷", "shipDate": "2026-09-20", "shipWeight": 278, "note": "", "sample": true}}, "items": {"i02": {"name": "育成用配合", "category": "飼料", "unit": "袋", "stock": 18, "reorderPoint": 25, "orderQty": 40, "supplier": "A飼料店（例）", "countedAt": "2026-09-18T09:00:00+09:00", "sample": true}, "i04": {"name": "稲わら", "category": "飼料", "unit": "ロール", "stock": 31, "reorderPoint": 15, "orderQty": 30, "supplier": "B牧草（例）", "countedAt": "2026-09-18T09:00:00+09:00", "sample": true}, "i09": {"name": "敷料（おが粉）", "category": "資材", "unit": "m³", "stock": 22, "reorderPoint": 10, "orderQty": 20, "supplier": "F製材所（例）", "countedAt": "2026-09-18T09:00:00+09:00", "sample": true}, "i06": {"name": "駆虫薬", "category": "薬品", "unit": "本", "stock": 3, "reorderPoint": 4, "orderQty": 6, "supplier": "C動物病院（例）", "countedAt": "2026-09-18T09:00:00+09:00", "sample": true}, "i10": {"name": "イヤータグ", "category": "資材", "unit": "個", "stock": 40, "reorderPoint": 20, "orderQty": 50, "supplier": "D畜産資材（例）", "countedAt": "2026-09-18T09:00:00+09:00", "sample": true}, "i03": {"name": "チモシー乾草", "category": "飼料", "unit": "ロール", "stock": 14, "reorderPoint": 10, "orderQty": 20, "supplier": "B牧草（例）", "countedAt": "2026-09-18T09:00:00+09:00", "sample": true}, "i01": {"name": "肥育前期配合", "category": "飼料", "unit": "袋", "stock": 42, "reorderPoint": 30, "orderQty": 60, "supplier": "A飼料店（例）", "countedAt": "2026-09-18T09:00:00+09:00", "sample": true}, "i07": {"name": "授精用シース", "category": "繁殖資材", "unit": "箱", "stock": 2, "reorderPoint": 3, "orderQty": 5, "supplier": "D畜産資材（例）", "countedAt": "2026-09-18T09:00:00+09:00", "sample": true}, "i08": {"name": "液体窒素", "category": "繁殖資材", "unit": "L", "stock": 60, "reorderPoint": 40, "orderQty": 100, "supplier": "E産業ガス（例）", "countedAt": "2026-09-18T09:00:00+09:00", "sample": true}, "i05": {"name": "ビタミン剤", "category": "薬品", "unit": "本", "stock": 6, "reorderPoint": 5, "orderQty": 10, "supplier": "C動物病院（例）", "countedAt": "2026-09-18T09:00:00+09:00", "sample": true}}, "carcass": {"k006": {"date": "2026-05-04", "earTag": "1526694507", "barn": "1号牛舎", "weight": 512.3, "grade": "A4", "bms": 7, "price": 2369, "sample": true}, "k014": {"date": "2026-08-14", "earTag": "1513915838", "barn": "3号牛舎", "weight": 457.1, "grade": "A4", "bms": 5, "price": 2385, "sample": true}, "k018": {"date": "2026-09-27", "earTag": "1616084735", "barn": "1号牛舎", "weight": 487.1, "grade": "A4", "bms": 7, "price": 2320, "sample": true}, "k004": {"date": "2026-05-22", "earTag": "1529230047", "barn": "3号牛舎", "weight": 475.1, "grade": "A5", "bms": 11, "price": 2570, "sample": true}, "k016": {"date": "2026-09-15", "earTag": "1508561396", "barn": "2号牛舎", "weight": 513.7, "grade": "A4", "bms": 6, "price": 2383, "sample": true}, "k011": {"date": "2026-07-28", "earTag": "1635527260", "barn": "1号牛舎", "weight": 455.6, "grade": "A5", "bms": 9, "price": 2649, "sample": true}, "k007": {"date": "2026-06-01", "earTag": "1502808274", "barn": "3号牛舎", "weight": 478.5, "grade": "A4", "bms": 6, "price": 2350, "sample": true}, "k005": {"date": "2026-05-02", "earTag": "1673276636", "barn": "3号牛舎", "weight": 525.4, "grade": "A5", "bms": 10, "price": 2705, "sample": true}, "k009": {"date": "2026-06-22", "earTag": "1673722932", "barn": "2号牛舎", "weight": 460.0, "grade": "A5", "bms": 8, "price": 2678, "sample": true}, "k010": {"date": "2026-07-02", "earTag": "1686783507", "barn": "2号牛舎", "weight": 538.3, "grade": "A5", "bms": 11, "price": 2620, "sample": true}, "k002": {"date": "2026-04-14", "earTag": "1583756160", "barn": "1号牛舎", "weight": 489.6, "grade": "A4", "bms": 5, "price": 2391, "sample": true}, "k001": {"date": "2026-04-05", "earTag": "1684348903", "barn": "3号牛舎", "weight": 480.0, "grade": "A3", "bms": 4, "price": 2033, "sample": true}, "k017": {"date": "2026-09-09", "earTag": "1521679644", "barn": "2号牛舎", "weight": 470.2, "grade": "A5", "bms": 11, "price": 2667, "sample": true}, "k015": {"date": "2026-08-24", "earTag": "1530388384", "barn": "1号牛舎", "weight": 535.8, "grade": "A4", "bms": 6, "price": 2317, "sample": true}, "k008": {"date": "2026-06-16", "earTag": "1641271597", "barn": "1号牛舎", "weight": 513.0, "grade": "A4", "bms": 5, "price": 2348, "sample": true}, "k013": {"date": "2026-08-14", "earTag": "1678588566", "barn": "1号牛舎", "weight": 471.9, "grade": "A5", "bms": 9, "price": 2624, "sample": true}, "k003": {"date": "2026-04-03", "earTag": "1605098142", "barn": "3号牛舎", "weight": 542.1, "grade": "A4", "bms": 6, "price": 2297, "sample": true}, "k012": {"date": "2026-07-15", "earTag": "1559443102", "barn": "2号牛舎", "weight": 523.9, "grade": "A5", "bms": 10, "price": 2726, "sample": true}}, "calving": {"c005": {"date": "2026-06-07", "damId": "1468425323", "calfId": "1343343215", "sex": "雄", "weight": 34.0, "status": "正常", "note": "", "sample": true}, "c007": {"date": "2026-05-17", "damId": "1449428595", "calfId": "1488750760", "sex": "雌", "weight": 29.1, "status": "正常", "note": "", "sample": true}, "c014": {"date": "2026-07-17", "damId": "1366686503", "calfId": "1448462019", "sex": "雄", "weight": 33.4, "status": "正常", "note": "", "sample": true}, "c004": {"date": "2026-06-01", "damId": "1413956002", "calfId": "1325266607", "sex": "雄", "weight": 33.1, "status": "正常", "note": "", "sample": true}, "c017": {"date": "2026-08-20", "damId": "1391819906", "calfId": "1347754636", "sex": "雄", "weight": 28.8, "status": "正常", "note": "", "sample": true}, "c001": {"date": "2026-05-07", "damId": "1443849730", "calfId": "1354381943", "sex": "雄", "weight": 27.1, "status": "難産", "note": "", "sample": true}, "c018": {"date": "2026-08-13", "damId": "1479372829", "calfId": "1304948311", "sex": "雌", "weight": 30.1, "status": "正常", "note": "", "sample": true}, "c013": {"date": "2026-08-05", "damId": "1384328238", "calfId": "1359702190", "sex": "雌", "weight": 28.1, "status": "正常", "note": "", "sample": true}, "c002": {"date": "2026-04-15", "damId": "1436213743", "calfId": "1480161919", "sex": "雌", "weight": 29.4, "status": "正常", "note": "", "sample": true}, "c015": {"date": "2026-07-28", "damId": "1380597509", "calfId": "1490464812", "sex": "雌", "weight": 33.5, "status": "正常", "note": "", "sample": true}, "c010": {"date": "2026-06-28", "damId": "1471507028", "calfId": "1481455291", "sex": "雄", "weight": 29.2, "status": "正常", "note": "", "sample": true}, "c003": {"date": "2026-04-24", "damId": "1412252233", "calfId": "1341458949", "sex": "雄", "weight": 27.1, "status": "正常", "note": "", "sample": true}, "c009": {"date": "2026-07-05", "damId": "1483073705", "calfId": "1372993093", "sex": "雌", "weight": 33.2, "status": "正常", "note": "", "sample": true}, "c016": {"date": "2026-08-12", "damId": "1331693041", "calfId": "1383749822", "sex": "雄", "weight": 30.2, "status": "正常", "note": "", "sample": true}, "c008": {"date": "2026-06-16", "damId": "1445139262", "calfId": "1317257929", "sex": "雌", "weight": 33.9, "status": "正常", "note": "", "sample": true}, "c019": {"date": "2026-09-15", "damId": "1496269088", "calfId": "1474511499", "sex": "雄", "weight": 31.3, "status": "正常", "note": "", "sample": true}, "c006": {"date": "2026-06-01", "damId": "1457180079", "calfId": "1385503557", "sex": "雌", "weight": 31.8, "status": "正常", "note": "", "sample": true}, "c011": {"date": "2026-07-03", "damId": "1491155778", "calfId": "1488016876", "sex": "雄", "weight": 26.7, "status": "正常", "note": "", "sample": true}, "c012": {"date": "2026-07-16", "damId": "1433255250", "calfId": "1319438511", "sex": "雄", "weight": 33.5, "status": "正常", "note": "", "sample": true}}, "invoices": {"v02": {"date": "2026-09-10", "vendor": "C動物病院（例）", "total": 73700, "tax": 6700, "category": "診療費", "checked": "yes", "memo": "", "sample": true}, "v08": {"date": "2026-08-11", "vendor": "C動物病院（例）", "total": 52800, "tax": 4800, "category": "診療費", "checked": "yes", "memo": "", "sample": true}, "v05": {"date": "2026-09-25", "vendor": "E産業ガス（例）", "total": 27500, "tax": 2500, "category": "繁殖費", "checked": "no", "memo": "", "sample": true}, "v04": {"date": "2026-09-20", "vendor": "D畜産資材（例）", "total": 38500, "tax": 3500, "category": "資材費", "checked": "no", "memo": "", "sample": true}, "v09": {"date": "2026-08-19", "vendor": "B牧草（例）", "total": 176000, "tax": 16000, "category": "飼料費", "checked": "yes", "memo": "", "sample": true}, "v01": {"date": "2026-09-05", "vendor": "A飼料店（例）", "total": 486200, "tax": 44200, "category": "飼料費", "checked": "yes", "memo": "", "sample": true}, "v03": {"date": "2026-09-12", "vendor": "B牧草（例）", "total": 198000, "tax": 18000, "category": "飼料費", "checked": "yes", "memo": "", "sample": true}, "v10": {"date": "2026-08-28", "vendor": "H整備（例）", "total": 88000, "tax": 8000, "category": "修繕費", "checked": "yes", "memo": "", "sample": true}, "v06": {"date": "2026-09-26", "vendor": "G石油（例）", "total": 41800, "tax": 3800, "category": "燃料費", "checked": "no", "memo": "", "sample": true}, "v07": {"date": "2026-08-05", "vendor": "A飼料店（例）", "total": 512600, "tax": 46600, "category": "飼料費", "checked": "yes", "memo": "", "sample": true}}, "opu": {"o007": {"date": "2026-07-06", "donorId": "1300286934", "collected": 21, "cultured": 16, "produced": 9, "freshET": 3, "frozen": 6, "sample": true}, "o003": {"date": "2026-05-09", "donorId": "1415626079", "collected": 15, "cultured": 13, "produced": 5, "freshET": 2, "frozen": 3, "sample": true}, "o001": {"date": "2026-04-08", "donorId": "1391994073", "collected": 26, "cultured": 24, "produced": 11, "freshET": 4, "frozen": 7, "sample": true}, "o002": {"date": "2026-04-13", "donorId": "1393295326", "collected": 20, "cultured": 18, "produced": 9, "freshET": 4, "frozen": 5, "sample": true}, "o012": {"date": "2026-09-10", "donorId": "1494389085", "collected": 26, "cultured": 23, "produced": 12, "freshET": 5, "frozen": 7, "sample": true}, "o008": {"date": "2026-07-07", "donorId": "1366620149", "collected": 24, "cultured": 20, "produced": 9, "freshET": 4, "frozen": 5, "sample": true}, "o009": {"date": "2026-08-05", "donorId": "1407242962", "collected": 30, "cultured": 27, "produced": 11, "freshET": 6, "frozen": 5, "sample": true}, "o005": {"date": "2026-06-06", "donorId": "1342287426", "collected": 23, "cultured": 20, "produced": 10, "freshET": 4, "frozen": 6, "sample": true}, "o011": {"date": "2026-09-26", "donorId": "1460137670", "collected": 30, "cultured": 27, "produced": 11, "freshET": 6, "frozen": 5, "sample": true}, "o004": {"date": "2026-05-17", "donorId": "1479997595", "collected": 19, "cultured": 15, "produced": 7, "freshET": 3, "frozen": 4, "sample": true}, "o010": {"date": "2026-08-03", "donorId": "1457191315", "collected": 15, "cultured": 12, "produced": 5, "freshET": 2, "frozen": 3, "sample": true}, "o006": {"date": "2026-06-18", "donorId": "1386847969", "collected": 22, "cultured": 19, "produced": 8, "freshET": 4, "frozen": 4, "sample": true}}, "semen": {"s1": {"bull": "福桜", "lot": "JB-2201", "received": 60, "minStock": 5, "price": 4500, "supplier": "家畜改良センター（例）", "sample": true}, "s5": {"bull": "隆之国", "lot": "JB-2256", "received": 25, "minStock": 5, "price": 4800, "supplier": "家畜改良センター（例）", "sample": true}, "s3": {"bull": "晴勝", "lot": "JB-2230", "received": 30, "minStock": 5, "price": 3800, "supplier": "家畜改良センター（例）", "sample": true}, "s4": {"bull": "美千代", "lot": "JB-2241", "received": 20, "minStock": 5, "price": 5200, "supplier": "家畜改良センター（例）", "sample": true}, "s2": {"bull": "安茂", "lot": "JB-2215", "received": 40, "minStock": 5, "price": 6000, "supplier": "家畜改良センター（例）", "sample": true}}, "orders": {"r01": {"itemId": "i06", "qty": 6, "status": "発注済", "createdAt": "2026-09-18T10:00:00+09:00", "orderedAt": "2026-09-18T11:00:00+09:00", "sample": true}}, "settings": {"main": {"fyStart": 4, "farms": ["平野", "淡路"], "barns": ["1号牛舎", "2号牛舎", "3号牛舎"], "office": "神戸うすなが牧場", "targets": {"conception": 55, "calvingRate": 90, "cultured": 600, "produced": 300, "freshET": 150, "carcassWeight": 500, "semenMin": 5, "growing": {"平野": {"shipWeight": 290, "shipAge": 280, "dg": 0.95, "mortality": 3}, "淡路": {"shipWeight": 285, "shipAge": 280, "dg": 0.92, "mortality": 3}}}}}};const L={};
+const snapC=c=>{const o=D[c]||{};const docs=Object.entries(o).map(([id,d])=>({id,exists:true,data:()=>d,metadata:{}}));return {docs,size:docs.length,empty:!docs.length}};
+const fire=c=>(L[c]||[]).forEach(f=>setTimeout(()=>f(),0));
+const docRef=(c,id)=>({id,set:async d=>{(D[c]=D[c]||{})[id]=JSON.parse(JSON.stringify(d));fire(c)},delete:async()=>{if(D[c])delete D[c][id];fire(c)},
+  onSnapshot:nx=>{const f=()=>{const d=(D[c]||{})[id];nx({exists:!!d,data:()=>d})};(L[c]=L[c]||[]).push(f);setTimeout(f,0);return()=>{}}});
+const db={collection:c=>({doc:id=>docRef(c,id||Date.now().toString(36)+Math.random().toString(36).slice(2,6)),onSnapshot:nx=>{const f=()=>nx(snapC(c));(L[c]=L[c]||[]).push(f);setTimeout(f,0);return()=>{}}}),
+  doc:p=>{const [c,id]=p.split('/');return docRef(c,id)}};
+window.claude={use:async n=>n==='db'?db:null};
+})();
+</script><script>
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const fmtD=x=>`${x.getFullYear()}-${pad(x.getMonth()+1)}-${pad(x.getDate())}`;
+const TODAY=fmtD(new Date());
+const parseD=s=>{const [y,m,d]=String(s).split('-').map(Number);return new Date(y,(m||1)-1,d||1)};
+const addDays=(s,n)=>{const x=parseD(s);x.setDate(x.getDate()+n);return fmtD(x)};
+const dayDiff=(a,b)=>Math.round((parseD(b)-parseD(a))/864e5);
+const ym=d=>d?String(d).slice(0,7):'';
+const monthAdd=(M,n)=>{let [y,m]=M.split('-').map(Number);m+=n;while(m>12){m-=12;y++}while(m<1){m+=12;y--}return `${y}-${pad(m)}`};
+const monthEnd=M=>{const [y,m]=M.split('-').map(Number);return fmtD(new Date(y,m,0))};
+const jpM=M=>{const [y,m]=M.split('-').map(Number);return `${y}年${m}月`};
+const jpD=d=>d?`${Number(d.slice(5,7))}/${Number(d.slice(8,10))}`:'—';
+const num=v=>v===''||v==null||isNaN(Number(v))?null:Number(v);
+const avg=a=>{const b=a.filter(x=>x!=null&&!isNaN(x));return b.length?b.reduce((s,x)=>s+x,0)/b.length:null};
+const sum=a=>a.reduce((s,x)=>s+(Number(x)||0),0);
+const f0=v=>v==null?'—':Math.round(v).toLocaleString('ja-JP');
+const f1=v=>v==null?'—':(Math.round(v*10)/10).toLocaleString('ja-JP',{minimumFractionDigits:1,maximumFractionDigits:1});
+const f2=v=>v==null?'—':v.toFixed(2);
+const pct=(a,b)=>b?a/b*100:null;
+const yen=v=>v==null?'—':'¥'+Math.round(v).toLocaleString('ja-JP');
+const GEST=285; // 黒毛和種の妊娠期間（日）
+
+/* ---------- state ---------- */
+const COLS=['ai','opu','semen','calving','cattle','carcass','items','orders','invoices','reports'];
+const S={settings:null}; COLS.forEach(c=>S[c]=[]);
+let db=null, sample=null, downloads=null, loaded=false, dbState='wait';
+let tab='report';
+let M=ym(TODAY);
+try{const t=localStorage.getItem('usn-tab'); if(t) tab=t;}catch(e){}
+if(location.hash&&/^#[a-z]+$/.test(location.hash)) tab=location.hash.slice(1);
+
+const DEF={fyStart:4,farms:['平野','淡路'],barns:['1号牛舎','2号牛舎','3号牛舎'],office:'神戸うすなが牧場',
+  targets:{conception:55,cultured:420,produced:200,freshET:90,calvingRate:90,carcassWeight:500,semenMin:5,
+    growing:{'平野':{shipWeight:290,shipAge:280,dg:0.95,mortality:3},'淡路':{shipWeight:290,shipAge:280,dg:0.95,mortality:3}}}};
+const cfg=()=>{const s=S.settings||{};return {...DEF,...s,targets:{...DEF.targets,...(s.targets||{}),growing:{...DEF.targets.growing,...((s.targets||{}).growing||{})}}}};
+const fyStartM=m=>{const fs=cfg().fyStart||4;const [y,mm]=m.split('-').map(Number);return `${mm>=fs?y:y-1}-${pad(fs)}`};
+const inFY=(d,m)=>{const k=ym(d);return k&&k>=fyStartM(m)&&k<=m};
+const monthsIn=m=>{let s=fyStartM(m),n=1;while(s<m){s=monthAdd(s,1);n++}return n};
+
+/* ---------- ui primitives ---------- */
+function toast(msg){const t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,2600)}
+function pill(state,label){const L={good:'達成',warn:'あと少し',bad:'未達',none:'データなし'};return `<span class="pill p-${state}">${esc(label||L[state])}</span>`}
+function judge(v,t,dir){if(v==null||t==null||t===''||isNaN(t))return 'none';const r=dir==='down'?(v===0?Infinity:t/v):(t===0?Infinity:v/t);return r>=1?'good':r>=0.95?'warn':'bad'}
+function stat(l,v,unit,t){return `<div class="stat"><span class="l">${esc(l)}</span><span class="v">${v}${unit?`<small>${esc(unit)}</small>`:''}</span>${t?`<span class="t">${t}</span>`:''}</div>`}
+function table(heads,rows,emptyMsg){
+  if(!rows.length) return `<div class="empty">${esc(emptyMsg||'まだ記録がありません')}</div>`;
+  return `<div class="tbl"><table><thead><tr>${heads.map(h=>`<th class="${h.n?'n':''}">${esc(h.t||h)}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((c,i)=>`<td class="${heads[i]&&heads[i].n?'n':''}${heads[i]&&heads[i].w?' wrap':''}">${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`}
+function openModal(html){$('#sheet').innerHTML=html;$('#modal').hidden=false;const f=$('#sheet').querySelector('input,select,textarea,button');f&&f.focus()}
+function closeModal(){$('#modal').hidden=true;$('#sheet').innerHTML=''}
+$('#modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#modal').hidden)closeModal()});
+
+/* ---------- data writes ---------- */
+function newId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+async function save(col,id,data){
+  if(!db){toast('保存できません（共有データに接続していません）');return false}
+  const clean={};for(const [k,v] of Object.entries(data)) if(v!==undefined) clean[k]=v;
+  clean.updatedAt=new Date().toISOString();
+  try{await db.collection(col).doc(id||newId()).set(clean);return true}
+  catch(e){toast(e.code==='invalid_argument'?'この画面では書き込みの権限がありません':'保存に失敗しました。もう一度お試しください');return false}
+}
+async function del(col,id){if(!db)return false;try{await db.collection(col).doc(id).delete();return true}catch(e){toast('削除に失敗しました');return false}}
+
+/* ---------- generic form ---------- */
+const FORMS={
+  ai:{title:'授精・移植の記録',fields:()=>[
+    {k:'date',l:'実施日',t:'date',req:1,def:TODAY},{k:'cowId',l:'雌牛の番号（個体識別番号）',req:1},
+    {k:'method',l:'方法',t:'select',opts:['AI','ET新鮮','ET凍結'],def:'AI'},
+    {k:'semenId',l:'精液（AIのとき）',t:'select',opts:[['','—']].concat(S.semen.map(s=>[s.id,`${s.bull}（${s.lot}）`]))},
+    {k:'embryo',l:'受精卵の由来（ETのとき）'},{k:'tech',l:'授精師'},
+    {k:'result',l:'妊娠鑑定',t:'select',opts:['未判定','受胎','不受胎'],def:'未判定'},{k:'note',l:'備考',full:1}]},
+  opu:{title:'採卵・培養の記録',fields:()=>[
+    {k:'date',l:'採卵日',t:'date',req:1,def:TODAY},{k:'donorId',l:'供卵牛の番号',req:1},
+    {k:'collected',l:'採卵数',t:'number'},{k:'cultured',l:'培養卵数',t:'number'},{k:'produced',l:'生産個数（胚）',t:'number'},
+    {k:'freshET',l:'新鮮卵移植個数',t:'number'},{k:'frozen',l:'凍結個数',t:'number'},{k:'note',l:'備考',full:1}]},
+  semen:{title:'精液の受け入れ',fields:()=>[
+    {k:'bull',l:'種雄牛名',req:1},{k:'lot',l:'精液番号・ロット',req:1},{k:'received',l:'受入本数（累計）',t:'number',req:1},
+    {k:'minStock',l:'この本数を切ったら発注',t:'number',def:cfg().targets.semenMin},{k:'price',l:'1本の単価（円）',t:'number'},{k:'supplier',l:'仕入先'}]},
+  calving:{title:'分娩の記録',fields:()=>[
+    {k:'date',l:'分娩日',t:'date',req:1,def:TODAY},{k:'damId',l:'母牛の番号',req:1},{k:'calfId',l:'子牛の番号'},
+    {k:'sex',l:'性別',t:'select',opts:['雌','雄']},{k:'weight',l:'生時体重（kg）',t:'number',step:'0.1'},
+    {k:'status',l:'状態',t:'select',opts:['正常','難産','死産'],def:'正常'},{k:'note',l:'備考',full:1}]},
+  cattle:{title:'育成牛の記録',fields:()=>[
+    {k:'earTag',l:'個体識別番号',req:1},{k:'farm',l:'農場',t:'select',opts:cfg().farms,req:1},
+    {k:'birthDate',l:'生年月日',t:'date'},{k:'introDate',l:'導入日',t:'date',req:1,def:TODAY},{k:'introWeight',l:'導入時体重（kg）',t:'number'},
+    {k:'status',l:'状態',t:'select',opts:['飼養中','出荷','死亡'],def:'飼養中'},
+    {k:'shipDate',l:'出荷日',t:'date'},{k:'shipWeight',l:'出荷体重（kg）',t:'number'},{k:'deathDate',l:'死亡日',t:'date'},{k:'note',l:'備考',full:1}]},
+  carcass:{title:'枝肉成績',fields:()=>[
+    {k:'date',l:'と畜日',t:'date',req:1,def:TODAY},{k:'earTag',l:'個体識別番号',req:1},{k:'barn',l:'牛舎',t:'select',opts:cfg().barns,req:1},
+    {k:'weight',l:'枝肉重量（kg）',t:'number',step:'0.1',req:1},{k:'grade',l:'格付',t:'select',opts:['A5','A4','A3','A2','B4','B3','B2']},
+    {k:'bms',l:'BMS',t:'number'},{k:'price',l:'単価（円/kg）',t:'number'}]},
+  items:{title:'在庫品目',fields:()=>[
+    {k:'name',l:'品名',req:1},{k:'category',l:'区分',t:'select',opts:['飼料','薬品','資材','繁殖資材','その他']},{k:'unit',l:'単位',def:'袋'},
+    {k:'stock',l:'現在の在庫',t:'number',req:1},{k:'reorderPoint',l:'この数を切ったら発注',t:'number',req:1},{k:'orderQty',l:'1回の発注数',t:'number'},{k:'supplier',l:'発注先'}]},
+  invoices:{title:'請求書',fields:()=>[
+    {k:'date',l:'請求日',t:'date',req:1,def:TODAY},{k:'vendor',l:'請求元',req:1},{k:'total',l:'税込合計（円）',t:'number',req:1},{k:'tax',l:'うち消費税（円）',t:'number'},
+    {k:'category',l:'費目',t:'select',opts:['飼料費','薬品費','診療費','資材費','繁殖費','燃料費','修繕費','その他']},
+    {k:'checked',l:'内容確認',t:'select',opts:[['no','未確認'],['yes','確認済み']],def:'no'},{k:'memo',l:'メモ',full:1}]}
+};
+function field(f,val){
+  const v=val??f.def??'';const id='f_'+f.k;
+  let inner;
+  if(f.t==='select') inner=`<select id="${id}" name="${f.k}">${f.opts.map(o=>{const [ov,ol]=Array.isArray(o)?o:[o,o];return `<option value="${esc(ov)}"${String(ov)===String(v)?' selected':''}>${esc(ol)}</option>`}).join('')}</select>`;
+  else if(f.t==='textarea') inner=`<textarea id="${id}" name="${f.k}" rows="3">${esc(v)}</textarea>`;
+  else inner=`<input id="${id}" name="${f.k}" type="${f.t||'text'}" ${f.t==='number'?`inputmode="decimal" step="${f.step||'any'}"`:''} value="${esc(v)}"${f.req?' required':''}>`;
+  return `<div class="fld${f.full?' full':''}"><label for="${id}">${esc(f.l)}${f.req?' *':''}</label>${inner}</div>`}
+function openForm(col,rec,extra){
+  const def=FORMS[col];const fs=def.fields();const r=rec||{};
+  openModal(`<h2>${esc(def.title)}${rec&&rec.id?'を直す':'を追加'}</h2>${extra&&extra.head||''}
+  <form id="gform" class="form" novalidate>${fs.map(f=>field(f,r[f.k])).join('')}</form>
+  <div class="sheet-f">${rec&&rec.id?`<button class="btn dng dl" id="fDel">削除</button>`:''}<button class="btn" id="fCancel">やめる</button><button class="btn pri" id="fSave">保存</button></div>`);
+  $('#fCancel').onclick=closeModal;
+  if($('#fDel')) $('#fDel').onclick=async e=>{const b=e.currentTarget;if(b.dataset.sure){if(await del(col,rec.id)){closeModal();toast('削除しました')}}else{b.dataset.sure=1;b.textContent='本当に削除する'}};
+  $('#fSave').onclick=async()=>{
+    const out={...(rec||{})};delete out.id;
+    for(const f of fs){const el=document.getElementById('f_'+f.k);let v=el.value.trim();
+      if(f.req&&!v){el.focus();toast(`「${f.l}」を入れてください`);return}
+      out[f.k]=f.t==='number'?num(v):v}
+    if(extra&&extra.merge) Object.assign(out,extra.merge);
+    delete out.sample;
+    $('#fSave').disabled=true;
+    if(await save(col,rec&&rec.id,out)){closeModal();toast('保存しました')}else $('#fSave').disabled=false};
+}
+
+/* ---------- calculations ---------- */
+function breedStats(m){
+  const recs=S.ai.filter(r=>ym(r.date)===m);
+  const judged=recs.filter(r=>r.result==='受胎'||r.result==='不受胎');
+  const ok=judged.filter(r=>r.result==='受胎');
+  const fy=S.ai.filter(r=>inFY(r.date,m)&&(r.result==='受胎'||r.result==='不受胎'));
+  const by=meth=>{const j=judged.filter(r=>meth==='AI'?r.method==='AI':r.method!=='AI');return {n:j.length,rate:pct(j.filter(r=>r.result==='受胎').length,j.length)}};
+  return {count:recs.length,judged:judged.length,pending:recs.length-judged.length,rate:pct(ok.length,judged.length),
+    fyRate:pct(fy.filter(r=>r.result==='受胎').length,fy.length),fyN:fy.length,ai:by('AI'),et:by('ET')}}
+function opuStats(m){
+  const mo=S.opu.filter(r=>ym(r.date)===m), fy=S.opu.filter(r=>inFY(r.date,m));
+  const s=a=>({collected:sum(a.map(r=>r.collected)),cultured:sum(a.map(r=>r.cultured)),produced:sum(a.map(r=>r.produced)),freshET:sum(a.map(r=>r.freshET)),frozen:sum(a.map(r=>r.frozen)),n:a.length});
+  return {mo:s(mo),fy:s(fy)}}
+function dueList(){
+  return S.ai.filter(r=>r.result==='受胎').map(r=>{const due=addDays(r.date,GEST);
+    const c=S.calving.find(c=>c.damId===r.cowId&&Math.abs(dayDiff(due,c.date))<=30);
+    return {...r,due,calved:c||null}}).sort((a,b)=>a.due<b.due?-1:1)}
+function calvingStats(m){
+  const dl=dueList();const end=m===ym(TODAY)?TODAY:monthEnd(m);
+  const dueFY=dl.filter(r=>inFY(r.due,m)&&r.due<=end);
+  const done=dueFY.filter(r=>r.calved);
+  const mo=S.calving.filter(c=>ym(c.date)===m);
+  return {mo:mo.length,live:mo.filter(c=>c.status!=='死産').length,male:mo.filter(c=>c.sex==='雄').length,female:mo.filter(c=>c.sex==='雌').length,
+    avgW:avg(mo.map(c=>num(c.weight))),rate:pct(done.length,dueFY.length),dueN:dueFY.length,doneN:done.length,
+    next:dl.filter(r=>!r.calved&&r.due>=addDays(TODAY,-20)&&r.due<=addDays(TODAY,60))}}
+function semenStats(m){
+  return S.semen.map(s=>{const uses=S.ai.filter(r=>r.method==='AI'&&r.semenId===s.id);
+    const j=uses.filter(r=>inFY(r.date,m)&&(r.result==='受胎'||r.result==='不受胎'));
+    const stock=(num(s.received)||0)-uses.length;
+    return {...s,used:uses.length,usedMo:uses.filter(r=>ym(r.date)===m).length,stock,low:stock<=(num(s.minStock)??cfg().targets.semenMin),
+      rate:pct(j.filter(r=>r.result==='受胎').length,j.length),rateN:j.length}}).sort((a,b)=>a.stock-b.stock)}
+function growStats(m,farm){
+  const all=S.cattle.filter(c=>c.farm===farm);
+  const shipped=all.filter(c=>c.status==='出荷'&&ym(c.shipDate)===m);
+  const fyS=fyStartM(m)+'-01', end=monthEnd(m);
+  const atStart=all.filter(c=>c.introDate&&c.introDate<fyS&&!((c.status==='出荷'&&c.shipDate<fyS)||(c.status==='死亡'&&c.deathDate<fyS))).length;
+  const intro=all.filter(c=>inFY(c.introDate,m)).length;
+  const deaths=all.filter(c=>c.status==='死亡'&&inFY(c.deathDate,m)).length;
+  const head=all.filter(c=>c.introDate&&c.introDate<=end&&!((c.status==='出荷'&&c.shipDate<=end)||(c.status==='死亡'&&c.deathDate<=end))).length;
+  return {shipped:shipped.length,weight:avg(shipped.map(c=>num(c.shipWeight))),
+    age:avg(shipped.filter(c=>c.birthDate).map(c=>dayDiff(c.birthDate,c.shipDate))),
+    dg:avg(shipped.filter(c=>c.introWeight&&c.shipWeight&&c.introDate).map(c=>(c.shipWeight-c.introWeight)/Math.max(1,dayDiff(c.introDate,c.shipDate)))),
+    deaths,deathsMo:all.filter(c=>c.status==='死亡'&&ym(c.deathDate)===m).length,base:atStart+intro,mortality:pct(deaths,atStart+intro),head,intro}}
+function carcassStats(m){
+  const row=a=>({n:a.length,w:avg(a.map(r=>num(r.weight))),hi:pct(a.filter(r=>/^[AB][45]$/.test(r.grade||'')).length,a.length),
+    price:avg(a.map(r=>num(r.price))),sales:sum(a.map(r=>(num(r.weight)||0)*(num(r.price)||0)))});
+  const mo=S.carcass.filter(r=>ym(r.date)===m), fy=S.carcass.filter(r=>inFY(r.date,m));
+  return {mo:row(mo),fy:row(fy),barns:cfg().barns.map(b=>({barn:b,mo:row(mo.filter(r=>r.barn===b)),fy:row(fy.filter(r=>r.barn===b))}))}}
+function stockStats(){
+  const open=new Set(S.orders.filter(o=>o.status!=='入荷済').map(o=>o.itemId));
+  const need=S.items.filter(i=>num(i.stock)!=null&&num(i.stock)<=num(i.reorderPoint));
+  const last=S.items.map(i=>i.countedAt).filter(Boolean).sort().pop()||null;
+  return {need,needNew:need.filter(i=>!open.has(i.id)),open,last,stale:!last||dayDiff(last.slice(0,10),TODAY)>7}}
+function invStats(m){
+  const mo=S.invoices.filter(r=>ym(r.date)===m);
+  const cats={};mo.forEach(r=>{const c=r.category||'その他';cats[c]=(cats[c]||0)+(num(r.total)||0)});
+  return {n:mo.length,total:sum(mo.map(r=>r.total)),unchecked:mo.filter(r=>r.checked!=='yes').length,cats}}
+
+function buildReport(m){
+  const T=cfg().targets, b=breedStats(m), o=opuStats(m), c=calvingStats(m), sm=semenStats(m), ca=carcassStats(m), st=stockStats(), iv=invStats(m);
+  const pace=monthsIn(m)/12;
+  const K=[];
+  const add=(g,name,v,unit,t,dir,fmt,tl)=>K.push({g,name,v,unit,t,dir,fmt:fmt||f1,tl,state:judge(v,t,dir)});
+  add('繁殖','受胎率（今月）',b.rate,'%',T.conception,'up');
+  add('繁殖','受胎率（年度累計）',b.fyRate,'%',T.conception,'up');
+  add('繁殖','培養卵数（年度累計）',o.fy.cultured,'個',T.cultured*pace,'up',f0,`年${f0(T.cultured)}・今月時点${f0(T.cultured*pace)}`);
+  add('繁殖','生産個数（年度累計）',o.fy.produced,'個',T.produced*pace,'up',f0,`年${f0(T.produced)}・今月時点${f0(T.produced*pace)}`);
+  add('繁殖','新鮮卵移植個数（年度累計）',o.fy.freshET,'個',T.freshET*pace,'up',f0,`年${f0(T.freshET)}・今月時点${f0(T.freshET*pace)}`);
+  add('繁殖','分娩率（年度累計）',c.rate,'%',T.calvingRate,'up');
+  cfg().farms.forEach(f=>{const g=growStats(m,f),t=T.growing[f]||{};
+    add('育成・'+f,'出荷牛の平均体重',g.weight,'kg',t.shipWeight,'up');
+    add('育成・'+f,'出荷牛の平均日齢',g.age,'日',t.shipAge,'down',f0);
+    add('育成・'+f,'DG（1日の増体）',g.dg,'kg',t.dg,'up',f2);
+    add('育成・'+f,'導入からの死亡率（年度）',g.mortality,'%',t.mortality,'down')});
+  add('枝肉','平均枝肉重量（今月）',ca.mo.w,'kg',T.carcassWeight,'up');
+  ca.barns.forEach(x=>{if(x.mo.n) add('枝肉',`${x.barn}の平均枝肉重量`,x.mo.w,'kg',T.carcassWeight,'up')});
+  // checks
+  const C=[];
+  const stale=S.ai.filter(r=>r.result==='未判定'&&dayDiff(r.date,TODAY)>=40);
+  C.push(stale.length?{s:'warn',t:`妊娠鑑定の結果が未入力：${stale.length}頭（授精から40日以上）`}:{s:'good',t:'妊娠鑑定の結果はすべて入っています'});
+  C.push(st.stale?{s:'warn',t:`棚卸が1週間以上ありません（最終：${st.last?jpD(st.last.slice(0,10)):'未実施'}）`}:{s:'good',t:`棚卸は最新です（最終：${jpD(st.last.slice(0,10))}）`});
+  C.push(st.needNew.length?{s:'bad',t:`発注が必要な品目：${st.needNew.map(i=>i.name).join('、')}`}:{s:'good',t:'発注が必要な品目はありません'});
+  const lowS=sm.filter(s=>s.low);
+  C.push(lowS.length?{s:'bad',t:`精液の在庫が少ない：${lowS.map(s=>`${s.bull} 残${s.stock}本`).join('、')}`}:{s:'good',t:'精液の在庫は足りています'});
+  C.push(iv.unchecked?{s:'warn',t:`内容を確認していない請求書：${iv.unchecked}件`}:{s:'good',t:iv.n?'今月の請求書はすべて確認済みです':'今月の請求書はまだありません'});
+  const noW=S.cattle.filter(x=>x.status==='出荷'&&ym(x.shipDate)===m&&!x.shipWeight);
+  if(noW.length) C.push({s:'warn',t:`出荷体重が未入力：${noW.length}頭`});
+  const soon=c.next.filter(r=>r.due>=TODAY&&r.due<=addDays(TODAY,14));
+  if(soon.length) C.push({s:'warn',t:`2週間以内に分娩予定：${soon.map(r=>`${r.cowId}（${jpD(r.due)}）`).join('、')}`});
+  return {m,K,C,b,o,c,sm,ca,st,iv}}
+
+function reportText(R){
+  const lines=[`【${jpM(R.m)} 月次報告】神戸うすなが牧場`,''];
+  let g='';R.K.forEach(k=>{if(k.g!==g){g=k.g;lines.push(`■ ${g}`)}
+    lines.push(`・${k.name}：${k.fmt(k.v)}${k.v==null?'':k.unit}（目標 ${k.tl||(k.t==null?'—':k.fmt(k.t)+k.unit)}）… ${{good:'達成',warn:'あと少し',bad:'未達',none:'データなし'}[k.state]}`)});
+  lines.push('',`■ 経費（請求書）`,`・合計 ${yen(R.iv.total)}（${R.iv.n}件）`);
+  Object.entries(R.iv.cats).forEach(([c,v])=>lines.push(`　${c} ${yen(v)}`));
+  lines.push(`■ 枝肉売上（今月）${yen(R.ca.mo.sales)}（${R.ca.mo.n}頭）`);
+  lines.push('','■ 確認事項');R.C.filter(c=>c.s!=='good').forEach(c=>lines.push('・'+c.t));
+  const rep=S.reports.find(r=>r.id===R.m);if(rep&&rep.comment){lines.push('','■ 所見',rep.comment)}
+  return lines.join('\n')}
+
+/* ---------- views ---------- */
+const V={};
+V.report=()=>{
+  const R=buildReport(M);const rep=S.reports.find(r=>r.id===M)||{};
+  const isCur=M===ym(TODAY), closed=M<ym(TODAY)||TODAY>=monthEnd(M).slice(0,8)+'30'||TODAY===monthEnd(M);
+  const status=rep.confirmed?`<span class="pill p-good">確認済み ${jpD(rep.confirmedAt.slice(0,10))}</span>`:closed?`<span class="pill p-warn">自動作成済み・確認待ち</span>`:`<span class="pill p-none">集計中（月末30日に確定）</span>`;
+  let g='',kp='';R.K.forEach(k=>{if(k.g!==g){if(g)kp+='</div>';g=k.g;kp+=`<div class="kgroup"><div class="kg-h">${esc(g)}</div>`}
+    kp+=`<div class="kpi"><span class="nm">${esc(k.name)}</span><span class="val">${k.fmt(k.v)}${k.v==null?'':`<small class="muted"> ${esc(k.unit)}</small>`}</span><span class="tg">目標 ${esc(k.tl||(k.t==null?'—':k.fmt(k.t)+k.unit))}</span><span>${pill(k.state)}</span></div>`});
+  if(g)kp+='</div>';
+  const good=R.K.filter(k=>k.state==='good').length, tot=R.K.filter(k=>k.state!=='none').length;
+  return `
+  <div class="row"><h1 class="pg">${jpM(M)}の月次報告</h1>${status}</div>
+  <section class="sec"><div class="sec-h"><h2>確認すること</h2><span class="sub">ここが全部緑になれば、報告は確認だけで終わります</span></div>
+    <ul class="checks">${R.C.map(c=>`<li><span class="dot d-${c.s}"></span><span>${esc(c.t)}</span></li>`).join('')}</ul></section>
+  <section class="sec"><div class="sec-h"><h2>目標に対する成果</h2><span class="sub">達成 ${good} / ${tot} 指標</span></div>
+    <div class="grid">${stat('受胎率（今月）',f1(R.b.rate),'%',`鑑定済み ${R.b.judged}頭`)}${stat('分娩（今月）',R.c.mo,'頭',`雌${R.c.female}・雄${R.c.male}`)}${stat('枝肉売上（今月）',yen(R.ca.mo.sales),'',`${R.ca.mo.n}頭`)}${stat('経費（請求書）',yen(R.iv.total),'',`${R.iv.n}件`)}</div>
+    ${kp}</section>
+  <section class="sec"><div class="sec-h"><h2>所見</h2><button class="btn ai" id="aiComment">AIで所見を書く</button><button class="btn sm" id="editComment">手で書く</button></div>
+    <div class="ai-out" id="commentBox">${rep.comment?esc(rep.comment):'<span class="muted">まだありません。「AIで所見を書く」を押すと、上の数字から良かった点・課題・来月やることをまとめます。</span>'}</div></section>
+  <section class="sec"><div class="sec-h"><h2>報告を出す</h2></div>
+    <div class="row"><button class="btn pri" id="copyRep">報告文をコピー</button>${downloads?'<button class="btn" id="csvRep">CSVで保存</button>':''}${rep.confirmed?'<button class="btn" id="unconfirm">確認済みを取り消す</button>':'<button class="btn" id="confirm">確認済みにする</button>'}</div>
+    <p class="sub" style="margin:0">LINEやメールにそのまま貼れる文章をコピーします。</p></section>`};
+V.report.bind=()=>{
+  const R=buildReport(M);
+  $('#copyRep').onclick=()=>copy(reportText(R));
+  if($('#csvRep')) $('#csvRep').onclick=async()=>{const rows=[['区分','指標','実績','単位','目標','判定']].concat(R.K.map(k=>[k.g,k.name,k.v==null?'':(Math.round(k.v*100)/100),k.unit,k.tl||(k.t==null?'':Math.round(k.t*100)/100),{good:'達成',warn:'あと少し',bad:'未達',none:'データなし'}[k.state]]));
+    const csv='﻿'+rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+    try{await downloads.save({filename:`月次報告_${M}.csv`,data:csv});toast('保存しました')}catch(e){if(e.code!=='declined')toast('保存できませんでした')}};
+  const rep=S.reports.find(r=>r.id===M)||{};
+  if($('#confirm')) $('#confirm').onclick=()=>save('reports',M,{...strip(rep),confirmed:true,confirmedAt:new Date().toISOString()}).then(ok=>ok&&toast('確認済みにしました'));
+  if($('#unconfirm')) $('#unconfirm').onclick=()=>save('reports',M,{...strip(rep),confirmed:false}).then(ok=>ok&&toast('取り消しました'));
+  $('#editComment').onclick=()=>{openModal(`<h2>所見</h2><div class="fld full"><label for="cmt">${jpM(M)}の所見</label><textarea id="cmt" rows="10">${esc(rep.comment||'')}</textarea></div><div class="sheet-f"><button class="btn" id="cC">やめる</button><button class="btn pri" id="cS">保存</button></div>`);
+    $('#cC').onclick=closeModal;$('#cS').onclick=async()=>{if(await save('reports',M,{...strip(rep),comment:$('#cmt').value})){closeModal();toast('保存しました')}}};
+  const aiBtn=$('#aiComment');
+  if(!sample){aiBtn.hidden=true;return}
+  aiBtn.onclick=async()=>{
+    aiBtn.disabled=true;const box=$('#commentBox');box.textContent='考えています…（30秒ほどかかります）';
+    const prompt=`あなたは和牛の繁殖・育成牧場の経営アドバイザーです。次の月次報告の数字だけを使って、所見を日本語で書いてください。\n形式：\n【良かった点】箇条書き2〜3行\n【課題】箇条書き2〜3行\n【来月やること】箇条書き2〜3行（担当部門を括弧で）\n数字は報告にあるものだけを使い、推測で数字を作らないこと。前置きや締めの言葉は不要。\n\n${reportText(R)}`;
+    try{const {text}=await sample(prompt,{onText:({text})=>{box.textContent=text},cache:false});
+      await save('reports',M,{...strip(rep),comment:text,commentBy:'AI'});toast('所見を保存しました')}
+    catch(e){box.textContent=e.text||'';toast(e.code==='not_granted'?'AIの利用が許可されませんでした':e.code==='rate_limited'?'少し時間をおいてもう一度押してください':'所見を作れませんでした')}
+    finally{aiBtn.disabled=false}}};
+function strip(r){const o={...r};delete o.id;return o}
+async function copy(text){try{await navigator.clipboard.writeText(text);toast('コピーしました')}catch(e){openModal(`<h2>報告文</h2><p class="sub">全部選んでコピーしてください。</p><textarea style="width:100%;min-height:50vh;border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--surface)" id="cpy">${esc(text)}</textarea><div class="sheet-f"><button class="btn pri" id="cpyX">閉じる</button></div>`);$('#cpy').select();$('#cpyX').onclick=closeModal}}
+
+V.breed=()=>{
+  const b=breedStats(M),o=opuStats(M),c=calvingStats(M);
+  const recs=S.ai.filter(r=>ym(r.date)===M).sort((a,b)=>a.date<b.date?1:-1);
+  const opus=S.opu.filter(r=>ym(r.date)===M).sort((a,b)=>a.date<b.date?1:-1);
+  const calv=S.calving.filter(r=>ym(r.date)===M).sort((a,b)=>a.date<b.date?1:-1);
+  const sName=id=>{const s=S.semen.find(s=>s.id===id);return s?s.bull:'—'};
+  const resPill=r=>r==='受胎'?pill('good','受胎'):r==='不受胎'?pill('bad','不受胎'):pill('none','未判定');
+  return `
+  <h1 class="pg">繁殖・分娩</h1>
+  <section class="sec"><div class="sec-h"><h2>分娩予定表</h2><span class="sub">受胎の記録から自動で作成（妊娠期間${GEST}日）</span></div>
+    ${table(['分娩予定日','母牛',{t:'あと',n:1},'授精日','方法','',''],c.next.map(r=>{const d=dayDiff(TODAY,r.due);
+      return [`<b>${jpD(r.due)}</b>`,esc(r.cowId),d<0?`<span class="pill p-bad">${-d}日超過</span>`:d<=14?`<span class="pill p-warn">${d}日</span>`:`${d}日`,jpD(r.date),esc(r.method),'',`<button class="btn sm" data-calve="${esc(r.cowId)}" data-due="${r.due}">分娩を記録</button>`]}),'今後60日の分娩予定はありません')}</section>
+  <section class="sec"><div class="sec-h"><h2>${jpM(M)}の授精・移植</h2><button class="btn pri" data-add="ai">＋ 記録する</button></div>
+    <div class="grid">${stat('実施',b.count,'頭')}${stat('受胎率',f1(b.rate),'%',`鑑定済み${b.judged}頭・未判定${b.pending}頭`)}${stat('AIの受胎率',f1(b.ai.rate),'%',`${b.ai.n}頭`)}${stat('ETの受胎率',f1(b.et.rate),'%',`${b.et.n}頭`)}${stat('年度累計の受胎率',f1(b.fyRate),'%',`${b.fyN}頭`)}</div>
+    ${table(['実施日','雌牛','方法','精液・受精卵','授精師','妊娠鑑定',''],recs.map(r=>[jpD(r.date),esc(r.cowId),esc(r.method),esc(r.method==='AI'?sName(r.semenId):(r.embryo||'—')),esc(r.tech||'—'),resPill(r.result),`<button class="btn sm" data-edit="ai" data-id="${r.id}">直す</button>`]),'この月の記録はありません')}</section>
+  <section class="sec"><div class="sec-h"><h2>${jpM(M)}の採卵・培養</h2><button class="btn pri" data-add="opu">＋ 記録する</button></div>
+    <div class="grid">${stat('培養卵数',o.mo.cultured,'個',`年度累計 ${o.fy.cultured}個`)}${stat('生産個数',o.mo.produced,'個',`年度累計 ${o.fy.produced}個`)}${stat('新鮮卵移植',o.mo.freshET,'個',`年度累計 ${o.fy.freshET}個`)}${stat('凍結',o.mo.frozen,'個',`年度累計 ${o.fy.frozen}個`)}</div>
+    ${table(['採卵日','供卵牛',{t:'採卵',n:1},{t:'培養',n:1},{t:'生産',n:1},{t:'新鮮移植',n:1},{t:'凍結',n:1},''],opus.map(r=>[jpD(r.date),esc(r.donorId),f0(r.collected),f0(r.cultured),f0(r.produced),f0(r.freshET),f0(r.frozen),`<button class="btn sm" data-edit="opu" data-id="${r.id}">直す</button>`]),'この月の記録はありません')}</section>
+  <section class="sec"><div class="sec-h"><h2>${jpM(M)}の分娩</h2>${sample?'<button class="btn ai" id="paperCalf">紙の記録を写真で読む</button>':''}<button class="btn pri" data-add="calving">＋ 記録する</button></div>
+    <div class="grid">${stat('分娩',c.mo,'頭',`うち生存 ${c.live}頭`)}${stat('雌 / 雄',`${c.female} / ${c.male}`,'頭')}${stat('平均生時体重',f1(c.avgW),'kg')}${stat('分娩率（年度）',f1(c.rate),'%',`予定${c.dueN}頭中 ${c.doneN}頭`)}</div>
+    ${table(['分娩日','母牛','子牛','性別',{t:'生時体重',n:1},'状態',''],calv.map(r=>[jpD(r.date),esc(r.damId),esc(r.calfId||'—'),esc(r.sex||'—'),r.weight==null?'—':f1(r.weight)+'kg',r.status==='正常'?pill('good','正常'):pill(r.status==='死産'?'bad':'warn',r.status||'—'),`<button class="btn sm" data-edit="calving" data-id="${r.id}">直す</button>`]),'この月の記録はありません')}</section>`};
+V.breed.bind=()=>{
+  document.querySelectorAll('[data-calve]').forEach(b=>b.onclick=()=>openForm('calving',{damId:b.dataset.calve},{head:`<p class="sub" style="margin:0">分娩予定 ${jpD(b.dataset.due)} の母牛です</p>`}));
+  const pb=$('#paperCalf');if(pb) pb.onclick=()=>photoRead('calving');};
+
+V.semen=()=>{
+  const sm=semenStats(M);const T=cfg().targets;
+  const recs=S.ai.filter(r=>r.method==='AI'&&ym(r.date)===M).sort((a,b)=>a.date<b.date?1:-1);
+  return `
+  <h1 class="pg">精液</h1>
+  <section class="sec"><div class="sec-h"><h2>在庫</h2><span class="sub">受入本数から、授精の記録で使った本数を自動で引いています</span><button class="btn pri" data-add="semen">＋ 精液を受け入れる</button></div>
+    ${table(['種雄牛','精液番号',{t:'受入',n:1},{t:'使用',n:1},{t:'今月使用',n:1},{t:'在庫',n:1},'状態',''],sm.map(s=>[esc(s.bull),esc(s.lot),f0(num(s.received)),s.used,s.usedMo,`<b>${s.stock}</b>`,s.low?pill('bad','発注'):pill('good','足りている'),`<button class="btn sm" data-edit="semen" data-id="${s.id}">直す</button>`]),'精液がまだ登録されていません')}</section>
+  <section class="sec"><div class="sec-h"><h2>種雄牛ごとの受胎率（年度）</h2></div>
+    ${table(['種雄牛',{t:'鑑定済み',n:1},{t:'受胎率',n:1},''],sm.filter(s=>s.rateN).sort((a,b)=>b.rate-a.rate).map(s=>[esc(s.bull),s.rateN+'頭',f1(s.rate)+'%',`<div class="bar" style="width:120px"><i style="width:${Math.min(100,s.rate||0)}%"></i></div>`]),'鑑定済みの記録がまだありません')}</section>
+  <section class="sec"><div class="sec-h"><h2>授精証明書（${jpM(M)}）</h2><span class="sub">授精の記録から作成します</span></div>
+    ${table(['授精日','雌牛','種雄牛','授精師',''],recs.map(r=>{const s=S.semen.find(x=>x.id===r.semenId)||{};return [jpD(r.date),esc(r.cowId),esc(s.bull||'—'),esc(r.tech||'—'),`<button class="btn sm" data-cert="${r.id}">証明書を見る</button>`]}),'この月のAIの記録はありません')}</section>`};
+V.semen.bind=()=>document.querySelectorAll('[data-cert]').forEach(b=>b.onclick=()=>cert(b.dataset.cert));
+function cert(id){
+  const r=S.ai.find(x=>x.id===id);if(!r)return;const s=S.semen.find(x=>x.id===r.semenId)||{};
+  const no=`${r.date.replace(/-/g,'')}-${String(r.cowId).slice(-4)}`;
+  const txt=`家畜人工授精証明書\n証明書番号：${no}\n授精年月日：${r.date}\n雌牛の個体識別番号：${r.cowId}\n種雄牛名：${s.bull||''}\n精液番号：${s.lot||''}\n授精師：${r.tech||''}\n事業所：${cfg().office}`;
+  openModal(`<h2>授精証明書</h2><div class="cert"><h3>家畜人工授精証明書</h3><dl>
+    <dt>証明書番号</dt><dd>${esc(no)}</dd><dt>授精年月日</dt><dd>${esc(r.date)}</dd><dt>雌牛の個体識別番号</dt><dd>${esc(r.cowId)}</dd>
+    <dt>種雄牛名</dt><dd>${esc(s.bull||'—')}</dd><dt>精液番号</dt><dd>${esc(s.lot||'—')}</dd><dt>授精師</dt><dd>${esc(r.tech||'—')}</dd><dt>事業所</dt><dd>${esc(cfg().office)}</dd></dl></div>
+    <p class="sub" style="margin:0">試作の様式です。正式な様式（記載項目）は使っている精液管理システムや組合の様式に合わせます。</p>
+    <div class="sheet-f"><button class="btn" id="ceX">閉じる</button><button class="btn pri" id="ceC">文字をコピー</button></div>`);
+  $('#ceX').onclick=closeModal;$('#ceC').onclick=()=>{navigator.clipboard.writeText(txt).then(()=>toast('コピーしました'),()=>toast('コピーできませんでした'))}}
+
+V.grow=()=>{
+  const T=cfg().targets.growing;
+  const cards=cfg().farms.map(f=>{const g=growStats(M,f),t=T[f]||{};
+    const k=(l,v,u,tv,dir,fmt)=>`<div class="kpi"><span class="nm">${l}</span><span class="val">${fmt(v)}${v==null?'':`<small class="muted"> ${u}</small>`}</span><span class="tg">目標 ${tv==null?'—':fmt(tv)+u}</span><span>${pill(judge(v,tv,dir))}</span></div>`;
+    return `<div class="farm"><div class="row"><h3>${esc(f)}農場</h3><span class="sub">飼養中 ${g.head}頭・今月出荷 ${g.shipped}頭</span></div>
+      <div>${k('出荷牛の平均体重',g.weight,'kg',t.shipWeight,'up',f1)}${k('出荷牛の平均日齢',g.age,'日',t.shipAge,'down',f0)}${k('DG（1日の増体）',g.dg,'kg',t.dg,'up',f2)}${k('導入からの死亡率（年度）',g.mortality,'%',t.mortality,'down',f1)}</div>
+      <span class="sub">死亡率＝年度内の死亡 ${g.deaths}頭 ÷（期首の頭数＋年度内の導入）${g.base}頭</span></div>`}).join('');
+  const shipped=S.cattle.filter(c=>(c.status==='出荷'&&ym(c.shipDate)===M)||(c.status==='死亡'&&ym(c.deathDate)===M)||ym(c.introDate)===M).sort((a,b)=>(a.farm+a.earTag)<(b.farm+b.earTag)?-1:1);
+  return `
+  <h1 class="pg">育成</h1>
+  <section class="sec"><div class="sec-h"><h2>${jpM(M)}の成果</h2></div><div class="two">${cards}</div></section>
+  <section class="sec"><div class="sec-h"><h2>${jpM(M)}に動きのあった牛</h2><span class="sub">導入・出荷・死亡</span><button class="btn pri" data-add="cattle">＋ 牛を登録</button></div>
+    ${table(['農場','個体番号','状態','導入日','出荷・死亡日',{t:'体重',n:1},{t:'日齢',n:1},{t:'DG',n:1},''],shipped.map(c=>{const d=c.shipDate||c.deathDate;
+      return [esc(c.farm),esc(c.earTag),c.status==='出荷'?pill('good','出荷'):c.status==='死亡'?pill('bad','死亡'):pill('none','飼養中'),jpD(c.introDate),jpD(d),c.status==='出荷'?(c.shipWeight?f1(c.shipWeight)+'kg':'<span class="pill p-warn">未入力</span>'):(c.introWeight?f1(c.introWeight)+'kg':'—'),
+        c.birthDate&&d?dayDiff(c.birthDate,d)+'日':'—',c.status==='出荷'&&c.shipWeight&&c.introWeight?f2((c.shipWeight-c.introWeight)/Math.max(1,dayDiff(c.introDate,c.shipDate))):'—',`<button class="btn sm" data-edit="cattle" data-id="${c.id}">直す</button>`]}),'この月の動きはありません')}</section>
+  <section class="sec"><div class="sec-h"><h2>飼養中の牛を探す</h2></div>
+    <div class="fld"><label for="cq">個体番号の一部</label><input id="cq" placeholder="例：1234"></div><div id="cres"></div></section>`};
+V.grow.bind=()=>{const q=$('#cq');q.oninput=()=>{const v=q.value.trim();const r=v?S.cattle.filter(c=>String(c.earTag).includes(v)).slice(0,20):[];
+  $('#cres').innerHTML=v?table(['農場','個体番号','状態','導入日',''],r.map(c=>[esc(c.farm),esc(c.earTag),esc(c.status),jpD(c.introDate),`<button class="btn sm" data-edit="cattle" data-id="${c.id}">出荷・死亡を記録</button>`]),'見つかりません'):'';bindCommon()}};
+
+V.carcass=()=>{
+  const ca=carcassStats(M),T=cfg().targets;
+  const recs=S.carcass.filter(r=>ym(r.date)===M).sort((a,b)=>a.date<b.date?1:-1);
+  return `
+  <h1 class="pg">枝肉</h1>
+  <section class="sec"><div class="sec-h"><h2>${jpM(M)}の成績</h2><button class="btn pri" data-add="carcass">＋ 成績を入れる</button></div>
+    <div class="grid">${stat('出荷',ca.mo.n,'頭')}${stat('平均枝肉重量',f1(ca.mo.w),'kg',`目標 ${T.carcassWeight}kg`)}${stat('4・5等級の割合',f1(ca.mo.hi),'%')}${stat('枝肉売上',yen(ca.mo.sales),'',`平均単価 ${f0(ca.mo.price)}円/kg`)}</div>
+    ${table(['牛舎',{t:'今月 頭数',n:1},{t:'今月 平均重量',n:1},'',{t:'年度 頭数',n:1},{t:'年度 平均重量',n:1},{t:'年度 4・5等級',n:1}],ca.barns.map(x=>[esc(x.barn),x.mo.n,x.mo.n?f1(x.mo.w)+'kg':'—',x.mo.n?pill(judge(x.mo.w,T.carcassWeight,'up')):'',x.fy.n,x.fy.n?f1(x.fy.w)+'kg':'—',x.fy.n?f1(x.fy.hi)+'%':'—']))}</section>
+  <section class="sec"><div class="sec-h"><h2>明細</h2></div>
+    ${table(['と畜日','個体番号','牛舎',{t:'枝肉重量',n:1},'格付',{t:'BMS',n:1},{t:'単価',n:1},{t:'金額',n:1},''],recs.map(r=>[jpD(r.date),esc(r.earTag),esc(r.barn),f1(r.weight)+'kg',esc(r.grade||'—'),r.bms??'—',r.price?f0(r.price)+'円':'—',yen((r.weight||0)*(r.price||0)),`<button class="btn sm" data-edit="carcass" data-id="${r.id}">直す</button>`]),'この月の成績はありません')}</section>`};
+
+V.stock=()=>{
+  const st=stockStats();const iName=id=>(S.items.find(i=>i.id===id)||{}).name||'（削除された品目）';
+  const orders=S.orders.filter(o=>o.status!=='入荷済'||ym(o.receivedAt)===M).sort((a,b)=>a.createdAt<b.createdAt?1:-1);
+  const items=[...S.items].sort((a,b)=>(a.category+a.name)<(b.category+b.name)?-1:1);
+  return `
+  <h1 class="pg">在庫・発注</h1>
+  <section class="sec"><div class="sec-h"><h2>発注が必要なもの</h2><span class="sub">在庫が発注点を切った品目を自動で出しています</span></div>
+    ${st.need.length?table(['品名',{t:'在庫',n:1},{t:'発注点',n:1},{t:'発注数',n:1},'発注先',''],st.need.map(i=>[esc(i.name),`<b>${f0(i.stock)}</b> ${esc(i.unit||'')}`,f0(i.reorderPoint),f0(i.orderQty),esc(i.supplier||'—'),st.open.has(i.id)?pill('none','発注リスト済み'):`<button class="btn sm pri" data-order="${i.id}">発注リストに入れる</button>`])):'<div class="empty">発注が必要な品目はありません</div>'}</section>
+  <section class="sec"><div class="sec-h"><h2>発注リスト</h2>${orders.some(o=>o.status==='発注予定')?'<button class="btn" id="copyOrd">発注予定をコピー</button>':''}</div>
+    ${table(['品名',{t:'数量',n:1},'発注先','状態',''],orders.map(o=>{const it=S.items.find(i=>i.id===o.itemId)||{};return [esc(iName(o.itemId)),`${f0(o.qty)} ${esc(it.unit||'')}`,esc(it.supplier||'—'),o.status==='入荷済'?pill('good','入荷済'):o.status==='発注済'?pill('warn','発注済'):pill('none','発注予定'),
+      o.status==='発注予定'?`<button class="btn sm" data-ost="${o.id}" data-to="発注済">発注した</button>`:o.status==='発注済'?`<button class="btn sm pri" data-ost="${o.id}" data-to="入荷済">入荷した</button>`:jpD((o.receivedAt||'').slice(0,10))]}),'発注リストは空です')}</section>
+  <section class="sec"><div class="sec-h"><h2>在庫一覧</h2><span class="sub">最終棚卸 ${st.last?jpD(st.last.slice(0,10)):'未実施'}</span>${st.stale?pill('warn','1週間以上前'):''}<button class="btn pri" id="countBtn">棚卸を入力</button><button class="btn" data-add="items">＋ 品目</button></div>
+    ${table(['区分','品名',{t:'在庫',n:1},{t:'発注点',n:1},'発注先',''],items.map(i=>[esc(i.category||'—'),esc(i.name),`${num(i.stock)<=num(i.reorderPoint)?`<b style="color:var(--bad)">${f0(i.stock)}</b>`:f0(i.stock)} ${esc(i.unit||'')}`,f0(i.reorderPoint),esc(i.supplier||'—'),`<button class="btn sm" data-edit="items" data-id="${i.id}">直す</button>`]),'品目がまだ登録されていません')}</section>`};
+V.stock.bind=()=>{
+  document.querySelectorAll('[data-order]').forEach(b=>b.onclick=async()=>{const i=S.items.find(x=>x.id===b.dataset.order);b.disabled=true;
+    if(await save('orders',null,{itemId:i.id,qty:num(i.orderQty)||1,status:'発注予定',createdAt:new Date().toISOString()}))toast('発注リストに入れました')});
+  document.querySelectorAll('[data-ost]').forEach(b=>b.onclick=async()=>{const o=S.orders.find(x=>x.id===b.dataset.ost);b.disabled=true;const to=b.dataset.to;
+    const d={...strip(o),status:to};if(to==='入荷済')d.receivedAt=new Date().toISOString();if(to==='発注済')d.orderedAt=new Date().toISOString();
+    if(await save('orders',o.id,d)){if(to==='入荷済'){const it=S.items.find(i=>i.id===o.itemId);if(it)await save('items',it.id,{...strip(it),stock:(num(it.stock)||0)+(num(o.qty)||0)})}toast(to==='入荷済'?'在庫に足しました':'発注済みにしました')}});
+  const co=$('#copyOrd');if(co)co.onclick=()=>{const by={};S.orders.filter(o=>o.status==='発注予定').forEach(o=>{const it=S.items.find(i=>i.id===o.itemId)||{};(by[it.supplier||'発注先未設定']=by[it.supplier||'発注先未設定']||[]).push(`・${it.name} ${o.qty}${it.unit||''}`)});
+    copy(Object.entries(by).map(([s,l])=>`【${s}様】\n${l.join('\n')}`).join('\n\n'))};
+  $('#countBtn').onclick=()=>{const items=[...S.items].sort((a,b)=>(a.category+a.name)<(b.category+b.name)?-1:1);
+    openModal(`<h2>棚卸</h2><p class="sub" style="margin:0">数えた数を入れて「保存」。空欄の品目は変更しません。</p><div class="form">${items.map(i=>`<div class="fld"><label for="c_${i.id}">${esc(i.name)}（今 ${f0(i.stock)} ${esc(i.unit||'')}）</label><input id="c_${i.id}" type="number" inputmode="decimal" step="any"></div>`).join('')}</div>
+    <div class="sheet-f"><button class="btn" id="kC">やめる</button><button class="btn pri" id="kS">保存</button></div>`);
+    $('#kC').onclick=closeModal;$('#kS').onclick=async()=>{$('#kS').disabled=true;const now=new Date().toISOString();let n=0;
+      for(const i of items){const v=num(document.getElementById('c_'+i.id).value);if(v!=null){if(await save('items',i.id,{...strip(i),stock:v,countedAt:now}))n++}}
+      closeModal();toast(`${n}品目の棚卸を保存しました`)}}};
+
+V.invoice=()=>{
+  const iv=invStats(M);const recs=S.invoices.filter(r=>ym(r.date)===M).sort((a,b)=>a.date<b.date?1:-1);
+  const cats=Object.entries(iv.cats).sort((a,b)=>b[1]-a[1]);const mx=Math.max(1,...cats.map(c=>c[1]));
+  return `
+  <h1 class="pg">請求書</h1>
+  <section class="sec"><div class="sec-h"><h2>請求書を入れる</h2></div>
+    <div class="row">${sample?'<button class="btn ai" id="invPhoto">写真から読み取る</button>':''}<button class="btn" data-add="invoices">手で入力</button></div>
+    <p class="sub" style="margin:0">${sample?'請求書を撮った写真を選ぶと、AIが請求元・日付・金額・品目を読み取ります。内容を確認してから保存します。':'AIの読み取りはこの画面では使えません。手で入力してください。'}</p></section>
+  <section class="sec"><div class="sec-h"><h2>${jpM(M)}の経費</h2><span class="sub">${iv.n}件・未確認 ${iv.unchecked}件</span></div>
+    <div class="grid">${stat('合計（税込）',yen(iv.total))}</div>
+    ${cats.length?`<div style="display:flex;flex-direction:column;gap:6px">${cats.map(([c,v])=>`<div style="display:grid;grid-template-columns:5.5em 1fr 7em;gap:8px;align-items:center;font-size:14px"><span>${esc(c)}</span><div class="bar"><i style="width:${v/mx*100}%"></i></div><span style="text-align:right">${yen(v)}</span></div>`).join('')}</div>`:''}
+    ${table(['請求日','請求元','費目',{t:'金額',n:1},'確認',''],recs.map(r=>[jpD(r.date),esc(r.vendor),esc(r.category||'—'),yen(r.total),r.checked==='yes'?pill('good','確認済み'):`<button class="btn sm" data-chk="${r.id}">確認した</button>`,`<button class="btn sm" data-edit="invoices" data-id="${r.id}">直す</button>`]),'この月の請求書はありません')}</section>`};
+V.invoice.bind=()=>{
+  const p=$('#invPhoto');if(p)p.onclick=()=>photoRead('invoices');
+  document.querySelectorAll('[data-chk]').forEach(b=>b.onclick=async()=>{const r=S.invoices.find(x=>x.id===b.dataset.chk);b.disabled=true;if(await save('invoices',r.id,{...strip(r),checked:'yes'}))toast('確認済みにしました')})};
+
+/* ---------- photo reading (AI) ---------- */
+async function photoRead(kind){
+  const lim=await sample.limits().catch(()=>null);
+  if(!lim||!lim.images){toast('この画面では写真の読み取りが使えません');return}
+  openModal(`<h2>${kind==='invoices'?'請求書':'分娩記録の紙'}を写真で読む</h2>
+    <div class="fld"><label for="ph">写真を選ぶ（${kind==='invoices'?'1枚':'最大'+lim.images.maxCount+'枚'}）</label><input type="file" id="ph" accept="${lim.images.mediaTypes.join(',')}" ${kind==='calving'?'multiple':''}></div>
+    <div class="ai-out" id="phOut"><span class="muted">写真を選ぶと読み取りを始めます。</span></div>
+    <div class="sheet-f"><button class="btn" id="phX">やめる</button></div>`);
+  let ctl=null;
+  $('#phX').onclick=()=>{ctl&&ctl.abort();closeModal()};
+  $('#ph').onchange=async e=>{
+    const files=[...e.target.files].slice(0,lim.images.maxCount);if(!files.length)return;
+    const out=$('#phOut');out.textContent='読み取っています…（30秒〜1分ほどかかります）';ctl=new AbortController();
+    const yr=M.slice(0,4);
+    const prompt=kind==='invoices'
+      ?`この画像は牧場に届いた請求書です。次の形のJSONオブジェクトだけを返してください。\n{"vendor":"請求元の会社名","date":"YYYY-MM-DD（請求日）","total":税込の合計金額（数値）,"tax":消費税額（数値、書かれていなければnull）,"category":"飼料費・薬品費・診療費・資材費・繁殖費・燃料費・修繕費・その他 のうち最も合うもの","lines":[{"name":"品名","qty":数量,"amount":金額}]}\n読めない項目はnullにしてください。金額は数字だけ（円やカンマは付けない）。`
+      :`この画像は牛の分娩の手書き記録です。書かれている子牛1頭ごとに1つのオブジェクトにして、JSON配列だけを返してください。\n[{"date":"YYYY-MM-DD（分娩日）","damId":"母牛の番号","calfId":"子牛の番号（なければnull）","sex":"雌 または 雄","weight":生時体重kg（数値、なければnull）,"status":"正常・難産・死産 のどれか（書かれていなければ正常）","note":"備考（なければ空文字）"}]\n年が書かれていない日付は${yr}年とします。読めない項目はnullにしてください。`;
+    try{
+      const data=await sample.json(prompt,{images:files,signal:ctl.signal,onText:()=>{out.textContent='読み取っています…'}});
+      if(kind==='invoices'){
+        if(!data||typeof data!=='object'||Array.isArray(data))throw {code:'invalid_json'};
+        const lines=Array.isArray(data.lines)?data.lines:[];
+        const rec={date:data.date||TODAY,vendor:data.vendor||'',total:num(data.total),tax:num(data.tax),category:data.category||'その他',checked:'no',
+          memo:lines.map(l=>`${l.name??''} ${l.qty??''} ${l.amount!=null?'¥'+l.amount:''}`.trim()).join(' / '),lines,source:'AI読取'};
+        closeModal();openForm('invoices',null,{head:`<p class="banner" style="margin:0"><b>AIが読み取りました。</b>写真と見比べて、違うところを直してから保存してください。</p>`,merge:{lines,source:'AI読取'}});
+        for(const [k,v] of Object.entries(rec)){const el=document.getElementById('f_'+k);if(el&&v!=null)el.value=v}
+      }else{
+        const rows=(Array.isArray(data)?data:[]).filter(r=>r&&r.damId);
+        if(!rows.length){out.textContent='分娩の記録が読み取れませんでした。写真を撮り直すか、手で入力してください。';return}
+        out.innerHTML=`<p class="sub" style="margin:0 0 6px">${rows.length}頭分を読み取りました。写真と見比べて直してから保存してください。</p>`+
+          `<div class="tbl"><table><thead><tr><th>分娩日</th><th>母牛</th><th>子牛</th><th>性別</th><th>体重</th><th>状態</th></tr></thead><tbody>${rows.map((r,i)=>`<tr>
+          <td><input id="r${i}_date" type="date" value="${esc(r.date||'')}"></td><td><input id="r${i}_damId" value="${esc(r.damId||'')}" size="8"></td><td><input id="r${i}_calfId" value="${esc(r.calfId||'')}" size="8"></td>
+          <td><select id="r${i}_sex">${['雌','雄'].map(s=>`<option${r.sex===s?' selected':''}>${s}</option>`).join('')}</select></td><td><input id="r${i}_weight" type="number" step="0.1" value="${esc(r.weight??'')}" style="width:5em"></td>
+          <td><select id="r${i}_status">${['正常','難産','死産'].map(s=>`<option${(r.status||'正常')===s?' selected':''}>${s}</option>`).join('')}</select></td></tr>`).join('')}</tbody></table></div>`;
+        const f=$('#sheet .sheet-f');const sb=document.createElement('button');sb.className='btn pri';sb.textContent=`${rows.length}頭分を保存`;f.append(sb);
+        sb.onclick=async()=>{sb.disabled=true;let n=0;for(let i=0;i<rows.length;i++){const g=k=>document.getElementById(`r${i}_${k}`).value.trim();
+          if(!g('damId')||!g('date'))continue;if(await save('calving',null,{date:g('date'),damId:g('damId'),calfId:g('calfId'),sex:g('sex'),weight:num(g('weight')),status:g('status'),note:rows[i].note||'',source:'紙から読取'}))n++}
+          closeModal();toast(`${n}頭分の分娩を保存しました`)};
+      }
+    }catch(err){
+      const c=err&&err.code;if(c==='cancelled')return;
+      out.textContent=c==='not_granted'?'AIの利用が許可されませんでした。':c==='image_rejected'?'この写真は読めませんでした。別の写真を選んでください。':c==='rate_limited'?'少し時間をおいてからもう一度試してください。':c==='invalid_json'?'うまく読み取れませんでした。明るい場所で真上から撮った写真でもう一度試してください。':'読み取れませんでした。もう一度試してください。'}
+  };
+}
+
+V.goals=()=>{
+  const c=cfg(),T=c.targets;const hasSample=COLS.some(k=>S[k].some(r=>r.sample));
+  const inp=(id,l,v,step)=>`<div class="fld"><label for="${id}">${l}</label><input id="${id}" type="number" inputmode="decimal" step="${step||'any'}" value="${v??''}"></div>`;
+  return `
+  <h1 class="pg">目標・設定</h1>
+  <section class="sec"><div class="sec-h"><h2>繁殖・枝肉の目標</h2><span class="sub">年間の数は、月次報告で「今月時点の目安」に割り戻して比べます</span></div>
+    <div class="form">${inp('t_conception','受胎率（%）',T.conception)}${inp('t_calvingRate','分娩率（%）',T.calvingRate)}${inp('t_cultured','培養卵数（年間・個）',T.cultured)}${inp('t_produced','生産個数（年間・個）',T.produced)}${inp('t_freshET','新鮮卵移植個数（年間・個）',T.freshET)}${inp('t_carcassWeight','平均枝肉重量（kg）',T.carcassWeight)}${inp('t_semenMin','精液の発注点（本・標準）',T.semenMin)}</div></section>
+  <section class="sec"><div class="sec-h"><h2>育成の目標（農場ごと）</h2></div>
+    ${c.farms.map(f=>{const t=T.growing[f]||{};return `<div class="kg-h">${esc(f)}農場</div><div class="form">${inp(`g_${f}_shipWeight`,'出荷時の平均体重（kg）',t.shipWeight)}${inp(`g_${f}_shipAge`,'出荷時の平均日齢（日・以下）',t.shipAge)}${inp(`g_${f}_dg`,'DG（kg/日）',t.dg)}${inp(`g_${f}_mortality`,'死亡率（%・以下）',t.mortality)}</div>`}).join('')}</section>
+  <section class="sec"><div class="sec-h"><h2>基本の設定</h2></div>
+    <div class="form"><div class="fld"><label for="s_fy">年度の始まりの月</label><select id="s_fy">${Array.from({length:12},(_,i)=>`<option value="${i+1}"${c.fyStart===i+1?' selected':''}>${i+1}月</option>`).join('')}</select></div>
+    <div class="fld"><label for="s_farms">育成の農場（読点で区切る）</label><input id="s_farms" value="${esc(c.farms.join('、'))}"></div>
+    <div class="fld"><label for="s_barns">牛舎（読点で区切る）</label><input id="s_barns" value="${esc(c.barns.join('、'))}"></div>
+    <div class="fld"><label for="s_office">証明書に載せる事業所名</label><input id="s_office" value="${esc(c.office)}"></div></div>
+    <div class="row"><button class="btn pri" id="saveGoals">目標と設定を保存</button></div></section>
+  ${false?`<section class="sec"><div class="sec-h"><h2>サンプルデータ</h2></div><p class="sub" style="margin:0">今入っている記録の多くは、使い方を見るためのサンプルです。本番の入力を始める前に消してください（目標・設定は残ります）。</p><div class="row"><button class="btn dng" id="delSample">サンプルデータを全部消す</button></div></section>`:''}`};
+V.goals.bind=()=>{
+  $('#saveGoals').onclick=async()=>{const c=cfg();const g=id=>num(document.getElementById(id).value);
+    const split=s=>s.split(/[、,，\s]+/).map(x=>x.trim()).filter(Boolean);
+    const farms=split($('#s_farms').value),barns=split($('#s_barns').value);
+    const growing={};farms.forEach(f=>{const el=k=>document.getElementById(`g_${f}_${k}`);growing[f]=el('shipWeight')?{shipWeight:num(el('shipWeight').value),shipAge:num(el('shipAge').value),dg:num(el('dg').value),mortality:num(el('mortality').value)}:{...DEF.targets.growing['平野']}});
+    const s={fyStart:Number($('#s_fy').value),farms:farms.length?farms:c.farms,barns:barns.length?barns:c.barns,office:$('#s_office').value.trim()||c.office,
+      targets:{conception:g('t_conception'),calvingRate:g('t_calvingRate'),cultured:g('t_cultured'),produced:g('t_produced'),freshET:g('t_freshET'),carcassWeight:g('t_carcassWeight'),semenMin:g('t_semenMin'),growing}};
+    if(await save('settings','main',s))toast('保存しました')};
+  const ds=$('#delSample');if(ds)ds.onclick=async()=>{if(!ds.dataset.sure){ds.dataset.sure=1;ds.textContent='本当に消す（元に戻せません）';return}
+    ds.disabled=true;let n=0;for(const k of COLS)for(const r of S[k].filter(r=>r.sample)){if(await del(k,r.id))n++;if(n%20===0)ds.textContent=`消しています… ${n}件`}
+    toast(`サンプルを${n}件消しました`)}};
+
+/* ---------- render ---------- */
+function bindCommon(){
+  document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>openForm(b.dataset.add));
+  document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{const r=S[b.dataset.edit].find(x=>x.id===b.dataset.id);if(r)openForm(b.dataset.edit,r)});
+}
+function render(){
+  document.querySelectorAll('#tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===tab?'true':'false'));
+  $('#mPick').value=M;
+  if(!loaded){$('#view').innerHTML=dbState==='none'
+    ?`<div class="empty">共有データに接続できませんでした。claude.ai でこのページを開き直してください。</div>`
+    :`<div class="empty">データを読み込んでいます…</div>`;return}
+  const hasSample=COLS.some(k=>S[k].some(r=>r.sample));
+  const y=window.scrollY;
+  $('#view').innerHTML=`<div class="banner"><b>デモ版</b><span>見ていただくためのサンプルです。入力や変更は画面を閉じると元に戻ります。請求書・分娩記録の写真のAI読み取りと、AIの所見は本番版で使えます。</span></div>`+V[tab]();
+  bindCommon();V[tab].bind&&V[tab].bind();
+  window.scrollTo(0,y);
+}
+let rT=null;function schedule(){clearTimeout(rT);rT=setTimeout(render,60)}
+$('#tabs').addEventListener('click',e=>{const b=e.target.closest('button[data-tab]');if(!b)return;tab=b.dataset.tab;try{localStorage.setItem('usn-tab',tab)}catch(err){}window.scrollTo(0,0);render()});
+$('#mPrev').onclick=()=>{M=monthAdd(M,-1);render()};
+$('#mNext').onclick=()=>{M=monthAdd(M,1);render()};
+$('#mPick').onchange=e=>{if(e.target.value){M=e.target.value;render()}};
+
+/* ---------- boot ---------- */
+render();
+(async()=>{
+  if(!window.claude||!claude.use){dbState='none';render();return}
+  [sample,downloads]=await Promise.all([claude.use('sample').catch(()=>null),claude.use('downloads').catch(()=>null)]);
+  db=await claude.use('db').catch(()=>null);
+  if(!db){dbState='none';render();return}
+  let pending=COLS.length+1;const done=()=>{if(--pending===0){loaded=true}schedule()};
+  COLS.forEach(c=>{let first=true;db.collection(c).onSnapshot(snap=>{S[c]=snap.docs.map(d=>({id:d.id,...d.data()}));if(first){first=false;done()}else schedule()},
+    err=>{if(first){first=false;done()}})});
+  let f1st=true;db.doc('settings/main').onSnapshot(s=>{S.settings=s.exists?s.data():null;if(f1st){f1st=false;done()}else schedule()},()=>{if(f1st){f1st=false;done()}});
+})();
+</script>
+</body></html>
