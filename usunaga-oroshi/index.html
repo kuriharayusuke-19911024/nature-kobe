@@ -1,0 +1,822 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>うすなが牧場 卸台帳</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=IBM+Plex+Mono:wght@500&family=Zen+Kaku+Gothic+New:wght@700&display=swap">
+<style>
+/* 冷蔵庫の鋼板のような冷たい灰色の地に、赤身の色をひとつだけ。上にタブ、中は一覧→詳細はシートで開く */
+:root{
+  --bg:#eef0f2; --surface:#ffffff; --sunk:#f6f7f8; --ink:#1c2128; --sub:#5d6670; --line:#d9dde2;
+  --accent:#9e1b32; --accent-soft:#f6e3e6; --on-accent:#ffffff;
+  --ok:#2e7149; --ok-soft:#e1f0e6; --warn:#9a5b00; --warn-soft:#fbeed6; --info:#2c5a87; --info-soft:#e2ecf6;
+  --f-display:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",sans-serif;
+  --f-body:"BIZ UDPGothic","Hiragino Sans","Yu Gothic","Noto Sans JP",system-ui,sans-serif;
+  --f-num:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#14171b; --surface:#1d2127; --sunk:#181b20; --ink:#e7e9ec; --sub:#9aa2ac; --line:#2e343c;
+  --accent:#e2576c; --accent-soft:#3a1d23; --on-accent:#1a0a0d;
+  --ok:#62c08a; --ok-soft:#1c3226; --warn:#e3a54a; --warn-soft:#3a2c14; --info:#7eaedb; --info-soft:#1b2a3a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#14171b; --surface:#1d2127; --sunk:#181b20; --ink:#e7e9ec; --sub:#9aa2ac; --line:#2e343c;
+  --accent:#e2576c; --accent-soft:#3a1d23; --on-accent:#1a0a0d;
+  --ok:#62c08a; --ok-soft:#1c3226; --warn:#e3a54a; --warn-soft:#3a2c14; --info:#7eaedb; --info-soft:#1b2a3a; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{background:var(--bg);color:var(--ink);font:15px/1.6 var(--f-body)}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.topin{max-width:1180px;margin:0 auto;padding:12px 16px 0;display:flex;flex-direction:column;gap:8px}
+.brand{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.brand h1{font:700 20px/1.2 var(--f-display);margin:0;letter-spacing:.02em}
+.brand .co{color:var(--sub);font-size:13px}
+nav.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+nav.tabs button{border:0;background:none;color:var(--sub);font:700 14px var(--f-body);padding:10px 14px;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+main{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:18px 60px;display:flex;flex-direction:column;gap:16px}
+h2{font:700 18px/1.3 var(--f-display);margin:0}
+h3{font:700 15px/1.4 var(--f-body);margin:0}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.spread{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);font:700 14px var(--f-body);padding:8px 14px;border-radius:8px;cursor:pointer}
+.btn:hover{border-color:var(--sub)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.sm{padding:4px 10px;font-size:13px}
+.btn.ghost{border-color:transparent;background:none;color:var(--sub)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font:700 13px var(--f-body);color:var(--sub);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.pill{display:inline-block;font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;white-space:nowrap}
+.st-new{background:var(--warn-soft);color:var(--warn)}
+.st-alloc{background:var(--info-soft);color:var(--info)}
+.st-shipped{background:var(--ok-soft);color:var(--ok)}
+.st-cancel{background:var(--sunk);color:var(--sub)}
+.st-in{background:var(--ok-soft);color:var(--ok)}
+.st-reserved{background:var(--info-soft);color:var(--info)}
+.st-out{background:var(--sunk);color:var(--sub)}
+.tablewrap{overflow-x:auto;min-width:0}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:8px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+th{font-size:12px;color:var(--sub);font-weight:700;white-space:nowrap}
+td.r,th.r{text-align:right}
+tr.click{cursor:pointer}
+tr.click:hover td{background:var(--sunk)}
+.muted{color:var(--sub);font-size:13px}
+.empty{border:1px dashed var(--line);border-radius:12px;padding:22px;color:var(--sub);text-align:center;font-size:14px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:14px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.kpi b{display:block;font:500 20px var(--f-num);font-variant-numeric:tabular-nums}
+.kpi span{font-size:12px;color:var(--sub)}
+.steps{display:grid;gap:8px;counter-reset:s}
+.steps li{list-style:none;display:flex;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.steps li::before{counter-increment:s;content:counter(s);width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font:700 13px var(--f-num);background:var(--sunk);color:var(--sub);flex:none}
+.steps li.done::before{content:"✓";background:var(--ok-soft);color:var(--ok)}
+.steps li span{flex:1;min-width:0}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--sub);font-weight:700;min-width:0}
+input,select,textarea{font:15px var(--f-body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%;min-width:0}
+input.num{text-align:right}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:none}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:10px}
+.ordercard{display:grid;grid-template-columns:auto 1fr auto;gap:4px 14px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer;text-align:left;font:inherit;color:inherit;width:100%}
+.ordercard:hover{border-color:var(--sub)}
+.ordercard .no{font:500 13px var(--f-num);color:var(--sub)}
+.ordercard .who{font-weight:700;font-size:16px;min-width:0}
+.ordercard .amt{font:500 16px var(--f-num);text-align:right}
+.ordercard .sub{grid-column:1/-1;color:var(--sub);font-size:13px}
+.lot{border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
+.lothead{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline;padding:10px 14px;background:var(--sunk);border-bottom:1px solid var(--line)}
+.lothead b{font:700 16px var(--f-num)}
+.lothead .m{font-size:13px;color:var(--sub)}
+.bar{height:8px;border-radius:4px;background:var(--accent);opacity:.8}
+/* sheet */
+dialog{border:0;padding:0;background:var(--surface);color:var(--ink);border-radius:14px;width:min(820px,calc(100vw - 24px));max-height:calc(100vh - 24px)}
+dialog::backdrop{background:rgba(10,12,15,.45)}
+.sh{display:flex;flex-direction:column;max-height:calc(100vh - 24px)}
+.shhead{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.shbody{padding:14px 16px;overflow:auto;display:flex;flex-direction:column;gap:14px}
+.shfoot{padding:12px 16px;border-top:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.line{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+.pick label{display:flex;gap:6px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:13px;cursor:pointer}
+.pick input{width:auto}
+.totals{display:grid;grid-template-columns:1fr auto;gap:2px 16px;justify-content:end;font-size:14px;margin-left:auto;min-width:240px}
+.totals .num{text-align:right}
+.totals .big{font-size:18px;font-weight:700}
+.note{background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:10px 12px;font-size:13px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:10px;font-weight:700;font-size:14px;z-index:50}
+.docprev{border:1px solid var(--line);border-radius:10px;background:#fff;overflow:auto;max-height:55vh}
+@media (max-width:560px){ .ordercard{grid-template-columns:1fr auto} .ordercard .no{grid-column:1/-1} }
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body>
+
+<header class="top"><div class="topin">
+  <div class="brand"><h1>卸台帳</h1><span class="co" id="coName"></span><span class="muted" id="conn">読み込み中…</span></div>
+  <nav class="tabs" id="tabs" role="tablist">
+    <button role="tab" data-t="orders" aria-selected="true">受注・出荷</button>
+    <button role="tab" data-t="stock">在庫</button>
+    <button role="tab" data-t="customers">取引先</button>
+    <button role="tab" data-t="billing">請求</button>
+    <button role="tab" data-t="analysis">分析</button>
+    <button role="tab" data-t="settings">設定</button>
+  </nav>
+</div></header>
+<main id="main"><div class="empty">データを読み込んでいます。</div></main>
+<dialog id="sheet"><div class="sh" id="sheetIn"></div></dialog>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/* ===================== 状態 ===================== */
+const S = {parts:[], lots:[], stock:[], customers:[], agents:[], orders:[], settings:{}};
+const COLS = ['parts','lots','stock','customers','agents','orders'];
+const V = {tab:'orders', ofilter:'open', month: ymNow(), loaded:false};
+let sample = null, readOnly = false;
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const yen = n => '¥' + Math.round(n || 0).toLocaleString('ja-JP');
+const kgf = n => (Math.round((n || 0) * 100) / 100).toLocaleString('ja-JP', {minimumFractionDigits:2, maximumFractionDigits:2});
+const pct = n => isFinite(n) ? (Math.round(n * 1000) / 10).toFixed(1) + '%' : '—';
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+function today(){ const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+function ymNow(){ return today().slice(0,7); }
+function ymShift(ym, k){ let [y,m] = ym.split('-').map(Number); m += k; while(m<1){m+=12;y--} while(m>12){m-=12;y++} return y + '-' + String(m).padStart(2,'0'); }
+const jdate = d => d ? d.replace(/^(\d{4})-(\d{2})-(\d{2})$/, (_,y,m,dd)=>`${+m}/${+dd}`) : '—';
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(()=> t.hidden = true, 2600); }
+
+const byId = (c, id) => S[c].find(x => x.id === id);
+const partName = id => byId('parts', id)?.name || '（部位未設定）';
+const custName = id => byId('customers', id)?.name || '（取引先なし）';
+const taxRate = () => (S.settings.taxRate ?? 8) / 100;
+const STATUS = {new:'受注', alloc:'引当済', shipped:'出荷済', cancel:'取消'};
+const SSTATUS = {in:'在庫', reserved:'引当中', out:'出荷済'};
+
+/* ===================== 計算 ===================== */
+function lotTotalKg(lotId){ return S.stock.filter(s => s.lotId === lotId).reduce((a,s)=>a + (+s.kg||0), 0); }
+function lotCostPerKg(lotId){ const l = byId('lots', lotId); const t = lotTotalKg(lotId); return l && t > 0 ? (+l.cost||0) / t : 0; }
+function lineCalc(line){
+  const items = (line.stockIds||[]).map(id => byId('stock', id)).filter(Boolean);
+  const kg = items.reduce((a,s)=>a + (+s.kg||0), 0);
+  const amount = Math.round(kg * (+line.price||0));
+  const cost = items.reduce((a,s)=>a + (+s.kg||0) * lotCostPerKg(s.lotId), 0);
+  return {items, kg, amount, cost};
+}
+function orderCalc(o){
+  let kg=0, sub=0, cost=0, qty=0;
+  (o.lines||[]).forEach(l => { const c = lineCalc(l); kg += c.kg; sub += c.amount; cost += c.cost; qty += (+l.qty||0); });
+  const disc = Math.round(+o.disc || 0);
+  const net = sub - disc;
+  const tax = Math.floor(net * taxRate());
+  return {kg, sub, disc, net, tax, total: net + tax, cost, gp: net - cost, qty};
+}
+function suggestDisc(o){
+  const c = byId('customers', o.customerId); if(!c || !c.discQty || !c.discYen) return 0;
+  const qty = (o.lines||[]).reduce((a,l)=>a + (+l.qty||0), 0);
+  return qty > +c.discQty ? qty * (+c.discYen) : 0;
+}
+function nextOrderNo(date){
+  const pre = (date||today()).replace(/-/g,'').slice(2);
+  const n = S.orders.filter(o => (o.no||'').startsWith(pre)).length + 1;
+  return pre + '-' + String(n).padStart(2,'0');
+}
+function nextLotNo(){ return S.lots.reduce((a,l)=>Math.max(a, +l.no||0), 0) + 1; }
+
+/* ===================== 保存（端末内＋Googleスプレッドシート） ===================== */
+const LS_DATA = 'usunaga-oroshi-data-v1', LS_CFG = 'usunaga-oroshi-cfg', LS_Q = 'usunaga-oroshi-queue';
+const ALL = [...COLS, 'config'];
+const Store = { data: {}, cfg: {url:'', pass:''}, queue: [], online: null, lastPull: 0 };
+ALL.forEach(c => Store.data[c] = {});
+function lsGet(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(_){ return d; } }
+function lsSet(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(_){} }
+function rebuild(){
+  COLS.forEach(c => S[c] = Object.values(Store.data[c]).filter(d => !d._d));
+  const st = Store.data.config.settings; S.settings = st && !st._d ? st : {};
+}
+function saveLocal(){ lsSet(LS_DATA, Store.data); lsSet(LS_Q, Store.queue); }
+function syncLabel(){
+  const el = $('#conn'); if(!el) return;
+  if(!Store.cfg.url) el.textContent = 'この端末だけに保存中（共有するには設定で保存先を登録）';
+  else if(Store.queue.length) el.textContent = `未送信 ${Store.queue.length}件（通信が戻ると自動で送ります）`;
+  else if(Store.online === false) el.textContent = '保存先につながりません';
+  else el.textContent = '';
+}
+async function gas(body){
+  const r = await fetch(Store.cfg.url, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({...body, pass: Store.cfg.pass})});
+  const j = await r.json(); if(!j.ok) throw new Error(j.error || 'error'); return j;
+}
+async function flush(){
+  if(!Store.cfg.url || !Store.queue.length || flush.busy) return;
+  flush.busy = true;
+  try{
+    while(Store.queue.length){
+      const batch = Store.queue.slice(0, 50);
+      await gas({op:'put', docs: batch});
+      Store.queue.splice(0, batch.length); saveLocal();
+    }
+    Store.online = true;
+  }catch(e){ Store.online = false; if(String(e.message).includes('pass')) toast('合言葉が違います。設定を確認してください'); }
+  flush.busy = false; syncLabel();
+}
+async function pull(){
+  if(!Store.cfg.url) return;
+  try{
+    const j = await gas({op:'get'});
+    let changed = false;
+    (j.docs || []).forEach(x => {
+      if(!Store.data[x.col]) return;
+      const cur = Store.data[x.col][x.id];
+      if(!cur || (x.doc._u || 0) > (cur._u || 0)){
+        if(Store.queue.some(q => q.col === x.col && q.id === x.id)) return;
+        Store.data[x.col][x.id] = x.doc; changed = true;
+      }
+    });
+    Store.online = true;
+    if(changed){ saveLocal(); rebuild(); render(); }
+  }catch(e){ Store.online = false; }
+  syncLabel();
+}
+function writeDoc(c, doc){
+  doc._u = Date.now();
+  Store.data[c][doc.id] = doc;
+  Store.queue = Store.queue.filter(q => !(q.col === c && q.id === doc.id));
+  Store.queue.push({col: c, id: doc.id, doc});
+  saveLocal(); rebuild(); syncLabel(); flush();
+}
+async function put(c, obj){ writeDoc(c, structuredClone(obj)); }
+async function patch(c, id, obj){ const cur = Store.data[c][id] || {id}; writeDoc(c, {...structuredClone(cur), ...structuredClone(obj)}); }
+async function del(c, id){ writeDoc(c, {id, _d: 1}); }
+
+/* ===================== 画面 ===================== */
+document.getElementById('tabs').addEventListener('click', e => {
+  const b = e.target.closest('button'); if(!b) return;
+  V.tab = b.dataset.t;
+  document.querySelectorAll('#tabs button').forEach(x => x.setAttribute('aria-selected', x === b));
+  try{ localStorage.setItem('niku-tab', V.tab); }catch(_){}
+  render();
+});
+function render(){
+  $('#coName').textContent = S.settings.company || '';
+  const m = $('#main');
+  if(!V.loaded){ return; }
+  m.innerHTML = ({orders:vOrders, stock:vStock, customers:vCustomers, billing:vBilling, analysis:vAnalysis, settings:vSettings}[V.tab])();
+}
+const wr = () => readOnly ? 'disabled' : '';
+
+/* ---------- 受注 ---------- */
+function setupSteps(){
+  const s = [
+    ['会社情報を入れる（納品書・請求書に載ります）', !!S.settings.company, "go('settings')"],
+    ['部位を登録する', S.parts.length > 0, "go('settings')"],
+    ['取引先と単価を登録する', S.customers.length > 0, "go('customers')"],
+    ['入荷した個体（枝肉）と部位ごとの重量を登録する', S.lots.length > 0, "go('stock')"],
+  ];
+  if(s.every(x => x[1])) return '';
+  return `<div class="panel"><h2>はじめに</h2><p class="muted" style="margin:0">次の順に登録すると、受注から請求まで流れます。サンプルのデータは入れていません。</p>
+  <ol class="steps" style="margin:0;padding:0">${s.map(([t,d,a])=>`<li class="${d?'done':''}"><span>${t}</span>${d?'':`<button class="btn sm" onclick="${a}">開く</button>`}</li>`).join('')}</ol></div>`;
+}
+function go(t){ document.querySelector(`#tabs button[data-t="${t}"]`).click(); }
+function vOrders(){
+  const f = V.ofilter;
+  const list = S.orders.filter(o => f==='open' ? (o.status==='new'||o.status==='alloc') : f==='all' ? true : o.status===f)
+    .sort((a,b)=> (b.date||'').localeCompare(a.date||'') || (b.no||'').localeCompare(a.no||''));
+  const cnt = k => S.orders.filter(o=>o.status===k).length;
+  return `${setupSteps()}
+  <div class="spread"><h2>受注・出荷</h2><button class="btn pri" onclick="openOrderNew()" ${wr()}>＋ 受注を入力</button></div>
+  <div class="chips">${[['open',`対応中 ${cnt('new')+cnt('alloc')}`],['new',`受注 ${cnt('new')}`],['alloc',`引当済 ${cnt('alloc')}`],['shipped',`出荷済 ${cnt('shipped')}`],['all','すべて']].map(([k,l])=>`<button class="chip" aria-pressed="${f===k}" onclick="V.ofilter='${k}';render()">${l}</button>`).join('')}</div>
+  ${list.length ? `<div style="display:grid;gap:8px">${list.map(o=>{const c=orderCalc(o);return `<button class="ordercard" onclick="openOrder('${o.id}')">
+    <span class="no">No.${esc(o.no)}</span><span class="who">${esc(custName(o.customerId))} <span class="pill st-${o.status}">${STATUS[o.status]}</span></span><span class="amt">${c.kg?yen(c.total):'—'}</span>
+    <span class="sub">受注 ${jdate(o.date)}・納品 ${jdate(o.deliver)}　${(o.lines||[]).map(l=>`${esc(partName(l.partId))} ${l.qty||''}${l.qty?'個':''}`).join('、')}${c.kg?`　計 ${kgf(c.kg)}kg`:''}</span></button>`}).join('')}</div>`
+    : `<div class="empty">${S.orders.length ? 'この条件の受注はありません。' : 'まだ受注はありません。「＋ 受注を入力」から登録します。'}</div>`}`;
+}
+
+function openSheet(html){ $('#sheetIn').innerHTML = html; const d = $('#sheet'); if(!d.open) d.showModal(); }
+function closeSheet(){ $('#sheet').close(); }
+$('#sheet').addEventListener('click', e => { if(e.target.id === 'sheet') closeSheet(); });
+
+function partOptions(sel){ return S.parts.slice().sort((a,b)=>(a.sort??0)-(b.sort??0)).map(p=>`<option value="${p.id}" ${p.id===sel?'selected':''}>${esc(p.name)}</option>`).join(''); }
+function custOptions(sel){ return `<option value="">選んでください</option>` + S.customers.map(c=>`<option value="${c.id}" ${c.id===sel?'selected':''}>${esc(c.name)}</option>`).join(''); }
+
+function openOrderNew(){
+  if(!S.customers.length || !S.parts.length){ toast('先に取引先と部位を登録してください'); return; }
+  openSheet(`<div class="shhead"><h2>受注を入力</h2><button class="btn ghost" onclick="closeSheet()">閉じる</button></div>
+  <div class="shbody">
+    <div class="fgrid">
+      <label class="f">取引先<select id="o_cust">${custOptions('')}</select></label>
+      <label class="f">受注日<input type="date" id="o_date" value="${today()}"></label>
+      <label class="f">納品日<input type="date" id="o_deliver"></label>
+    </div>
+    <div id="o_lines" style="display:grid;gap:8px"></div>
+    <div><button class="btn sm" onclick="addLineRow()">＋ 部位を追加</button></div>
+    <label class="f">メモ<textarea id="o_memo" rows="2" placeholder="カットの指定、配送の注意など"></textarea></label>
+  </div>
+  <div class="shfoot"><button class="btn" onclick="closeSheet()">やめる</button><button class="btn pri" onclick="saveOrderNew()">受注を登録</button></div>`);
+  addLineRow();
+}
+function addLineRow(){
+  const d = document.createElement('div'); d.className = 'fgrid line';
+  d.innerHTML = `<label class="f">部位<select class="l_part">${partOptions('')}</select></label>
+    <label class="f">数量（個・本）<input class="l_qty num" type="number" min="0" step="1" inputmode="numeric"></label>
+    <label class="f">指定・メモ<input class="l_note" placeholder="例：2kg前後、スライス"></label>`;
+  $('#o_lines').appendChild(d);
+}
+async function saveOrderNew(){
+  const customerId = $('#o_cust').value; if(!customerId) return toast('取引先を選んでください');
+  const c = byId('customers', customerId);
+  const lines = [...document.querySelectorAll('#o_lines .line')].map(r => ({
+    partId: r.querySelector('.l_part').value, qty: +r.querySelector('.l_qty').value || 0, note: r.querySelector('.l_note').value.trim(),
+    price: +(c?.prices?.[r.querySelector('.l_part').value]) || 0, stockIds: []
+  })).filter(l => l.partId);
+  if(!lines.length) return toast('部位を1つ以上入れてください');
+  const date = $('#o_date').value || today();
+  const o = {id: uid(), no: nextOrderNo(date), customerId, date, deliver: $('#o_deliver').value || '', memo: $('#o_memo').value.trim(), lines, status: 'new', disc: 0, createdAt: new Date().toISOString()};
+  o.disc = suggestDisc(o);
+  await put('orders', o);
+  toast('受注を登録しました'); openOrder(o.id);
+}
+
+function openOrder(id){
+  const o = byId('orders', id); if(!o) return closeSheet();
+  const c = orderCalc(o), locked = o.status === 'shipped' || o.status === 'cancel';
+  const cu = byId('customers', o.customerId);
+  const linesHtml = (o.lines||[]).map((l,i) => {
+    const lc = lineCalc(l);
+    const avail = S.stock.filter(s => s.partId === l.partId && s.status === 'in');
+    return `<div class="line">
+      <div class="spread"><h3>${esc(partName(l.partId))} <span class="muted">${l.qty?l.qty+'個':''} ${esc(l.note||'')}</span></h3>
+        <label class="f" style="flex-direction:row;align-items:center;gap:6px">単価 円/kg<input class="num" style="width:110px" type="number" min="0" value="${l.price||''}" onchange="setPrice('${o.id}',${i},this.value)" ${locked||readOnly?'disabled':''}></label></div>
+      ${lc.items.length ? `<div class="tablewrap"><table><tr><th>通し番号-枝番</th><th>個体識別番号</th><th class="r">重量 kg</th><th class="r">原価/kg</th><th></th></tr>
+        ${lc.items.map(s=>{const lot=byId('lots',s.lotId);return `<tr><td class="num">${esc(s.branch)}</td><td class="num">${esc(lot?.kojin||'—')}</td>
+          <td class="r"><input class="num" style="width:100px" type="number" step="0.01" min="0" value="${s.kg}" onchange="setKg('${s.id}',this.value,'${o.id}')" ${locked||readOnly?'disabled':''}></td>
+          <td class="r num">${lotCostPerKg(s.lotId)?yen(lotCostPerKg(s.lotId)):'—'}</td>
+          <td class="r">${locked?'':`<button class="btn sm ghost" onclick="unalloc('${o.id}',${i},'${s.id}')" ${wr()}>外す</button>`}</td></tr>`}).join('')}
+        <tr><td colspan="2"><b>小計</b></td><td class="r num"><b>${kgf(lc.kg)}</b></td><td></td><td class="r num"><b>${yen(lc.amount)}</b></td></tr></table></div>`
+        : `<p class="muted" style="margin:0">まだ在庫を引き当てていません。</p>`}
+      ${locked ? '' : avail.length ? `<details><summary class="muted" style="cursor:pointer">在庫から引き当てる（${avail.length}件）</summary>
+        <div class="pick" style="margin-top:8px">${avail.map(s=>`<label><input type="checkbox" value="${s.id}" data-line="${i}" class="pickbox"><span class="num">${esc(s.branch)}</span><span class="num muted">${kgf(s.kg)}kg</span></label>`).join('')}</div>
+        <div style="margin-top:8px"><button class="btn sm pri" onclick="allocPicked('${o.id}',${i})" ${wr()}>選んだ在庫を引き当てる</button></div></details>`
+        : `<p class="muted" style="margin:0">この部位の在庫がありません。</p>`}
+    </div>`;
+  }).join('');
+  const sug = suggestDisc(o);
+  openSheet(`<div class="shhead"><div><h2>${esc(custName(o.customerId))} <span class="pill st-${o.status}">${STATUS[o.status]}</span></h2>
+    <div class="muted num">No.${esc(o.no)}・受注 ${jdate(o.date)}・納品 ${jdate(o.deliver)}${cu?.area?'・'+esc(cu.area):''}</div></div><button class="btn ghost" onclick="closeSheet()">閉じる</button></div>
+  <div class="shbody">
+    ${o.memo?`<div class="muted">メモ：${esc(o.memo)}</div>`:''}
+    ${linesHtml}
+    <div class="spread" style="align-items:flex-start">
+      <label class="f" style="max-width:260px">値引き（円）${sug?`<span class="muted" style="font-weight:400">取引先の条件では ${yen(sug)}</span>`:''}<input class="num" type="number" min="0" value="${o.disc||0}" onchange="setDisc('${o.id}',this.value)" ${locked||readOnly?'disabled':''}></label>
+      <div class="totals"><span>重量計</span><span class="num">${kgf(c.kg)} kg</span><span>小計</span><span class="num">${yen(c.sub)}</span>${c.disc?`<span>値引き</span><span class="num">−${yen(c.disc)}</span>`:''}
+        <span>消費税（${Math.round(taxRate()*100)}%）</span><span class="num">${yen(c.tax)}</span><span class="big">合計</span><span class="num big">${yen(c.total)}</span>
+        <span class="muted">粗利（税抜）</span><span class="num muted">${yen(c.gp)}（${pct(c.net? c.gp/c.net : NaN)}）</span></div>
+    </div>
+  </div>
+  <div class="shfoot">
+    ${o.status!=='cancel' && c.kg>0 ? `<button class="btn" onclick="docLabels('${o.id}')">ラベル</button><button class="btn" onclick="docCert('${o.id}')">証明書</button><button class="btn" onclick="docDelivery('${o.id}')">納品書</button>`:''}
+    ${o.status==='new' ? `<button class="btn" onclick="cancelOrder('${o.id}')" ${wr()}>取消</button>`:''}
+    ${o.status==='new' && c.kg>0 ? `<button class="btn pri" onclick="setStatus('${o.id}','alloc')" ${wr()}>引当を確定</button>`:''}
+    ${o.status==='alloc' ? `<button class="btn" onclick="setStatus('${o.id}','new')" ${wr()}>受注に戻す</button><button class="btn pri" onclick="ship('${o.id}')" ${wr()}>出荷済にする</button>`:''}
+    ${o.status==='shipped' ? `<button class="btn" onclick="unship('${o.id}')" ${wr()}>出荷を取り消す</button>`:''}
+  </div>`);
+}
+async function setPrice(oid, i, v){ const o = byId('orders', oid); const lines = structuredClone(o.lines); lines[i].price = +v||0; o.lines = lines; await patch('orders', oid, {lines}); openOrder(oid); }
+async function setDisc(oid, v){ const o = byId('orders', oid); o.disc = +v||0; await patch('orders', oid, {disc:o.disc}); openOrder(oid); }
+async function setKg(sid, v, oid){ const s = byId('stock', sid); s.kg = +v||0; await patch('stock', sid, {kg:s.kg}); if(oid) openOrder(oid); else render(); }
+async function allocPicked(oid, i){
+  const ids = [...document.querySelectorAll(`.pickbox[data-line="${i}"]:checked`)].map(x=>x.value);
+  if(!ids.length) return toast('引き当てる在庫を選んでください');
+  const o = byId('orders', oid); const lines = structuredClone(o.lines);
+  lines[i].stockIds = [...new Set([...(lines[i].stockIds||[]), ...ids])]; o.lines = lines;
+  await patch('orders', oid, {lines});
+  for(const id of ids){ const s = byId('stock', id); s.status='reserved'; s.orderId=oid; await patch('stock', id, {status:'reserved', orderId:oid}); }
+  toast(ids.length + '件を引き当てました'); openOrder(oid);
+}
+async function unalloc(oid, i, sid){
+  const o = byId('orders', oid); const lines = structuredClone(o.lines);
+  lines[i].stockIds = (lines[i].stockIds||[]).filter(x=>x!==sid); o.lines = lines;
+  await patch('orders', oid, {lines});
+  const s = byId('stock', sid); if(s){ s.status='in'; s.orderId=''; await patch('stock', sid, {status:'in', orderId:''}); }
+  openOrder(oid);
+}
+async function setStatus(oid, st){ const o = byId('orders', oid); o.status = st; await patch('orders', oid, {status:st}); toast(st==='alloc'?'引当を確定しました。ラベル・証明書・納品書を出せます':'受注に戻しました'); openOrder(oid); }
+async function ship(oid){
+  const o = byId('orders', oid); const d = today();
+  o.status='shipped'; o.shipDate = o.deliver || d;
+  await patch('orders', oid, {status:'shipped', shipDate:o.shipDate});
+  for(const l of o.lines) for(const id of (l.stockIds||[])){ const s = byId('stock', id); if(s){ s.status='out'; await patch('stock', id, {status:'out'}); } }
+  toast('出荷済にしました（在庫から引き落とし済み）'); openOrder(oid);
+}
+async function unship(oid){
+  const o = byId('orders', oid); o.status='alloc'; await patch('orders', oid, {status:'alloc', shipDate:''});
+  for(const l of o.lines) for(const id of (l.stockIds||[])){ const s = byId('stock', id); if(s){ s.status='reserved'; await patch('stock', id, {status:'reserved'}); } }
+  toast('引当済に戻しました'); openOrder(oid);
+}
+async function cancelOrder(oid){
+  if(!confirmTwice('cancel'+oid, '取消すにはもう一度押してください')) return;
+  const o = byId('orders', oid);
+  for(const l of o.lines) for(const id of (l.stockIds||[])){ const s = byId('stock', id); if(s){ s.status='in'; s.orderId=''; await patch('stock', id, {status:'in', orderId:''}); } }
+  const lines = o.lines.map(l=>({...l, stockIds:[]})); o.lines = lines; o.status='cancel';
+  await patch('orders', oid, {status:'cancel', lines}); toast('取消しました'); closeSheet(); render();
+}
+const armed = {};
+function confirmTwice(key, msg){ if(armed[key] && Date.now()-armed[key] < 4000){ delete armed[key]; return true; } armed[key] = Date.now(); toast(msg); return false; }
+
+/* ---------- 在庫 ---------- */
+function vStock(){
+  const inStock = S.stock.filter(s=>s.status==='in');
+  const byPart = {};
+  inStock.forEach(s => { (byPart[s.partId] ||= {kg:0,n:0}); byPart[s.partId].kg += +s.kg||0; byPart[s.partId].n++; });
+  const maxKg = Math.max(1, ...Object.values(byPart).map(x=>x.kg));
+  const lots = S.lots.slice().sort((a,b)=>(+b.no||0)-(+a.no||0));
+  return `<div class="spread"><h2>在庫</h2><button class="btn pri" onclick="openLot()" ${wr()}>＋ 入荷（個体）を登録</button></div>
+  <div class="panel"><h3>部位ごとの在庫（引当前）</h3>
+  ${Object.keys(byPart).length ? `<div class="tablewrap"><table><tr><th>部位</th><th class="r">個数</th><th class="r">重量 kg</th><th style="width:40%"></th></tr>
+    ${Object.entries(byPart).sort((a,b)=>b[1].kg-a[1].kg).map(([p,x])=>`<tr><td>${esc(partName(p))}</td><td class="r num">${x.n}</td><td class="r num">${kgf(x.kg)}</td><td><div class="bar" style="width:${x.kg/maxKg*100}%"></div></td></tr>`).join('')}</table></div>`
+    : `<div class="muted">在庫はありません。</div>`}</div>
+  ${lots.length ? lots.map(l => {
+    const items = S.stock.filter(s=>s.lotId===l.id).sort((a,b)=>String(a.branch).localeCompare(String(b.branch),'ja',{numeric:true}));
+    const tot = items.reduce((a,s)=>a+(+s.kg||0),0);
+    return `<div class="lot"><div class="lothead"><b>No.${esc(l.no)}</b><span class="m">個体識別番号 <span class="num">${esc(l.kojin||'—')}</span></span>
+      <span class="m">${esc([l.breed,l.grade,l.origin].filter(Boolean).join('・'))}</span><span class="m">入荷 ${jdate(l.date)}</span>
+      <span class="m">枝肉 ${l.carcassKg?kgf(l.carcassKg)+'kg':'—'}・部位計 ${kgf(tot)}kg・歩留まり ${l.carcassKg?pct(tot/l.carcassKg):'—'}</span>
+      <span class="m">仕入 ${l.cost?yen(l.cost):'—'}・原価 ${lotCostPerKg(l.id)?yen(lotCostPerKg(l.id))+'/kg':'—'}</span>
+      <span style="margin-left:auto" class="row"><button class="btn sm" onclick="openLot('${l.id}')" ${wr()}>編集</button></span></div>
+      <div class="tablewrap"><table><tr><th>枝番</th><th>部位</th><th class="r">重量 kg</th><th>状態</th><th>引当先</th><th></th></tr>
+      ${items.map(s=>{const o=s.orderId?byId('orders',s.orderId):null;return `<tr><td class="num">${esc(s.branch)}</td><td>${esc(partName(s.partId))}</td><td class="r num">${kgf(s.kg)}</td>
+        <td><span class="pill st-${s.status}">${SSTATUS[s.status]}</span></td><td>${o?`<a href="javascript:void 0" onclick="openOrder('${o.id}')">${esc(custName(o.customerId))}</a>`:''}</td>
+        <td class="r">${s.status==='in'?`<button class="btn sm ghost" onclick="openSplit('${s.id}')" ${wr()}>分ける</button>`:''}</td></tr>`}).join('') || `<tr><td colspan="6" class="muted">部位がまだ登録されていません</td></tr>`}</table></div></div>`;
+  }).join('') : `<div class="empty">入荷した個体はまだありません。「＋ 入荷（個体）を登録」から、個体識別番号と部位ごとの重量を入れます。</div>`}`;
+}
+function lotRow(r={}){
+  return `<div class="fgrid line lrow" data-sid="${r.id||''}"><label class="f">部位<select class="r_part">${partOptions(r.partId)}</select></label>
+    <label class="f">重量 kg<input class="r_kg num" type="number" step="0.01" min="0" value="${r.kg??''}" inputmode="decimal"></label>
+    <label class="f">枝番（空欄なら自動）<input class="r_br num" value="${esc(r.branch||'')}"></label></div>`;
+}
+function openLot(id){
+  if(!S.parts.length){ toast('先に設定で部位を登録してください'); return go('settings'); }
+  const l = id ? byId('lots', id) : {no: nextLotNo(), date: today()};
+  const rows = id ? S.stock.filter(s=>s.lotId===id) : [];
+  openSheet(`<div class="shhead"><h2>${id?'個体を編集':'入荷を登録'}</h2><button class="btn ghost" onclick="closeSheet()">閉じる</button></div>
+  <div class="shbody">
+    <div class="fgrid">
+      <label class="f">通し番号<input id="l_no" class="num" type="number" value="${esc(l.no)}"></label>
+      <label class="f">個体識別番号（10桁）<input id="l_kojin" class="num" inputmode="numeric" value="${esc(l.kojin||'')}"></label>
+      <label class="f">入荷日<input id="l_date" type="date" value="${esc(l.date||'')}"></label>
+      <label class="f">品種<input id="l_breed" value="${esc(l.breed||'')}" placeholder="例：黒毛和種"></label>
+      <label class="f">格付<input id="l_grade" value="${esc(l.grade||'')}" placeholder="例：A4"></label>
+      <label class="f">産地・生産者<input id="l_origin" value="${esc(l.origin||'')}"></label>
+      <label class="f">枝肉重量 kg<input id="l_ckg" class="num" type="number" step="0.1" value="${l.carcassKg??''}"></label>
+      <label class="f">仕入額（税抜・円）<input id="l_cost" class="num" type="number" value="${l.cost??''}"></label>
+    </div>
+    <div class="spread"><h3>部位ごとの重量</h3>
+      <span class="row"><label class="btn sm" id="ocrBtn" ${sample?'':'hidden'}>伝票の写真から読み取る<input type="file" accept="image/*" id="ocrFile" hidden onchange="ocr(this)"></label>
+      <button class="btn sm" onclick="document.getElementById('l_rows').insertAdjacentHTML('beforeend', lotRow())">＋ 行を追加</button></span></div>
+    <p class="muted" id="ocrMsg" style="margin:0">仕入額を部位の合計重量で割った金額を、その個体の原価（円/kg）として粗利の計算に使います。</p>
+    <div id="l_rows" style="display:grid;gap:8px">${rows.length ? rows.map(lotRow).join('') : lotRow()}</div>
+  </div>
+  <div class="shfoot">${id?`<button class="btn" onclick="deleteLot('${id}')">個体を削除</button>`:''}<button class="btn" onclick="closeSheet()">やめる</button><button class="btn pri" onclick="saveLot('${id||''}')">保存</button></div>`);
+}
+async function saveLot(id){
+  const no = +$('#l_no').value || nextLotNo();
+  const lot = {id: id || uid(), no, kojin: $('#l_kojin').value.trim(), date: $('#l_date').value, breed: $('#l_breed').value.trim(), grade: $('#l_grade').value.trim(),
+    origin: $('#l_origin').value.trim(), carcassKg: +$('#l_ckg').value || 0, cost: +$('#l_cost').value || 0};
+  const rows = [...document.querySelectorAll('#l_rows .lrow')].map(r=>({sid:r.dataset.sid, partId:r.querySelector('.r_part').value, kg:+r.querySelector('.r_kg').value||0, branch:r.querySelector('.r_br').value.trim()})).filter(r=>r.kg>0);
+  await put('lots', lot);
+  const used = new Set(S.stock.filter(s=>s.lotId===lot.id).map(s=>String(s.branch)));
+  let n = 1;
+  for(const r of rows){
+    let branch = r.branch;
+    if(!branch){ while(used.has(`${no}-${n}`)) n++; branch = `${no}-${n}`; }
+    used.add(branch);
+    if(r.sid){ const s = byId('stock', r.sid); await patch('stock', r.sid, {partId:r.partId, kg:r.kg, branch}); Object.assign(s, {partId:r.partId, kg:r.kg, branch}); }
+    else { const s = {id: uid(), lotId: lot.id, partId: r.partId, kg: r.kg, branch, status:'in', orderId:''}; await put('stock', s); }
+  }
+  toast('保存しました'); closeSheet(); render();
+}
+async function deleteLot(id){
+  if(S.stock.some(s=>s.lotId===id && s.status!=='in')) return toast('引当・出荷済の部位がある個体は削除できません');
+  if(!confirmTwice('lot'+id, '削除するにはもう一度押してください')) return;
+  for(const s of S.stock.filter(s=>s.lotId===id)) await del('stock', s.id);
+  await del('lots', id); toast('削除しました'); closeSheet(); render();
+}
+function openSplit(sid){
+  const s = byId('stock', sid);
+  openSheet(`<div class="shhead"><h2>在庫を分ける</h2><button class="btn ghost" onclick="closeSheet()">閉じる</button></div>
+  <div class="shbody"><p style="margin:0">${esc(partName(s.partId))}・<span class="num">${esc(s.branch)}</span>・${kgf(s.kg)}kg を2つに分けます。切り出した分は新しい枝番になり、残りはこの枝番のまま残ります。</p>
+  <div class="fgrid"><label class="f">切り出す重量 kg<input id="sp_kg" class="num" type="number" step="0.01" min="0"></label>
+  <label class="f">新しい枝番<input id="sp_br" class="num" value="${esc(s.branch)}-A"></label></div></div>
+  <div class="shfoot"><button class="btn" onclick="closeSheet()">やめる</button><button class="btn pri" onclick="doSplit('${sid}')">分ける</button></div>`);
+}
+async function doSplit(sid){
+  const s = byId('stock', sid); const k = +$('#sp_kg').value || 0;
+  if(k <= 0 || k >= s.kg) return toast('元の重量より小さい重量を入れてください');
+  const ns = {id: uid(), lotId: s.lotId, partId: s.partId, kg: Math.round(k*100)/100, branch: $('#sp_br').value.trim() || s.branch+'-A', status:'in', orderId:''};
+  await put('stock', ns);
+  const rest = Math.round((s.kg - k)*100)/100; s.kg = rest; await patch('stock', sid, {kg: rest});
+  toast('分けました'); closeSheet(); render();
+}
+async function ocr(input){
+  const f = input.files?.[0]; if(!f || !sample) return;
+  const msg = $('#ocrMsg'); msg.textContent = '写真を読み取っています…';
+  try{
+    const names = S.parts.map(p=>p.name);
+    const r = await sample.json(`この画像は食肉の入荷伝票または部位ごとの計量表です。書かれている内容だけを読み取り、JSONで返してください。推測で値を作らないこと。読めない値は null。
+形式: {"kojin": 個体識別番号の文字列 or null, "carcassKg": 枝肉重量の数値 or null, "items": [{"part": 部位名, "kg": 重量の数値, "branch": 枝番があれば文字列 or null}]}
+部位名は、次の登録済みの名前に当てはまるものはその表記に合わせてください: ${JSON.stringify(names)}`, {images:[f], modelTier:'default'});
+    if(r?.kojin && !$('#l_kojin').value) $('#l_kojin').value = r.kojin;
+    if(r?.carcassKg && !$('#l_ckg').value) $('#l_ckg').value = r.carcassKg;
+    const items = (r?.items||[]).filter(x => x && +x.kg > 0);
+    const unknown = [];
+    const html = items.map(x => { const p = S.parts.find(p=>p.name===x.part); if(!p) unknown.push(x.part); return lotRow({partId:p?.id, kg:+x.kg, branch:x.branch||''}); }).join('');
+    const box = $('#l_rows');
+    if([...box.querySelectorAll('.r_kg')].every(i=>!i.value)) box.innerHTML = '';
+    box.insertAdjacentHTML('beforeend', html);
+    msg.textContent = `${items.length}行を読み取りました。数字が伝票と合っているか確認してから保存してください。` + (unknown.length ? `登録にない部位名：${unknown.join('、')}（部位を選び直してください）` : '');
+  }catch(e){ msg.textContent = e?.code==='not_granted' ? '写真の読み取りが許可されていません。' : '読み取れませんでした。手で入力してください。'; }
+  input.value = '';
+}
+
+/* ---------- 取引先 ---------- */
+function vCustomers(){
+  const areas = {};
+  return `<div class="spread"><h2>取引先</h2><span class="row"><button class="btn" onclick="openAgent()" ${wr()}>＋ 代理店</button><button class="btn pri" onclick="openCustomer()" ${wr()}>＋ 取引先</button></span></div>
+  ${S.customers.length ? `<div class="panel"><div class="tablewrap"><table><tr><th>取引先</th><th>エリア</th><th>代理店</th><th>値引き条件</th><th class="r">単価を決めた部位</th></tr>
+    ${S.customers.slice().sort((a,b)=>(a.name||'').localeCompare(b.name||'','ja')).map(c=>`<tr class="click" onclick="openCustomer('${c.id}')"><td><b>${esc(c.name)}</b></td><td>${esc(c.area||'—')}</td><td>${esc(byId('agents',c.agentId)?.name||'—')}</td>
+    <td>${c.discQty&&c.discYen?`${c.discQty}個を超えたら1個 ${yen(c.discYen)}引き`:'—'}</td><td class="r num">${Object.values(c.prices||{}).filter(Boolean).length}</td></tr>`).join('')}</table></div></div>`
+    : `<div class="empty">取引先はまだありません。取引先ごとに部位の単価（円/kg）を決められます。単価は他の取引先からは見えません。</div>`}
+  <div class="panel"><h3>代理店</h3>${S.agents.length ? `<div class="tablewrap"><table><tr><th>代理店</th><th class="r">手数料率</th><th class="r">担当の取引先</th></tr>
+    ${S.agents.map(a=>`<tr class="click" onclick="openAgent('${a.id}')"><td>${esc(a.name)}</td><td class="r num">${a.rate||0}%</td><td class="r num">${S.customers.filter(c=>c.agentId===a.id).length}</td></tr>`).join('')}</table></div>`
+    : `<div class="muted">代理店は未登録です。登録すると、担当の取引先の売上から手数料を毎月自動で計算します。</div>`}</div>`;
+}
+function openCustomer(id){
+  const c = id ? byId('customers', id) : {prices:{}};
+  const areaList = S.settings.areas?.length ? S.settings.areas : [];
+  openSheet(`<div class="shhead"><h2>${id?'取引先を編集':'取引先を登録'}</h2><button class="btn ghost" onclick="closeSheet()">閉じる</button></div>
+  <div class="shbody">
+    <div class="fgrid">
+      <label class="f">取引先名<input id="c_name" value="${esc(c.name||'')}"></label>
+      <label class="f">エリア<input id="c_area" list="areaList" value="${esc(c.area||'')}" placeholder="例：関西、東京"><datalist id="areaList">${[...new Set([...areaList, ...S.customers.map(x=>x.area).filter(Boolean)])].map(a=>`<option value="${esc(a)}">`).join('')}</datalist></label>
+      <label class="f">代理店<select id="c_agent"><option value="">なし</option>${S.agents.map(a=>`<option value="${a.id}" ${a.id===c.agentId?'selected':''}>${esc(a.name)}</option>`).join('')}</select></label>
+      <label class="f">電話<input id="c_tel" value="${esc(c.tel||'')}"></label>
+    </div>
+    <label class="f">住所（納品書・請求書の宛先）<input id="c_addr" value="${esc(c.addr||'')}"></label>
+    <div class="fgrid">
+      <label class="f">値引き：1回の注文がこの個数を超えたら<input id="c_dq" class="num" type="number" min="0" value="${c.discQty||''}"></label>
+      <label class="f">1個あたりの値引き（円）<input id="c_dy" class="num" type="number" min="0" value="${c.discYen||''}"></label>
+    </div>
+    <h3>部位ごとの単価（円/kg・税抜）</h3>
+    ${S.parts.length ? `<div class="fgrid">${S.parts.slice().sort((a,b)=>(a.sort??0)-(b.sort??0)).map(p=>`<label class="f">${esc(p.name)}<input class="num c_price" data-p="${p.id}" type="number" min="0" value="${c.prices?.[p.id]||''}"></label>`).join('')}</div>` : `<div class="muted">設定で部位を登録すると、ここで単価を入れられます。</div>`}
+    <label class="f">メモ<textarea id="c_note" rows="2">${esc(c.note||'')}</textarea></label>
+  </div>
+  <div class="shfoot">${id?`<button class="btn" onclick="delCustomer('${id}')">削除</button>`:''}<button class="btn" onclick="closeSheet()">やめる</button><button class="btn pri" onclick="saveCustomer('${id||''}')">保存</button></div>`);
+}
+async function saveCustomer(id){
+  const name = $('#c_name').value.trim(); if(!name) return toast('取引先名を入れてください');
+  const prices = {}; document.querySelectorAll('.c_price').forEach(i => { if(+i.value) prices[i.dataset.p] = +i.value; });
+  const c = {id: id||uid(), name, area: $('#c_area').value.trim(), agentId: $('#c_agent').value, tel: $('#c_tel').value.trim(), addr: $('#c_addr').value.trim(),
+    discQty: +$('#c_dq').value||0, discYen: +$('#c_dy').value||0, prices, note: $('#c_note').value.trim()};
+  await put('customers', c);
+  toast('保存しました'); closeSheet(); render();
+}
+async function delCustomer(id){
+  if(S.orders.some(o=>o.customerId===id)) return toast('受注がある取引先は削除できません');
+  if(!confirmTwice('cu'+id,'削除するにはもう一度押してください')) return;
+  await del('customers', id); closeSheet(); render();
+}
+function openAgent(id){
+  const a = id ? byId('agents', id) : {};
+  openSheet(`<div class="shhead"><h2>${id?'代理店を編集':'代理店を登録'}</h2><button class="btn ghost" onclick="closeSheet()">閉じる</button></div>
+  <div class="shbody"><div class="fgrid"><label class="f">代理店名<input id="a_name" value="${esc(a.name||'')}"></label>
+  <label class="f">手数料率（税抜売上に対する%）<input id="a_rate" class="num" type="number" step="0.1" min="0" value="${a.rate??''}"></label></div></div>
+  <div class="shfoot">${id?`<button class="btn" onclick="delAgent('${id}')">削除</button>`:''}<button class="btn" onclick="closeSheet()">やめる</button><button class="btn pri" onclick="saveAgent('${id||''}')">保存</button></div>`);
+}
+async function saveAgent(id){
+  const name = $('#a_name').value.trim(); if(!name) return toast('代理店名を入れてください');
+  const a = {id:id||uid(), name, rate: +$('#a_rate').value||0}; await put('agents', a);
+  closeSheet(); render();
+}
+async function delAgent(id){ if(S.customers.some(c=>c.agentId===id)) return toast('担当の取引先がある代理店は削除できません'); await del('agents', id); closeSheet(); render(); }
+
+/* ---------- 請求 ---------- */
+function shippedIn(ym){ return S.orders.filter(o => o.status==='shipped' && (o.shipDate||o.deliver||o.date||'').startsWith(ym)); }
+function monthPicker(){ return `<div class="row"><button class="btn sm" onclick="V.month=ymShift(V.month,-1);render()" aria-label="前の月">‹</button><b class="num">${V.month.replace('-','年')}月</b><button class="btn sm" onclick="V.month=ymShift(V.month,1);render()" aria-label="次の月">›</button></div>`; }
+function vBilling(){
+  const os = shippedIn(V.month);
+  const per = {};
+  os.forEach(o => { const c = orderCalc(o); (per[o.customerId] ||= {n:0, net:0, tax:0, total:0, orders:[]}); const p = per[o.customerId]; p.n++; p.net+=c.net; p.tax+=c.tax; p.total+=c.total; p.orders.push(o); });
+  const ag = {};
+  Object.entries(per).forEach(([cid,p]) => { const c = byId('customers',cid); const a = c && byId('agents', c.agentId); if(a){ (ag[a.id] ||= {a, net:0, cs:[]}); ag[a.id].net += p.net; ag[a.id].cs.push(c.name); } });
+  return `<div class="spread"><h2>請求</h2>${monthPicker()}</div>
+  <p class="muted" style="margin:0">出荷済の受注を、出荷日（納品日）の月で取引先ごとにまとめています。</p>
+  ${Object.keys(per).length ? `<div class="panel"><div class="tablewrap"><table><tr><th>取引先</th><th class="r">納品</th><th class="r">税抜</th><th class="r">消費税</th><th class="r">請求額</th><th></th></tr>
+    ${Object.entries(per).map(([cid,p])=>`<tr><td><b>${esc(custName(cid))}</b></td><td class="r num">${p.n}件</td><td class="r num">${yen(p.net)}</td><td class="r num">${yen(p.tax)}</td><td class="r num"><b>${yen(p.total)}</b></td>
+      <td class="r"><button class="btn sm" onclick="docInvoice('${cid}','${V.month}')">請求書</button></td></tr>`).join('')}
+    <tr><td><b>合計</b></td><td class="r num">${os.length}件</td><td class="r num">${yen(Object.values(per).reduce((a,p)=>a+p.net,0))}</td><td class="r num">${yen(Object.values(per).reduce((a,p)=>a+p.tax,0))}</td><td class="r num"><b>${yen(Object.values(per).reduce((a,p)=>a+p.total,0))}</b></td><td></td></tr></table></div></div>`
+    : `<div class="empty">この月に出荷済の受注はありません。</div>`}
+  <div class="panel"><h3>代理店手数料</h3>${Object.keys(ag).length ? `<div class="tablewrap"><table><tr><th>代理店</th><th>対象の取引先</th><th class="r">税抜売上</th><th class="r">率</th><th class="r">手数料</th></tr>
+    ${Object.values(ag).map(x=>`<tr><td>${esc(x.a.name)}</td><td>${esc(x.cs.join('、'))}</td><td class="r num">${yen(x.net)}</td><td class="r num">${x.a.rate||0}%</td><td class="r num"><b>${yen(Math.floor(x.net*(x.a.rate||0)/100))}</b></td></tr>`).join('')}</table></div>`
+    : `<div class="muted">この月、代理店経由の売上はありません。</div>`}</div>`;
+}
+
+/* ---------- 分析 ---------- */
+function linesIn(ym){
+  const out = [];
+  shippedIn(ym).forEach(o => {
+    const c = byId('customers', o.customerId); const oc = orderCalc(o);
+    (o.lines||[]).forEach(l => { const lc = lineCalc(l); const share = oc.sub ? lc.amount/oc.sub : 0; const net = lc.amount - oc.disc*share;
+      out.push({part: l.partId, cust: o.customerId, area: c?.area || '未設定', kg: lc.kg, net, cost: lc.cost}); });
+  });
+  return out;
+}
+function groupTable(rows, key, label, nameFn){
+  const g = {}; rows.forEach(r => { const k = r[key]; (g[k] ||= {kg:0,net:0,cost:0}); g[k].kg+=r.kg; g[k].net+=r.net; g[k].cost+=r.cost; });
+  const arr = Object.entries(g).sort((a,b)=>b[1].net-a[1].net);
+  if(!arr.length) return `<div class="panel"><h3>${label}</h3><div class="muted">データなし</div></div>`;
+  const max = Math.max(...arr.map(x=>x[1].net), 1);
+  return `<div class="panel"><h3>${label}</h3><div class="tablewrap"><table><tr><th>${label.replace('別','')}</th><th class="r">kg</th><th class="r">売上（税抜）</th><th class="r">粗利</th><th class="r">粗利率</th></tr>
+  ${arr.map(([k,x])=>`<tr><td>${esc(nameFn(k))}<div class="bar" style="width:${x.net/max*100}%;margin-top:4px"></div></td><td class="r num">${kgf(x.kg)}</td><td class="r num">${yen(x.net)}</td><td class="r num">${yen(x.net-x.cost)}</td><td class="r num">${pct(x.net?(x.net-x.cost)/x.net:NaN)}</td></tr>`).join('')}</table></div></div>`;
+}
+function vAnalysis(){
+  const rows = linesIn(V.month);
+  const net = rows.reduce((a,r)=>a+r.net,0), cost = rows.reduce((a,r)=>a+r.cost,0), kg = rows.reduce((a,r)=>a+r.kg,0);
+  const months = Array.from({length:12}, (_,i)=> ymShift(V.month, i-11));
+  const series = months.map(m => { const r = linesIn(m); const n = r.reduce((a,x)=>a+x.net,0); return {m, net:n, gp: n - r.reduce((a,x)=>a+x.cost,0)}; });
+  const mx = Math.max(1, ...series.map(s=>s.net));
+  const W = 720, H = 180, pad = 26, bw = (W - pad*2) / 12;
+  const chart = `<svg viewBox="0 0 ${W} ${H+28}" width="100%" role="img" aria-label="直近12か月の売上と粗利">
+    <line x1="${pad}" x2="${W-pad}" y1="${H}" y2="${H}" stroke="var(--line)"/>
+    ${series.map((s,i)=>{const x=pad+i*bw; const h=s.net/mx*(H-20); const g=Math.max(0,s.gp)/mx*(H-20);
+      return `<rect x="${x+bw*.15}" y="${H-h}" width="${bw*.7}" height="${h}" rx="3" fill="var(--accent)" opacity=".28"><title>${s.m} 売上 ${yen(s.net)}</title></rect>
+      <rect x="${x+bw*.15}" y="${H-g}" width="${bw*.7}" height="${g}" rx="3" fill="var(--accent)"><title>${s.m} 粗利 ${yen(s.gp)}</title></rect>
+      <text x="${x+bw/2}" y="${H+18}" text-anchor="middle" font-size="11" fill="${s.m===V.month?'var(--ink)':'var(--sub)'}">${+s.m.slice(5)}月</text>`}).join('')}
+  </svg>`;
+  return `<div class="spread"><h2>分析</h2>${monthPicker()}</div>
+  <div class="kpis"><div class="kpi"><span>売上（税抜）</span><b>${yen(net)}</b></div><div class="kpi"><span>粗利</span><b>${yen(net-cost)}</b></div>
+  <div class="kpi"><span>粗利率</span><b>${pct(net?(net-cost)/net:NaN)}</b></div><div class="kpi"><span>出荷重量</span><b>${kgf(kg)} kg</b></div></div>
+  <div class="panel"><div class="spread"><h3>直近12か月</h3><span class="muted">薄い棒＝売上、濃い棒＝粗利</span></div><div class="tablewrap">${chart}</div></div>
+  <div class="grid2">${groupTable(rows,'part','部位別',partName)}${groupTable(rows,'cust','取引先別',custName)}${groupTable(rows,'area','エリア別',x=>x)}</div>
+  <p class="muted" style="margin:0">原価は、個体の仕入額をその個体の部位の合計重量で割った金額（円/kg）で計算しています。値引きは注文の中の金額の割合で各部位に配分しています。</p>`;
+}
+
+/* ---------- 設定 ---------- */
+function vSettings(){
+  const st = S.settings;
+  return `<h2>設定</h2>
+  <div class="panel"><h3>会社情報（納品書・請求書・ラベルに載ります）</h3>
+    <div class="fgrid">
+      <label class="f">会社名<input id="s_company" value="${esc(st.company||'')}" placeholder="例：神戸うすなが牧場"></label>
+      <label class="f">電話<input id="s_tel" value="${esc(st.tel||'')}"></label>
+      <label class="f">登録番号（インボイス）<input id="s_inv" value="${esc(st.invoiceNo||'')}" placeholder="T から始まる13桁"></label>
+      <label class="f">消費税率 %<input id="s_tax" class="num" type="number" value="${st.taxRate ?? 8}"></label>
+    </div>
+    <label class="f">住所<input id="s_addr" value="${esc(st.addr||'')}"></label>
+    <label class="f">振込先（請求書に載ります）<textarea id="s_bank" rows="2">${esc(st.bank||'')}</textarea></label>
+    <div class="fgrid">
+      <label class="f">ラベルの幅 mm<input id="s_lw" class="num" type="number" value="${st.labelW||60}"></label>
+      <label class="f">ラベルの高さ mm<input id="s_lh" class="num" type="number" value="${st.labelH||40}"></label>
+    </div>
+    <div><button class="btn pri" onclick="saveSettings()" ${wr()}>保存</button></div>
+  </div>
+  <div class="panel"><h3>部位</h3>
+    ${S.parts.length ? `<div class="tablewrap"><table><tr><th>並び</th><th>部位名</th><th></th></tr>${S.parts.slice().sort((a,b)=>(a.sort??0)-(b.sort??0)).map(p=>`<tr><td style="width:80px"><input class="num" type="number" value="${p.sort??0}" onchange="patchPart('${p.id}',{sort:+this.value})" ${wr()}></td>
+      <td><input value="${esc(p.name)}" onchange="patchPart('${p.id}',{name:this.value.trim()})" ${wr()}></td><td class="r"><button class="btn sm ghost" onclick="delPart('${p.id}')" ${wr()}>削除</button></td></tr>`).join('')}</table></div>` : `<div class="muted">部位はまだありません。扱っている部位を登録してください。</div>`}
+    <div class="row"><input id="p_new" placeholder="部位名（複数は読点か改行で区切る）" style="flex:1;min-width:200px"><button class="btn" onclick="addParts()" ${wr()}>追加</button></div>
+  </div>
+  <div class="panel"><h3>データの保存先（この端末の設定）</h3>
+    <p class="muted" style="margin:0">Googleスプレッドシートの保存先を登録すると、スタッフ全員の端末で同じデータを使えます。未登録の間は、この端末の中だけに保存されます。</p>
+    <div class="fgrid"><label class="f">保存先のURL<input id="c_url" value="${esc(Store.cfg.url)}" placeholder="https://script.google.com/macros/s/…/exec"></label>
+    <label class="f">合言葉<input id="c_pass" type="password" value="${esc(Store.cfg.pass)}"></label></div>
+    <div class="row"><button class="btn pri" onclick="saveCfg()">保存先を登録してつなぐ</button><span class="muted">${Store.cfg.url ? (Store.online===false?'つながっていません':Store.online?'つながっています':'確認中') : '未登録'}</span></div>
+  </div>
+  <div class="panel"><h3>バックアップ</h3>
+    <p class="muted" style="margin:0">すべてのデータを1つのファイルに書き出します。読み込むと、ファイルの内容をこの端末のデータに重ねます。</p>
+    <div class="row"><button class="btn" onclick="exportAll()">書き出す</button><label class="btn">読み込む<input type="file" accept="application/json,.json" hidden onchange="importAll(this)"></label></div>
+  </div>
+  ${readOnly?`<div class="note">この画面では閲覧のみです。編集するには、このページの共有設定で編集できる権限をもらってください。</div>`:''}`;
+}
+async function saveSettings(){
+  const s = {company:$('#s_company').value.trim(), tel:$('#s_tel').value.trim(), invoiceNo:$('#s_inv').value.trim(), taxRate:+$('#s_tax').value||0,
+    addr:$('#s_addr').value.trim(), bank:$('#s_bank').value.trim(), labelW:+$('#s_lw').value||60, labelH:+$('#s_lh').value||40, areas: S.settings.areas||[]};
+  await put('config', {id:'settings', ...s}); toast('保存しました'); render();
+}
+async function addParts(){
+  const names = $('#p_new').value.split(/[、,\n]/).map(x=>x.trim()).filter(Boolean); if(!names.length) return;
+  let k = S.parts.reduce((a,p)=>Math.max(a,p.sort??0),0);
+  for(const n of names){ if(S.parts.some(p=>p.name===n)) continue; const p = {id:uid(), name:n, sort:++k}; await put('parts', p); }
+  render();
+}
+async function patchPart(id, o){ await patch('parts', id, o); }
+async function delPart(id){ if(S.stock.some(s=>s.partId===id)) return toast('在庫がある部位は削除できません'); await del('parts', id); render(); }
+
+/* ===================== 帳票（印刷用ファイル） ===================== */
+const DOCCSS = `body{font-family:"BIZ UDPGothic","Hiragino Sans","Yu Gothic",sans-serif;color:#111;margin:0}
+.page{width:190mm;margin:10mm auto;font-size:11pt}.h{display:flex;justify-content:space-between;align-items:flex-start;gap:10mm}
+h1{font-size:20pt;letter-spacing:.3em;text-align:center;margin:0 0 8mm}table{border-collapse:collapse;width:100%;margin-top:6mm}
+th,td{border:1px solid #444;padding:2mm 3mm;font-size:10pt}th{background:#eee}td.r{text-align:right}.to{font-size:14pt;border-bottom:1px solid #111;padding-bottom:1mm;min-width:80mm}
+.tot{margin-left:auto;width:80mm;margin-top:4mm}.tot td{border:0;border-bottom:1px solid #999}.big{font-size:14pt;font-weight:bold}.co{text-align:right;font-size:10pt;line-height:1.6}
+@media print{.page{margin:0 auto}}`;
+function coBlock(){ const s=S.settings; return `<div class="co"><b style="font-size:12pt">${esc(s.company||'')}</b><br>${esc(s.addr||'')}<br>${s.tel?'TEL '+esc(s.tel):''}${s.invoiceNo?'<br>登録番号 '+esc(s.invoiceNo):''}</div>`; }
+function docShell(title, css, body){ return `<!doctype html><html lang="ja"><head><meta charset="utf-8"><title>${esc(title)}</title><style>${css}</style></head><body>${body}</body></html>`; }
+function showDoc(title, filename, html){
+  openSheet(`<div class="shhead"><h2>${esc(title)}</h2><button class="btn ghost" onclick="closeSheet()">閉じる</button></div>
+  <div class="shbody"><div class="docprev" id="docprev"></div>
+  <p class="muted" style="margin:0">「印刷」で、そのまま印刷するかPDFに保存できます。${title.includes('ラベル')?'ラベルプリンターでは用紙サイズを設定のラベル寸法に合わせてください。':''}</p></div>
+  <div class="shfoot">${V.backTo?`<button class="btn" onclick="openOrder('${V.backTo}')">受注に戻る</button>`:''}<button class="btn" id="dlBtn">ファイルを保存</button><button class="btn pri" id="prBtn">印刷</button></div>`);
+  const host = $('#docprev').attachShadow({mode:'open'}); host.innerHTML = html.replace(/^[\s\S]*?<head>[\s\S]*?<style>/, '<style>').replace(/<\/head><body>/,'').replace(/<\/body><\/html>$/,'');
+  $('#dlBtn').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([html], {type:'text/html'})); a.download = filename; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1000); };
+  $('#prBtn').onclick = () => printHtml(html);
+}
+function docDelivery(oid){
+  const o = byId('orders', oid), cu = byId('customers', o.customerId), c = orderCalc(o); V.backTo = oid;
+  const rows = (o.lines||[]).flatMap(l => lineCalc(l).items.map(s => { const lot = byId('lots', s.lotId); return `<tr><td>${esc(partName(l.partId))}</td><td>${esc(s.branch)}</td><td>${esc(lot?.kojin||'')}</td><td class="r">${kgf(s.kg)}</td><td class="r">${(+l.price||0).toLocaleString()}</td><td class="r">${Math.round(s.kg*(+l.price||0)).toLocaleString()}</td></tr>`; })).join('');
+  const body = `<div class="page"><h1>納品書</h1><div class="h"><div><div class="to">${esc(cu?.name||'')} 御中</div><p>${esc(cu?.addr||'')}</p><p>納品日 ${esc(o.shipDate||o.deliver||today())}<br>No. ${esc(o.no)}</p></div>${coBlock()}</div>
+  <p>下記の通り納品いたしました。</p><table><tr><th>品名</th><th>枝番</th><th>個体識別番号</th><th>重量(kg)</th><th>単価(円/kg)</th><th>金額(円)</th></tr>${rows}
+  ${c.disc?`<tr><td colspan="5">値引き</td><td class="r">-${c.disc.toLocaleString()}</td></tr>`:''}</table>
+  <table class="tot"><tr><td>小計（税抜）</td><td class="r">${yen(c.net)}</td></tr><tr><td>消費税（${Math.round(taxRate()*100)}%対象）</td><td class="r">${yen(c.tax)}</td></tr><tr><td class="big">合計</td><td class="r big">${yen(c.total)}</td></tr></table>
+  ${o.memo?`<p>備考：${esc(o.memo)}</p>`:''}</div>`;
+  showDoc('納品書', `納品書_${o.no}_${(cu?.name||'').replace(/[\\/:*?"<>|]/g,'')}.html`, docShell('納品書 '+o.no, DOCCSS, body));
+}
+function docInvoice(cid, ym){
+  const cu = byId('customers', cid); V.backTo = '';
+  const os = shippedIn(ym).filter(o=>o.customerId===cid).sort((a,b)=>(a.shipDate||'').localeCompare(b.shipDate||''));
+  let net=0, tax=0;
+  const rows = os.map(o => { const c = orderCalc(o); net+=c.net; tax+=c.tax; return `<tr><td>${esc(o.shipDate||o.deliver||'')}</td><td>${esc(o.no)}</td><td>${esc((o.lines||[]).map(l=>partName(l.partId)).join('、'))}</td><td class="r">${kgf(c.kg)}</td><td class="r">${c.net.toLocaleString()}</td></tr>`; }).join('');
+  const [y,m] = ym.split('-');
+  const body = `<div class="page"><h1>請求書</h1><div class="h"><div><div class="to">${esc(cu?.name||'')} 御中</div><p>${esc(cu?.addr||'')}</p><p>${+y}年${+m}月分</p></div>${coBlock()}</div>
+  <p style="font-size:14pt;margin-top:8mm">ご請求金額　<b style="font-size:18pt;border-bottom:2px solid #111">${yen(net+tax)}</b>（税込）</p>
+  <table><tr><th>納品日</th><th>伝票No.</th><th>品名</th><th>重量(kg)</th><th>金額(税抜・円)</th></tr>${rows}</table>
+  <table class="tot"><tr><td>小計（税抜）</td><td class="r">${yen(net)}</td></tr><tr><td>消費税（${Math.round(taxRate()*100)}%対象）</td><td class="r">${yen(tax)}</td></tr><tr><td class="big">合計</td><td class="r big">${yen(net+tax)}</td></tr></table>
+  ${S.settings.bank?`<p style="margin-top:8mm">お振込先<br>${esc(S.settings.bank).replace(/\n/g,'<br>')}</p>`:''}</div>`;
+  showDoc('請求書', `請求書_${ym}_${(cu?.name||'').replace(/[\\/:*?"<>|]/g,'')}.html`, docShell('請求書 '+ym, DOCCSS, body));
+}
+function docLabels(oid){
+  const o = byId('orders', oid), cu = byId('customers', o.customerId); V.backTo = oid;
+  const W = S.settings.labelW || 60, H = S.settings.labelH || 40;
+  const css = `@page{size:${W}mm ${H}mm;margin:0}body{margin:0;font-family:"BIZ UDPGothic","Hiragino Sans","Yu Gothic",sans-serif;color:#000}
+  .lb{width:${W}mm;height:${H}mm;padding:2.5mm 3mm;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;page-break-after:always;border:1px dashed #bbb;margin:0 0 2mm}
+  .p{font-size:${Math.max(9,Math.round(H/3.2))}pt;font-weight:bold;line-height:1.1}.k{font-size:${Math.max(10,Math.round(H/3))}pt;font-weight:bold;text-align:right}
+  .s{font-size:7pt;line-height:1.35}@media print{.lb{border:0;margin:0}}`;
+  const labels = (o.lines||[]).flatMap(l => lineCalc(l).items.map(s => { const lot = byId('lots', s.lotId);
+    return `<div class="lb"><div class="p">${esc(partName(l.partId))}</div><div class="k">${kgf(s.kg)} kg</div>
+    <div class="s">個体識別番号 ${esc(lot?.kojin||'—')}　枝番 ${esc(s.branch)}<br>${esc([lot?.breed,lot?.grade,lot?.origin].filter(Boolean).join(' '))}<br>${esc(S.settings.company||'')}　出荷 ${esc(o.deliver||today())}</div></div>`; })).join('');
+  showDoc(`ラベル（${W}×${H}mm）`, `ラベル_${o.no}.html`, docShell('ラベル '+o.no, css, labels));
+}
+function docCert(oid){
+  const o = byId('orders', oid), cu = byId('customers', o.customerId); V.backTo = oid;
+  const rows = (o.lines||[]).flatMap(l => lineCalc(l).items.map(s => { const lot = byId('lots', s.lotId);
+    return `<tr><td>${esc(partName(l.partId))}</td><td>${esc(lot?.kojin||'')}</td><td>${esc(lot?.breed||'')}</td><td>${esc(lot?.grade||'')}</td><td>${esc(lot?.origin||'')}</td><td class="r">${kgf(s.kg)}</td></tr>`; })).join('');
+  const body = `<div class="page"><h1>証明書</h1><div class="h"><div><div class="to">${esc(cu?.name||'')} 御中</div><p>出荷日 ${esc(o.deliver||today())}<br>No. ${esc(o.no)}</p></div>${coBlock()}</div>
+  <p>下記の商品について、個体識別番号および内容に相違ないことを証明します。</p>
+  <table><tr><th>品名</th><th>個体識別番号</th><th>品種</th><th>格付</th><th>産地・生産者</th><th>重量(kg)</th></tr>${rows}</table></div>`;
+  showDoc('証明書', `証明書_${o.no}.html`, docShell('証明書 '+o.no, DOCCSS, body));
+}
+
+/* ===================== 起動 ===================== */
+try{ const t = localStorage.getItem('niku-tab'); if(t){ V.tab = t; document.querySelectorAll('#tabs button').forEach(x=>x.setAttribute('aria-selected', x.dataset.t===t)); } }catch(_){}
+function printHtml(html){
+  const f = document.createElement('iframe');
+  f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0';
+  document.body.appendChild(f);
+  const d = f.contentDocument; d.open(); d.write(html); d.close();
+  setTimeout(() => { try{ f.contentWindow.focus(); f.contentWindow.print(); }catch(_){ toast('印刷できませんでした。「ファイルを保存」から開いて印刷してください'); } setTimeout(() => f.remove(), 3000); }, 400);
+}
+async function saveCfg(){
+  Store.cfg = {url: $('#c_url').value.trim(), pass: $('#c_pass').value};
+  lsSet(LS_CFG, Store.cfg); Store.online = null;
+  if(Store.cfg.url){
+    Object.keys(Store.data).forEach(c => Object.values(Store.data[c]).forEach(d => { if(!Store.queue.some(q=>q.col===c&&q.id===d.id)) Store.queue.push({col:c, id:d.id, doc:d}); }));
+    saveLocal(); await pull(); await flush();
+    toast(Store.online ? 'つながりました' : 'つながりませんでした。URLと合言葉を確認してください');
+  }
+  render();
+}
+function exportAll(){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify({app:'usunaga-oroshi', at:new Date().toISOString(), data:Store.data})], {type:'application/json'}));
+  a.download = `卸台帳_バックアップ_${today()}.json`; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+function importAll(input){
+  const f = input.files?.[0]; if(!f) return;
+  f.text().then(t => {
+    const j = JSON.parse(t); if(j.app !== 'usunaga-oroshi') throw new Error();
+    Object.entries(j.data||{}).forEach(([c, docs]) => { if(!Store.data[c]) return; Object.values(docs).forEach(d => writeDoc(c, d)); });
+    render(); toast('読み込みました');
+  }).catch(() => toast('このファイルは読み込めません'));
+  input.value = '';
+}
+(function boot(){
+  Store.cfg = lsGet(LS_CFG, {url:'', pass:''});
+  const saved = lsGet(LS_DATA, null); if(saved) ALL.forEach(c => Store.data[c] = saved[c] || {});
+  Store.queue = lsGet(LS_Q, []);
+  rebuild(); V.loaded = true; syncLabel(); render();
+  pull().then(flush);
+  setInterval(() => { if(document.visibilityState === 'visible'){ pull(); flush(); } }, 20000);
+  document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible'){ pull(); flush(); } });
+  window.addEventListener('online', () => { pull(); flush(); });
+})();
+</script>
+</body></html>
