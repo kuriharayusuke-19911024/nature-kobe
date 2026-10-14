@@ -249,19 +249,27 @@ async function api(action, data) {
   return j;
 }
 /* 金額計算（GASと同じ） */
+const markupPrice = (base, m) => { m = +m || 0; return m ? Math.ceil(base * (1 + m / 100) / 100) * 100 : base; };
+const baseOf = it => it.basePrice !== '' && it.basePrice != null ? +it.basePrice : (it.unitPrice !== '' && it.unitPrice != null ? +it.unitPrice : 0);
 function computeOrder(o, S, prods, trust) {
   const pm = {}; (prods || []).forEach(p => pm[p.id] = p);
-  let sub = 0;
+  const m = +o.markup || 0;
+  let sub = 0, back = 0;
   o.items = (o.items || []).filter(it => +it.g > 0 && +it.count > 0 && (trust || pm[it.pid])).map(it => {
     const p = pm[it.pid];
-    const unit = trust && it.unitPrice !== '' && it.unitPrice != null ? +it.unitPrice : (p ? p.price : 0);
+    const base = trust && it.basePrice !== '' && it.basePrice != null ? +it.basePrice
+      : trust && it.unitPrice !== '' && it.unitPrice != null ? +it.unitPrice : (p ? p.price : 0);
+    const unit = markupPrice(base, m);
     const amount = Math.round(unit * (+it.g) * (+it.count) / 1000);
     sub += amount;
-    return { pid: String(it.pid || ''), name: p ? (p.cat + ' ' + p.name) : String(it.name || ''), unitPrice: unit, variable: p ? p.variable : !!it.variable, g: +it.g, count: +it.count, amount, note: String(it.note || '') };
+    back += amount - Math.round(base * (+it.g) * (+it.count) / 1000);
+    return { pid: String(it.pid || ''), name: p ? (p.cat + ' ' + p.name) : String(it.name || ''), basePrice: base, unitPrice: unit, variable: p ? p.variable : !!it.variable, g: +it.g, count: +it.count, amount, note: String(it.note || '') };
   });
   o.extras = (trust ? (o.extras || []) : []).filter(x => x && String(x.name || '').trim()).map(x => ({ name: String(x.name), amount: +x.amount || 0, note: String(x.note || '') }));
   o.extras.forEach(x => sub += x.amount);
   o.subtotal = sub;
+  o.markup = m;
+  o.back = back;
   o.shipping = trust && o.shipping !== '' && o.shipping != null ? +o.shipping : (+S.shippingFee || 0);
   o.taxRate = trust && o.taxRate !== '' && o.taxRate != null ? +o.taxRate : (+S.taxRate || 10);
   o.tax = Math.floor((sub + o.shipping) * o.taxRate / 100);
@@ -601,7 +609,7 @@ const Admin = {
     const cnt = st => st === 'all' ? base.length : st === '未入金' ? base.filter(o => !o.paid).length : st === '要確認' ? base.filter(o => (o.checks || '').trim()).length : st === 'メール未' ? base.filter(o => !o.email || !(o.mail && o.mail.confirm)).length : A.orders.filter(o => (A.ev === 'all' || o.eventId === A.ev) && o.status === st).length;
     const chips = ['all', '受付', '発注済', '発送済', '未入金', '要確認', 'メール未', 'キャンセル'];
     return `<div class="filters">${this.evSelect(A.ev, "Admin.A.ev=this.value;Admin.render()", true)}<input type="search" placeholder="名前・電話・番号で検索" value="${h(A.q)}" oninput="Admin.A.q=this.value;Admin.refreshList()" style="flex:1;min-width:180px"></div>
-      <div class="stats"><div class="stat"><div class="l">注文数</div><div class="v">${base.length}件</div></div><div class="stat"><div class="l">税抜合計</div><div class="v num">${yen(sum('subtotal'))}</div></div><div class="stat"><div class="l">税込合計</div><div class="v num">${yen(sum('total'))}</div></div><div class="stat"><div class="l">未入金</div><div class="v num" style="color:var(--red)">${yen(unpaid)}</div></div></div>
+      <div class="stats"><div class="stat"><div class="l">注文数</div><div class="v">${base.length}件</div></div><div class="stat"><div class="l">税抜合計</div><div class="v num">${yen(sum('subtotal'))}</div></div><div class="stat"><div class="l">税込合計</div><div class="v num">${yen(sum('total'))}</div></div><div class="stat"><div class="l">未入金</div><div class="v num" style="color:var(--red)">${yen(unpaid)}</div></div>${sum('back') ? `<div class="stat"><div class="l">販売店バック（税抜）</div><div class="v num" style="color:var(--amb)">${yen(sum('back'))}</div></div><div class="stat"><div class="l">手元に残る額（税抜）</div><div class="v num">${yen(sum('subtotal') - sum('back'))}</div></div>` : ''}</div>
       <div class="chips">${chips.map(c => `<button class="${A.st === c ? 'on' : ''}" onclick="Admin.A.st='${c}';Admin.render()">${c === 'all' ? 'すべて' : c === 'メール未' ? '確認メール未送信' : c} ${cnt(c)}</button>`).join('')}</div>
       <div class="olist" id="olist">${this.cards(list)}</div>`;
   },
@@ -611,17 +619,19 @@ const Admin = {
     return list.map(o => `<button class="ocard ${o.status === 'キャンセル' ? 'cancel' : ''}" onclick="Admin.open('${o.id}')">
       <div class="top"><span class="nm">${h(o.name)} 様</span><span class="tt num">${yen(o.total)}</span></div>
       <div class="meta">${h(o.id)}　${h(o.memo || o.source || '')}${o.storage ? '　' + h(o.storage) : ''}</div>
-      <div class="chipsr"><span class="chip c-${o.status}">${o.status}</span>${o.paid ? '<span class="chip c-paid">入金済</span>' : '<span class="chip c-unpaid">未入金</span>'}${o.payment ? `<span class="chip c-gray">${o.payment}</span>` : ''}${o.receipt ? '<span class="chip c-gray">領収書</span>' : ''}${!o.email ? '<span class="chip c-warn">メールなし</span>' : (o.mail && o.mail.confirm ? '' : '<span class="chip c-gray">確認メール未</span>')}${o.status === '発送済' && o.email && !(o.mail && o.mail.ship) ? '<span class="chip c-warn">発送メール未</span>' : ''}${(o.checks || '').trim() ? '<span class="chip c-warn">要確認</span>' : ''}</div>
+      <div class="chipsr"><span class="chip c-${o.status}">${o.status}</span>${o.paid ? '<span class="chip c-paid">入金済</span>' : '<span class="chip c-unpaid">未入金</span>'}${o.payment ? `<span class="chip c-gray">${o.payment}</span>` : ''}${o.receipt ? '<span class="chip c-gray">領収書</span>' : ''}${!o.email ? '<span class="chip c-warn">メールなし</span>' : (o.mail && o.mail.confirm ? '' : '<span class="chip c-gray">確認メール未</span>')}${o.status === '発送済' && o.email && !(o.mail && o.mail.ship) ? '<span class="chip c-warn">発送メール未</span>' : ''}${o.paid && o.email && !(o.mail && o.mail.paid) ? '<span class="chip c-warn">入金メール未</span>' : ''}${(o.checks || '').trim() ? '<span class="chip c-warn">要確認</span>' : ''}</div>
       <div class="items">${h((o.items || []).map(i => i.name.replace(/^\S+\s/, '') + ' ' + gl(i.g) + (i.count > 1 ? '×' + i.count : '')).join('、'))}</div></button>`).join('');
   },
   /* ---- 注文の編集 ---- */
   newOrder() {
     const A = this.A, ev = A.ev !== 'all' ? A.ev : (A.events[0] || {}).id;
-    this.E = { id: '', eventId: ev, source: 'スタッフ', name: '', email: '', phone: '', zip: '', address: '', shipTo: { on: false }, storage: '', payment: '', receipt: false, receiptTo: '', note: '', items: [], extras: [], status: '受付', paid: false, paidAt: '', mail: { confirm: false, ship: false }, checks: '', memo: '', shipDate: '', carrier: 'ヤマト運輸', tracking: '' };
+    this.E = { id: '', eventId: ev, source: 'スタッフ', name: '', email: '', phone: '', zip: '', address: '', shipTo: { on: false }, storage: '', payment: '', receipt: false, receiptTo: '', note: '', items: [], extras: [], status: '受付', paid: false, paidAt: '', mail: { confirm: false, ship: false }, checks: '', memo: '', shipDate: '', carrier: 'ヤマト運輸', tracking: '', markup: this.evMarkup(ev) };
     this.addItem(true); this.renderEdit();
   },
   open(id) { this.E = clone(this.A.orders.find(o => o.id === id)); this.E.shipTo = this.E.shipTo || { on: false }; this.E.mail = this.E.mail || { confirm: false, ship: false }; this.renderEdit(); },
-  calcE() { const E = this.E; const tmp = clone(E); computeOrder(tmp, this.A.settings, this.A.products, true); return tmp; },
+  evMarkup(id) { const e = this.A.events.find(x => x.id === id); return e ? (+e.markup || 0) : 0; },
+  curMarkup() { const E = this.E; return E.markup != null && E.markup !== '' ? +E.markup : this.evMarkup(E.eventId); },
+  calcE() { const E = this.E; const tmp = clone(E); tmp.markup = this.curMarkup(); computeOrder(tmp, this.A.settings, this.A.products, true); return tmp; },
   renderEdit() {
     const E = this.E, A = this.A, t = this.calcE();
     const pOpts = sel => A.products.map(p => `<option value="${p.id}" ${sel === p.id ? 'selected' : ''}>${h(p.cat)} ${h(p.name)}</option>`).join('') + `<option value="" ${!sel ? 'selected' : ''}>（自由入力）</option>`;
@@ -638,7 +648,8 @@ const Admin = {
       <div class="card"><h3>商品</h3>
         ${E.items.map((it, i) => `<div class="itm"><div class="r1"><select onchange="Admin.setItem(${i},'pid',this.value,1)">${pOpts(it.pid)}</select><button class="x" onclick="Admin.delItem(${i})" aria-label="削除">✕</button></div>
           ${!it.pid ? `<div class="r1" style="margin-top:6px"><input style="flex:1" placeholder="商品名" value="${h(it.name || '')}" oninput="Admin.setItem(${i},'name',this.value)"></div>` : ''}
-          <div class="r2"><input type="number" inputmode="numeric" value="${h(it.g)}" oninput="Admin.setItem(${i},'g',this.value)" aria-label="グラム"><span class="lb">g ×</span><input style="width:58px" type="number" inputmode="numeric" value="${h(it.count)}" oninput="Admin.setItem(${i},'count',this.value)" aria-label="個数"><span class="lb">個　単価/kg</span><input style="width:92px" type="number" inputmode="numeric" value="${h(it.unitPrice)}" oninput="Admin.setItem(${i},'unitPrice',this.value)" aria-label="単価"><span class="amt num" id="ia-${i}">${yen(lineAmt(it.unitPrice, it.g, it.count))}</span></div>
+          <div class="r2"><input type="number" inputmode="numeric" value="${h(it.g)}" oninput="Admin.setItem(${i},'g',this.value)" aria-label="グラム"><span class="lb">g ×</span><input style="width:58px" type="number" inputmode="numeric" value="${h(it.count)}" oninput="Admin.setItem(${i},'count',this.value)" aria-label="個数"><span class="lb">個　元値/kg</span><input style="width:92px" type="number" inputmode="numeric" value="${h(baseOf(it))}" oninput="Admin.setItem(${i},'basePrice',this.value)" aria-label="元値"><span class="amt num" id="ia-${i}">${yen(lineAmt(markupPrice(baseOf(it), this.curMarkup()), it.g, it.count))}</span></div>
+          ${this.curMarkup() ? `<div class="xs mut" id="ib-${i}">販売単価 ${yen(markupPrice(baseOf(it), this.curMarkup()))}/kg（元値＋${this.curMarkup()}%）</div>` : ''}
           <div class="r1" style="margin-top:6px"><input style="flex:1" placeholder="メモ（例：すき焼き用）" value="${h(it.note || '')}" oninput="Admin.setItem(${i},'note',this.value)"></div></div>`).join('')}
         <button class="btn sm" style="margin-top:8px" onclick="Admin.addItem()">＋ 商品を追加</button>
         <p class="hint">価格変動（〜）の商品は、確定したら単価を書き換えてください。</p>
@@ -661,7 +672,7 @@ const Admin = {
       <div class="card"><h3>発送</h3>
         <div class="g2"><div>${fld('shipDate', '発送日', { type: 'date' })}</div><div><label class="f">配送業者</label><select class="in" onchange="Admin.setE('carrier',this.value)">${CARRIERS.map(c => `<option ${E.carrier === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div></div>
         ${fld('tracking', '伝票番号', { ph: '精肉店が入力します' })}
-        <div class="row wrapf" style="margin-top:10px"><label class="tog"><input type="checkbox" ${E.mail.confirm ? 'checked' : ''} onchange="Admin.setE('mail.confirm',this.checked)">確認メール送信済み</label><label class="tog"><input type="checkbox" ${E.mail.ship ? 'checked' : ''} onchange="Admin.setE('mail.ship',this.checked)">発送メール送信済み</label></div>
+        <div class="row wrapf" style="margin-top:10px"><label class="tog"><input type="checkbox" ${E.mail.confirm ? 'checked' : ''} onchange="Admin.setE('mail.confirm',this.checked)">確認メール送信済み</label><label class="tog"><input type="checkbox" ${E.mail.ship ? 'checked' : ''} onchange="Admin.setE('mail.ship',this.checked)">発送メール送信済み</label><label class="tog"><input type="checkbox" ${E.mail.paid ? 'checked' : ''} onchange="Admin.setE('mail.paid',this.checked)">入金メール送信済み</label></div>
       </div>
       <div class="card"><h3>社内メモ</h3>
         <label class="f">要確認（解決したら消してください）</label><textarea class="in" oninput="Admin.setE('checks',this.value)">${h(E.checks)}</textarea>
@@ -671,16 +682,17 @@ const Admin = {
       </div>
     </div>
     <div class="ft"><button class="btn pri" style="flex:1" id="savebtn" onclick="Admin.saveE()">保存</button>
-      ${E.id ? `<button class="btn" onclick="Admin.mail('confirm')">確認メール</button><button class="btn" onclick="Admin.mail('ship')">発送メール</button><button class="btn" onclick="Admin.receipt()">領収書PDF</button><button class="btn danger" onclick="Admin.askDelOrder()">削除</button>` : ''}</div>`);
+      ${E.id ? `<button class="btn" onclick="Admin.mail('confirm')">確認メール</button><button class="btn" onclick="Admin.mail('ship')">発送メール</button><button class="btn" onclick="Admin.mail('paid')">入金メール</button><button class="btn" onclick="Admin.receipt()">領収書PDF</button><button class="btn danger" onclick="Admin.askDelOrder()">削除</button>` : ''}</div>`);
   },
   totHtml(t) {
-    return `<tr><td>小計（税抜）</td><td class="right num">${yen(t.subtotal)}</td></tr>${t.shipping ? `<tr><td>送料</td><td class="right num">${yen(t.shipping)}</td></tr>` : ''}<tr><td>消費税（${t.taxRate}%）</td><td class="right num">${yen(t.tax)}</td></tr><tr class="g t"><td>合計（税込）</td><td class="right num">${yen(t.total)}</td></tr>`;
+    return `<tr><td>小計（税抜）</td><td class="right num">${yen(t.subtotal)}</td></tr>${t.shipping ? `<tr><td>送料</td><td class="right num">${yen(t.shipping)}</td></tr>` : ''}<tr><td>消費税（${t.taxRate}%）</td><td class="right num">${yen(t.tax)}</td></tr><tr class="g t"><td>合計（税込）</td><td class="right num">${yen(t.total)}</td></tr>${t.back ? `<tr class="t"><td>うち販売店バック（税抜・上乗せ${t.markup}%分）</td><td class="right num" style="color:var(--amb)">${yen(t.back)}</td></tr><tr><td>手元に残る額（税抜）</td><td class="right num">${yen(t.subtotal - t.back)}</td></tr>` : ''}`;
   },
   get(path) { return path.split('.').reduce((o, k) => (o == null ? '' : o[k]), this.E) ?? ''; },
   setE(path, v, re) {
     const ks = path.split('.'); let o = this.E;
     ks.slice(0, -1).forEach(k => { o[k] = o[k] || {}; o = o[k]; });
     o[ks[ks.length - 1]] = v;
+    if (path === 'eventId') { this.E.markup = this.evMarkup(v); return this.rerenderEdit(); }
     if (path === 'shipping' || path === 'taxRate') this.updTot();
     if (re) this.rerenderEdit();
   },
@@ -689,13 +701,16 @@ const Admin = {
   updTot() { const el = $('#etot'); if (el) el.innerHTML = this.totHtml(this.calcE()); },
   setItem(i, k, v, re) {
     const it = this.E.items[i];
-    if (k === 'pid') { it.pid = v; const p = this.A.products.find(x => x.id === v); if (p) { it.unitPrice = p.price; it.name = p.cat + ' ' + p.name; it.variable = p.variable; } }
-    else it[k] = (k === 'g' || k === 'count' || k === 'unitPrice') ? (v === '' ? '' : +v) : v;
+    if (k === 'pid') { it.pid = v; const p = this.A.products.find(x => x.id === v); if (p) { it.basePrice = p.price; delete it.unitPrice; it.name = p.cat + ' ' + p.name; it.variable = p.variable; } }
+    else if (k === 'basePrice') { it.basePrice = v === '' ? '' : +v; delete it.unitPrice; }
+    else it[k] = (k === 'g' || k === 'count') ? (v === '' ? '' : +v) : v;
     if (re) return this.rerenderEdit();
-    const a = document.getElementById('ia-' + i); if (a) a.textContent = yen(lineAmt(it.unitPrice, it.g, it.count));
+    const m = this.curMarkup(), sp = markupPrice(baseOf(it), m);
+    const a = document.getElementById('ia-' + i); if (a) a.textContent = yen(lineAmt(sp, it.g, it.count));
+    const bb = document.getElementById('ib-' + i); if (bb) bb.textContent = `販売単価 ${yen(sp)}/kg（元値＋${m}%）`;
     this.updTot();
   },
-  addItem(silent) { const p = this.A.products[0]; this.E.items.push({ pid: p ? p.id : '', name: p ? p.cat + ' ' + p.name : '', unitPrice: p ? p.price : 0, g: 200, count: 1, note: '' }); if (!silent) this.rerenderEdit(); },
+  addItem(silent) { const p = this.A.products[0]; this.E.items.push({ pid: p ? p.id : '', name: p ? p.cat + ' ' + p.name : '', basePrice: p ? p.price : 0, g: 200, count: 1, note: '' }); if (!silent) this.rerenderEdit(); },
   delItem(i) { this.E.items.splice(i, 1); this.rerenderEdit(); },
   addExtra() { (this.E.extras = this.E.extras || []).push({ name: '', amount: 0, note: '' }); this.rerenderEdit(); },
   setExtra(i, k, v) { this.E.extras[i][k] = k === 'amount' ? (+v || 0) : v; this.updTot(); },
@@ -728,6 +743,12 @@ const Admin = {
         body: `${E.name} 様\n\nこのたびは${ev.name ? '「' + ev.name + '」にて、' : ''}但馬牛・神戸ビーフをご注文いただき、誠にありがとうございます。\n以下の内容でご注文を承りました。\n\n■注文番号：${E.id}\n\n■ご注文内容\n${lines.join('\n')}\n\n小計（税抜）　${yen(o.subtotal)}\n${o.shipping ? '送料　' + yen(o.shipping) + '\n' : ''}消費税（${o.taxRate}%）　${yen(o.tax)}\n合計（税込）　${yen(o.total)}\n${variable ? '※価格変動の商品は、部位・入荷状況により金額が変わる場合がございます。確定しましたら改めてご連絡いたします。\n' : ''}\n■お届け先\n${dest}\n\n■保存状態：${E.storage || '（ご希望をお知らせください）'}\n■お支払い方法：${pay}\n${E.receipt ? `■領収書：ご用意いたします（宛名：${E.receiptTo || E.name} 様）\n` : ''}${E.note ? `■備考：${E.note}\n` : ''}■販売者：${S.sellerName || 'NATURE KOBE'}${S.processorName ? '（加工元：' + S.processorName + '）' : ''}\n\n${S.deliveryNote || ''}\n発送の際は、配送伝票番号をあらためてご連絡いたします。\n\nご不明な点がございましたら、本メールにご返信ください。\n今後ともよろしくお願いいたします。\n\n${sig}`
       };
     }
+    if (kind === 'paid') {
+      return {
+        subject: `【${S.sellerName || 'NATURE KOBE'}】ご入金確認のお知らせ（注文番号 ${E.id}）`,
+        body: `${E.name} 様\n\nこのたびは${ev.name ? '「' + ev.name + '」にて、' : ''}但馬牛・神戸ビーフをご注文いただき、誠にありがとうございました。\n下記のとおり、ご入金を確認いたしました。\n\n■注文番号：${E.id}\n■ご入金額：${yen(o.total)}（税込）\n■ご入金日：${E.paidAt ? jdate(E.paidAt) : jdate(today())}\n■お支払い方法：${E.payment === '振込' ? '銀行振込' : E.payment === '当日現金' ? '現金' : (E.payment || '')}\n${E.receipt ? `\nご依頼の領収書（宛名：${E.receiptTo || E.name} 様）をPDFで添付いたします。\n` : ''}\nお届けしたお肉はお楽しみいただけましたでしょうか。\nご感想やお気づきの点がございましたら、本メールにご返信いただけますと励みになります。\n\n今後も生産者に近いところから、品質の良い但馬牛・神戸ビーフをお届けしてまいります。\n次回の販売会のご案内もお送りいたしますので、またのご利用を心よりお待ちしております。\n\n■販売者：${S.sellerName || 'NATURE KOBE'}${S.processorName ? '（加工元：' + S.processorName + '）' : ''}\n\n${sig}`
+      };
+    }
     const future = E.shipDate && E.shipDate > today();
     const url = trackUrl(E.carrier, E.tracking);
     return {
@@ -738,18 +759,19 @@ const Admin = {
   async mail(kind) {
     const E = this.E;
     if (kind === 'ship' && (!E.shipDate || !E.tracking)) toast('発送日・伝票番号がまだ入っていません', true);
+    if (kind === 'paid' && !E.paid) toast('まだ「入金済み」になっていません', true);
     const m = this.mailText(kind);
     this._m = { kind, m };
     const gmail = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(E.email || '')}&su=${encodeURIComponent(m.subject)}&body=${encodeURIComponent(m.body)}`;
     const mailto = `mailto:${encodeURIComponent(E.email || '')}?subject=${encodeURIComponent(m.subject)}&body=${encodeURIComponent(m.body)}`;
-    openSheet(`<div class="hd"><button class="x" onclick="Admin.renderEdit()" aria-label="戻る">←</button><div class="t">${kind === 'confirm' ? '確認メール' : '発送メール'}：${h(E.name)} 様</div></div>
+    openSheet(`<div class="hd"><button class="x" onclick="Admin.renderEdit()" aria-label="戻る">←</button><div class="t">${kind === 'confirm' ? '確認メール' : kind === 'paid' ? '入金確認メール' : '発送メール'}：${h(E.name)} 様</div></div>
       <div class="bd">${!E.email ? '<div class="warnbox">メールアドレスが登録されていません。電話などでメールアドレスを聞いて、お客様欄に入力してください。</div>' : ''}
       <div class="card"><label class="f">宛先</label><div class="row"><input class="in" readonly value="${h(E.email || '')}"><button class="btn" onclick="copy(Admin.E.email||'','宛先を')">コピー</button></div>
       <label class="f">件名</label><div class="row"><input class="in" id="msub" value="${h(m.subject)}"><button class="btn" onclick="copy($('#msub').value,'件名を')">コピー</button></div>
       <label class="f">本文（ここで直せます）</label><textarea class="in" id="mbody" style="min-height:380px;font-size:14px">${h(m.body)}</textarea>
       <p><button class="btn pri block" onclick="copy($('#mbody').value,'本文を')">本文をコピー</button></p>
       <div class="row wrapf"><a class="btn" target="_blank" rel="noopener" href="${h(gmail)}" onclick="this.href=Admin.gmailHref()">Gmailで開く</a><a class="btn" href="${h(mailto)}" onclick="this.href=Admin.mailtoHref()">メールアプリで開く</a></div>
-      <p class="hint">送ったら下の「送信済みにする」を押すと、一覧の「未送信」表示が消えます。</p></div></div>
+      ${kind === 'paid' && E.receipt ? '<p class="hint">領収書は、注文画面の「領収書PDF」で保存してから添付してください。</p>' : ''}<p class="hint">送ったら下の「送信済みにする」を押すと、一覧の「未送信」表示が消えます。</p></div></div>
       <div class="ft"><button class="btn gold" style="flex:1" onclick="Admin.markSent('${kind}')">送信済みにする</button><button class="btn" onclick="Admin.renderEdit()">戻る</button></div>`);
   },
   gmailHref() { return `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(this.E.email || '')}&su=${encodeURIComponent($('#msub').value)}&body=${encodeURIComponent($('#mbody').value)}`; },
@@ -828,10 +850,14 @@ const Admin = {
     return `<div class="card"><h3>新しいイベントを作る</h3><p class="sm mut">イベントごとに注文用のURLとQRコードができます。会場でQRを見せて、お客さんのスマホから注文してもらえます。</p>
       <div class="g2"><div><label class="f">イベント名</label><input class="in" id="nev-name" placeholder="例）〇〇ワインショップ試食会"></div><div><label class="f">日付</label><input class="in" id="nev-date" type="date" value="${today()}"></div></div>
       <label class="f">会場</label><input class="in" id="nev-venue" placeholder="例）農と発酵zen">
+      <div class="g2"><div><label class="f">販売店（バック先）<span class="opt">任意</span></label><input class="in" id="nev-partner" placeholder="例）農と発酵zen"></div><div><label class="f">上乗せ率（%）</label><input class="in" id="nev-markup" type="number" inputmode="numeric" value="0" oninput="Admin.markupPreview('nev')"></div></div>
+      <p class="hint" id="nev-prev">0%なら元の価格のまま。25%にすると、元の価格に25%上乗せ（100円単位に切り上げ）した価格がお客さんに表示され、上乗せ分が販売店へのバックとして計算されます。</p>
       <p><button class="btn pri" id="nev-btn" onclick="Admin.addEvent()">作成する（受付開始）</button></p></div>
       ${A.events.map(e => {
         const url = baseUrl() + '?e=' + encodeURIComponent(e.id); const n = A.orders.filter(o => o.eventId === e.id && o.status !== 'キャンセル');
-        return `<div class="card"><div class="row"><div class="grow"><b>${h(e.name)}</b><div class="sm mut">${h(jdate(e.date))}　${h(e.venue)}　注文 ${n.length}件 ${yen(n.reduce((a, o) => a + o.total, 0))}</div></div>
+        const bk = n.reduce((a, o) => a + (+o.back || 0), 0), sb = n.reduce((a, o) => a + o.subtotal, 0);
+        return `<div class="card"><div class="row"><div class="grow"><b>${h(e.name)}</b><div class="sm mut">${h(jdate(e.date))}　${h(e.venue)}　注文 ${n.length}件 ${yen(n.reduce((a, o) => a + o.total, 0))}</div>
+          ${+e.markup ? `<div class="sm" style="margin-top:4px"><span class="chip c-warn">上乗せ${+e.markup}%</span> 販売店：${h(e.partner || '（未入力）')}　バック ${yen(bk)}（税抜）／手元 ${yen(sb - bk)}${bk ? `　<a href="javascript:void 0" onclick="Admin.copyBack('${h(e.id)}')">バック明細をコピー</a>` : ''}</div>` : ''}</div>
           <span class="chip ${e.open ? 'c-paid' : 'c-gray'}">${e.open ? '受付中' : '受付終了'}</span></div>
           <div class="urlbox">${h(url)}</div>
           <div class="row wrapf"><button class="btn sm" onclick="copy('${h(url)}','URLを')">URLをコピー</button><button class="btn sm" onclick="Admin.qr('${h(e.id)}')">QRコード</button><a class="btn sm" href="${h(url)}" target="_blank" rel="noopener">注文画面を開く</a>
@@ -846,7 +872,7 @@ const Admin = {
     const name = $('#nev-name').value.trim(); if (!name) { toast('イベント名を入力してください', true); return; }
     if (this._adding) return; this._adding = true;
     const b = $('#nev-btn'); if (b) { b.disabled = true; b.textContent = '作成中…'; }
-    try { await this.saveEvent({ name, date: $('#nev-date').value, venue: $('#nev-venue').value.trim(), open: true }); } finally { this._adding = false; }
+    try { await this.saveEvent({ name, date: $('#nev-date').value, venue: $('#nev-venue').value.trim(), partner: $('#nev-partner').value.trim(), markup: Math.max(0, +$('#nev-markup').value || 0), open: true }); } finally { this._adding = false; }
   },
   confirmBox(title, msg, okLabel, onOk) {
     this._onOk = onOk;
@@ -875,8 +901,22 @@ const Admin = {
   editEvent(id) {
     const e = this.A.events.find(x => x.id === id);
     openSheet(`<div class="hd"><button class="x" onclick="closeSheet()">✕</button><div class="t">イベントを変更</div></div><div class="bd"><div class="card">
-      <label class="f">イベント名</label><input class="in" id="ee-name" value="${h(e.name)}"><label class="f">日付</label><input class="in" id="ee-date" type="date" value="${h(e.date)}"><label class="f">会場</label><input class="in" id="ee-venue" value="${h(e.venue)}"></div></div>
-      <div class="ft"><button class="btn pri" style="flex:1" onclick="Admin.saveEvent(Object.assign({},Admin.A.events.find(x=>x.id==='${h(id)}'),{name:$('#ee-name').value,date:$('#ee-date').value,venue:$('#ee-venue').value}));closeSheet()">保存</button></div>`);
+      <label class="f">イベント名</label><input class="in" id="ee-name" value="${h(e.name)}"><label class="f">日付</label><input class="in" id="ee-date" type="date" value="${h(e.date)}"><label class="f">会場</label><input class="in" id="ee-venue" value="${h(e.venue)}">
+      <div class="g2"><div><label class="f">販売店（バック先）</label><input class="in" id="ee-partner" value="${h(e.partner || '')}"></div><div><label class="f">上乗せ率（%）</label><input class="in" id="ee-markup" type="number" inputmode="numeric" value="${h(+e.markup || 0)}" oninput="Admin.markupPreview('ee')"></div></div>
+      <p class="hint" id="ee-prev"></p><p class="hint">上乗せ率の変更は、これから入る注文に反映されます（すでに入っている注文の金額は変わりません）。</p></div></div>
+      <div class="ft"><button class="btn pri" style="flex:1" onclick="Admin.saveEvent(Object.assign({},Admin.A.events.find(x=>x.id==='${h(id)}'),{name:$('#ee-name').value,date:$('#ee-date').value,venue:$('#ee-venue').value,partner:$('#ee-partner').value.trim(),markup:Math.max(0,+$('#ee-markup').value||0)}));closeSheet()">保存</button></div>`);
+    this.markupPreview('ee');
+  },
+  markupPreview(pre) {
+    const m = Math.max(0, +($('#' + pre + '-markup') || {}).value || 0), el = $('#' + pre + '-prev'); if (!el) return;
+    if (!m) { el.textContent = '0%なら元の価格のまま表示されます。'; return; }
+    el.innerHTML = '表示価格の例（税抜/kg）：' + this.A.products.filter(p => p.active !== false).slice(0, 4).map(p => `${h(p.cat)} ${h(p.name)} ${yen(p.price)}→<b>${yen(markupPrice(p.price, m))}</b>`).join('、') + ' …';
+  },
+  copyBack(id) {
+    const e = this.A.events.find(x => x.id === id), n = this.A.orders.filter(o => o.eventId === id && o.status !== 'キャンセル');
+    const bk = n.reduce((a, o) => a + (+o.back || 0), 0), sb = n.reduce((a, o) => a + o.subtotal, 0), paid = n.filter(o => o.paid);
+    const t = `【販売店バック明細】\n${e.name}（${jdate(e.date)}）\n販売店：${e.partner || ''}\n上乗せ率：${+e.markup}%\n\n注文：${n.length}件（うち入金済 ${paid.length}件）\n売上（税抜）：${yen(sb)}\nバック額（税抜）：${yen(bk)}\n　うち入金済分：${yen(paid.reduce((a, o) => a + (+o.back || 0), 0))}\n\n内訳\n` + n.map(o => `・${o.id} ${o.name}様　売上${yen(o.subtotal)}　バック${yen(o.back || 0)}${o.paid ? '' : '（未入金）'}`).join('\n');
+    copy(t, 'バック明細を');
   },
   qr(id) {
     const e = this.A.events.find(x => x.id === id), url = baseUrl() + '?e=' + encodeURIComponent(id);
