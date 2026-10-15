@@ -367,7 +367,7 @@ const Customer = {
     C.products.forEach(p => { if (!cats.includes(p.cat)) cats.push(p.cat); });
     return `<p class="sm mut" style="margin:12px 0 0">量（g）と個数を選ぶと金額が自動で計算されます。表示価格は<b>税抜・1kgあたり</b>です。</p>` +
       cats.map(cat => `<div class="cat"><h3>${h(cat)}</h3>${C.products.filter(p => p.cat === cat).map(p => this.prodHtml(p)).join('')}</div>`).join('') +
-      `<p class="xs mut">${Customer.sellerLine()}<br>※<span class="var">価格変動</span>の商品は、部位・入荷状況により価格が変わる場合があります。確定額はメールでご連絡します。<br>※${h(C.S.deliveryNote || '')}</p>`;
+      `<p class="xs mut">${Customer.sellerLine()}<br>${+C.S.shippingFee ? '※送料は1回のご注文につき ' + yen(C.S.shippingFee) + '（税別）です。<br>' : ''}※<span class="var">価格変動</span>の商品は、部位・入荷状況により価格が変わる場合があります。確定額はメールでご連絡します。<br>※${h(C.S.deliveryNote || '')}</p>`;
   },
   prodHtml(p) {
     const lines = this.C.cart[p.id] || [];
@@ -408,12 +408,12 @@ const Customer = {
     const next = C.step === 1 ? `<button class="btn pri" id="nextbtn" onclick="Customer.go(2)" ${t.count ? '' : 'disabled'}>次へ</button>`
       : C.step === 2 ? `<button class="btn" onclick="Customer.go(1)">戻る</button><button class="btn pri" onclick="Customer.toConfirm()">確認へ</button>`
         : `<button class="btn" onclick="Customer.go(2)">戻る</button><button class="btn gold" id="sendbtn" onclick="Customer.submit()" ${C.sending ? 'disabled' : ''}>${C.sending ? '送信中…' : '注文する'}</button>`;
-    return `<div class="bar" id="bar"><div class="wrap in2"><div class="grow"><div class="xs mut" id="bar-sub">${t.count ? `${t.count}点　税抜 ${yen(t.sub)}` : '商品を選んでください'}</div><div class="tot num" id="bar-tot">${yen(t.total)}<small> 税込</small></div></div>${next}</div></div>`;
+    return `<div class="bar" id="bar"><div class="wrap in2"><div class="grow"><div class="xs mut" id="bar-sub">${t.count ? `${t.count}点　税抜 ${yen(t.sub)}${t.ship ? '＋送料 ' + yen(t.ship) : ''}` : '商品を選んでください'}</div><div class="tot num" id="bar-tot">${yen(t.total)}<small> 税込</small></div></div>${next}</div></div>`;
   },
   updateBar() {
     const t = this.totals();
     const s = $('#bar-sub'), tt = $('#bar-tot'), nb = $('#nextbtn');
-    if (s) s.textContent = t.count ? `${t.count}点　税抜 ${yen(t.sub)}` : '商品を選んでください';
+    if (s) s.textContent = t.count ? `${t.count}点　税抜 ${yen(t.sub)}${t.ship ? '＋送料 ' + yen(t.ship) : ''}` : '商品を選んでください';
     if (tt) tt.innerHTML = `${yen(t.total)}<small> 税込</small>`;
     if (nb) nb.disabled = !t.count;
   },
