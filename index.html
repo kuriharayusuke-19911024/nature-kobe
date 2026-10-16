@@ -294,7 +294,36 @@ function closeSheet() { $('#ov').hidden = true; document.body.style.overflow = '
 function brandBar(title, right, tabs) {
   return `${DEMO ? '<div class="demo">プレビュー（デモデータ）：ここでの操作は保存されません</div>' : ''}<div class="topbar"><div class="tin"><div class="logo">NATURE <span>KOBE</span></div><div class="ttl">${h(title)}</div><div class="sp"></div>${right || ''}</div>${tabs || ''}</div>`;
 }
-const GOPTS = [100, 150, 200, 250, 300, 400, 500, 700, 1000, 1500, 2000];
+const MIN_PACK = 300;
+const GOPTS = [300, 400, 500, 600, 700, 800, 900, 1000, 1200, 1500, 2000];
+/* 購入特典：「13000:2000,26000:4000」→ [{min:13000,val:2000},...] */
+const parsePerks = s => String(s || '').split(/[,、\s]+/).map(x => x.split(/[:：]/)).filter(x => +x[0] > 0).map(x => ({ min: +x[0], val: +x[1] || 0 })).sort((a, b) => a.min - b.min);
+const perkFor = (perks, sub) => { let cur = null, next = null; perks.forEach(p => { if (sub >= p.min) cur = p; else if (!next) next = p; }); return { cur, next }; };
+const perkText = (perks, sub) => { if (!perks.length) return ''; const { cur, next } = perkFor(perks, sub); return (cur ? `🍷 ${yen(cur.val)}相当のワイン特典の対象です` : '') + (next ? `${cur ? '（' : '🍷 '}あと ${yen(next.min - sub)} で ${yen(next.val)}相当のワイン${cur ? '）' : ''}` : ''); };
+
+const PAYMENTS = ['現金', 'クレジットカード'];
+const payLabel = p => p === 'クレジットカード' ? 'クレジットカード' : (p === '現金' || p === '当日現金') ? '現金' : p === '振込' ? '銀行振込' : (p || '');
+/* 自動メール：送信前に内容を見せて確認してから送る */
+async function mailFlow(opt) {
+  const kindName = opt.kind === 'receipt' ? '領収書メール' : '発送メール';
+  openSheet(`<div class="hd"><button class="x" onclick="closeSheet()">✕</button><div class="t">${kindName}の確認</div></div><div class="bd"><div class="loading">メールを準備しています…</div></div>`);
+  let m;
+  try { m = await api('mailPreview', { pass: opt.pass, id: opt.id, kind: opt.kind }); }
+  catch (e) { closeSheet(); toast(e.message, true); if (opt.onCancel) opt.onCancel(); return; }
+  window._mailOpt = opt;
+  openSheet(`<div class="hd"><button class="x" onclick="mailFlowCancel()">✕</button><div class="t">${kindName}の確認</div></div>
+    <div class="bd">${m.hasEmail ? `<div class="okbox">この内容で <b>${h(m.to)}</b> に、<b>info@naturekobe.com</b> から送信します。</div>` : '<div class="warnbox">この注文にはメールアドレスが登録されていないため、送信できません。</div>'}
+    <div class="card"><div class="sm mut">件名</div><div class="b" style="margin-bottom:10px">${h(m.subject)}</div>
+    ${m.attach ? `<div class="sm mut">添付</div><div style="margin-bottom:10px">📄 ${h(m.attach)}</div>` : ''}
+    <div class="sm mut">本文</div><div style="white-space:pre-wrap;font-size:14px;background:#faf9f5;border:1px solid var(--line);border-radius:8px;padding:10px">${h(m.body)}</div></div></div>
+    <div class="ft">${m.hasEmail ? `<button class="btn gold" style="flex:1" id="mailsend" onclick="mailFlowSend()">この内容で送信する</button>` : ''}<button class="btn" onclick="mailFlowCancel()">${m.hasEmail ? '送信しない' : '閉じる'}</button></div>`);
+}
+async function mailFlowSend() {
+  const opt = window._mailOpt, b = $('#mailsend'); if (b) { b.disabled = true; b.textContent = '送信中…'; }
+  try { const r = await api('sendMail', { pass: opt.pass, id: opt.id, kind: opt.kind }); closeSheet(); toast('送信しました'); if (opt.onSent) opt.onSent(r.order); }
+  catch (e) { toast(e.message, true); if (b) { b.disabled = false; b.textContent = 'この内容で送信する'; } }
+}
+function mailFlowCancel() { const opt = window._mailOpt; closeSheet(); if (opt && opt.onCancel) opt.onCancel(); }
 
 /* ===== ルーティング ===== */
 function route() {
@@ -365,7 +394,7 @@ const Customer = {
   renderItems() {
     const C = this.C, cats = [];
     C.products.forEach(p => { if (!cats.includes(p.cat)) cats.push(p.cat); });
-    return `<p class="sm mut" style="margin:12px 0 0">量（g）と個数を選ぶと金額が自動で計算されます。表示価格は<b>税抜・1kgあたり</b>です。</p>` +
+    return `<p class="sm mut" style="margin:12px 0 0">量（g）と個数を選ぶと金額が自動で計算されます。表示価格は<b>税抜・1kgあたり</b>です。<br><b>小分けは1パック300g以上</b>でお願いします（例：1kgを500g×2）。</p>${parsePerks(C.ev.perks).length ? `<div class="card" style="background:var(--goldl);border-color:#e6d3a8;margin-top:10px"><b>🍷 ご購入特典（税抜のお肉代の合計）</b><div class="sm">${parsePerks(C.ev.perks).map(p => `${yen(p.min)}以上 → ${yen(p.val)}相当のワイン`).join('<br>')}</div><div class="xs mut">ワインは発送完了後、店頭でお渡しします。</div></div>` : ''}` +
       cats.map(cat => `<div class="cat"><h3>${h(cat)}</h3>${C.products.filter(p => p.cat === cat).map(p => this.prodHtml(p)).join('')}</div>`).join('') +
       `<p class="xs mut">${Customer.sellerLine()}<br>${+C.S.shippingFee ? '※送料は1回のご注文につき ' + yen(C.S.shippingFee) + '（税別）です。<br>' : ''}※<span class="var">価格変動</span>の商品は、部位・入荷状況により価格が変わる場合があります。確定額はメールでご連絡します。<br>※${h(C.S.deliveryNote || '')}</p>`;
   },
@@ -381,7 +410,7 @@ const Customer = {
     const custom = l.custom || !GOPTS.includes(+l.g);
     return `<div class="line">
       <select aria-label="量" onchange="Customer.setG('${p.id}',${i},this.value)">${GOPTS.map(g => `<option value="${g}" ${!custom && +l.g === g ? 'selected' : ''}>${gl(g)}</option>`).join('')}<option value="custom" ${custom ? 'selected' : ''}>その他（g入力）</option></select>
-      ${custom ? `<input class="g" type="number" inputmode="numeric" min="50" step="50" value="${h(l.g)}" oninput="Customer.setCustomG('${p.id}',${i},this.value)" aria-label="グラム"><span class="sm">g</span>` : ''}
+      ${custom ? `<input class="g" type="number" inputmode="numeric" min="300" step="50" value="${h(l.g)}" oninput="Customer.setCustomG('${p.id}',${i},this.value)" aria-label="グラム"><span class="sm">g</span>` : ''}
       <span class="mut">×</span>
       <span class="stepper"><button onclick="Customer.cnt('${p.id}',${i},-1)" aria-label="減らす">−</button><span>${l.count}</span><button onclick="Customer.cnt('${p.id}',${i},1)" aria-label="増やす">＋</button></span>
       <span class="amt num" id="amt-${p.id}-${i}">${yen(lineAmt(p.price, l.g, l.count))}</span>
@@ -393,7 +422,7 @@ const Customer = {
     if (el) el.outerHTML = this.prodHtml(p);
     this.updateBar(); this.save();
   },
-  add(pid) { const C = this.C; (C.cart[pid] = C.cart[pid] || []).push({ g: 200, count: 1 }); this.rerenderProd(pid); },
+  add(pid) { const C = this.C; (C.cart[pid] = C.cart[pid] || []).push({ g: MIN_PACK, count: 1 }); this.rerenderProd(pid); },
   del(pid, i) { const C = this.C; C.cart[pid].splice(i, 1); if (!C.cart[pid].length) delete C.cart[pid]; this.rerenderProd(pid); },
   setG(pid, i, v) { const l = this.C.cart[pid][i]; if (v === 'custom') { l.custom = true; } else { l.custom = false; l.g = +v; } this.rerenderProd(pid); },
   setCustomG(pid, i, v) {
@@ -408,16 +437,20 @@ const Customer = {
     const next = C.step === 1 ? `<button class="btn pri" id="nextbtn" onclick="Customer.go(2)" ${t.count ? '' : 'disabled'}>次へ</button>`
       : C.step === 2 ? `<button class="btn" onclick="Customer.go(1)">戻る</button><button class="btn pri" onclick="Customer.toConfirm()">確認へ</button>`
         : `<button class="btn" onclick="Customer.go(2)">戻る</button><button class="btn gold" id="sendbtn" onclick="Customer.submit()" ${C.sending ? 'disabled' : ''}>${C.sending ? '送信中…' : '注文する'}</button>`;
-    return `<div class="bar" id="bar"><div class="wrap in2"><div class="grow"><div class="xs mut" id="bar-sub">${t.count ? `${t.count}点　税抜 ${yen(t.sub)}${t.ship ? '＋送料 ' + yen(t.ship) : ''}` : '商品を選んでください'}</div><div class="tot num" id="bar-tot">${yen(t.total)}<small> 税込</small></div></div>${next}</div></div>`;
+    return `<div class="bar" id="bar"><div class="wrap in2"><div class="grow"><div class="xs mut" id="bar-sub">${t.count ? `${t.count}点　税抜 ${yen(t.sub)}${t.ship ? '＋送料 ' + yen(t.ship) : ''}` : '商品を選んでください'}</div><div class="tot num" id="bar-tot">${yen(t.total)}<small> 税込</small></div><div class="xs" id="bar-perk" style="color:var(--amb)">${t.count ? perkText(parsePerks(C.ev.perks), t.sub) : ''}</div></div>${next}</div></div>`;
   },
   updateBar() {
     const t = this.totals();
     const s = $('#bar-sub'), tt = $('#bar-tot'), nb = $('#nextbtn');
     if (s) s.textContent = t.count ? `${t.count}点　税抜 ${yen(t.sub)}${t.ship ? '＋送料 ' + yen(t.ship) : ''}` : '商品を選んでください';
     if (tt) tt.innerHTML = `${yen(t.total)}<small> 税込</small>`;
+    const pk = $('#bar-perk'); if (pk) pk.textContent = t.count ? perkText(parsePerks(this.C.ev.perks), t.sub) : '';
     if (nb) nb.disabled = !t.count;
   },
-  go(step) { this.C.step = step; this.C.err = ''; this.render(); window.scrollTo(0, 0); },
+  go(step) {
+    if (step === 2 && this.items().some(i => i.g < MIN_PACK)) { toast('小分けは1パック300g以上でお願いします', true); return; }
+    this.C.step = step; this.C.err = ''; this.render(); window.scrollTo(0, 0);
+  },
   set(k, v) { this.C.info[k] = v; this.save(); },
   setRe(k, v) { this.C.info[k] = v; this.save(); const y = window.scrollY; this.render(); window.scrollTo(0, y); },
   renderInfo() {
@@ -442,8 +475,8 @@ const Customer = {
         ${inp('shipAddress', 'お届け先のご住所')}` : '<p class="hint" style="margin:0">上のご住所にお届けします</p>'}
     </div>
     <div class="card"><h3>ご希望の保存状態<span class="req" style="font-size:11px;color:#fff;background:var(--red);padding:0 6px;border-radius:4px;margin-left:6px;vertical-align:2px">必須</span></h3>${radio('storage', [['冷凍', '冷凍'], ['冷蔵', '冷蔵']])}</div>
-    <div class="card"><h3>お支払い方法<span class="req" style="font-size:11px;color:#fff;background:var(--red);padding:0 6px;border-radius:4px;margin-left:6px;vertical-align:2px">必須</span></h3>${radio('payment', [['振込', '銀行振込'], ['当日現金', '本日 現金でお支払い']])}
-      ${f.payment === '振込' ? `<p class="hint">振込先はご注文完了画面と確認メールでご案内します。</p>` : f.payment === '当日現金' ? `<p class="hint">この場でスタッフにお支払いください。</p>` : ''}</div>
+    <div class="card"><h3>お支払い方法<span class="req" style="font-size:11px;color:#fff;background:var(--red);padding:0 6px;border-radius:4px;margin-left:6px;vertical-align:2px">必須</span></h3>${radio('payment', [['現金', '現金'], ['クレジットカード', 'クレジットカード（Square）']])}
+      <p class="hint">お支払いはこの場でスタッフにお願いします。お支払いを確認後、領収書をメールでお送りします。</p></div>
     <div class="card"><h3>領収書</h3>
       <label class="tog"><input type="checkbox" ${f.receipt ? 'checked' : ''} onchange="Customer.setRe('receipt',this.checked)">領収書が必要</label>
       ${f.receipt ? `<label class="f">宛名<span class="opt">空欄ならお名前で発行します</span></label><input class="in" placeholder="例）株式会社〇〇" value="${h(f.receiptTo)}" oninput="Customer.set('receiptTo',this.value)">` : ''}
@@ -486,7 +519,7 @@ const Customer = {
       <dt>お名前</dt><dd>${h(f.name)} 様</dd><dt>メール</dt><dd>${h(f.email)}</dd><dt>電話</dt><dd>${h(f.phone)}</dd>
       <dt>ご住所</dt><dd>〒${h(f.zip)}<br>${h(f.address)}</dd>
       <dt>お届け先</dt><dd>${f.shipOn ? `${h(f.shipName)} 様<br>〒${h(f.shipZip)} ${h(f.shipAddress)}${f.shipPhone ? '<br>' + h(f.shipPhone) : ''}` : 'ご住所と同じ'}</dd>
-      <dt>保存状態</dt><dd>${h(f.storage)}</dd><dt>お支払い</dt><dd>${f.payment === '振込' ? '銀行振込' : '本日 現金'}</dd>
+      <dt>保存状態</dt><dd>${h(f.storage)}</dd><dt>お支払い</dt><dd>${h(payLabel(f.payment))}（この場でお支払い）</dd>
       <dt>領収書</dt><dd>${f.receipt ? '必要（宛名：' + h(f.receiptTo || f.name) + ' 様）' : '不要'}</dd>
       ${f.note ? `<dt>備考</dt><dd>${h(f.note)}</dd>` : ''}</dl>
       <button class="btn sm" onclick="Customer.go(2)" style="margin-top:10px">お客様情報を変更</button></div>
@@ -513,8 +546,7 @@ const Customer = {
       <div style="font-size:40px;color:var(--g)">✓</div><h2 style="margin:4px 0">ご注文ありがとうございます</h2>
       <p class="mut sm">注文番号</p><p class="b" style="font-size:20px;margin:0">${h(o.id)}</p>
       <p style="font-size:22px;font-weight:700;margin:12px 0 0">${yen(o.total)} <span class="sm mut">（税込）</span></p></div>
-      ${o.payment === '振込' ? `<div class="card"><h3>お振込先</h3>${C.S.bankInfo ? `<p style="white-space:pre-wrap;margin:0">${h(C.S.bankInfo)}</p>` : '<p class="mut">振込先は確認メールでご案内します。</p>'}<p class="hint">お振込み手数料はお客様のご負担でお願いいたします。</p></div>`
-        : `<div class="card"><h3>お支払い</h3><p style="margin:0">この画面をスタッフにお見せいただき、現金でお支払いください。</p></div>`}
+      <div class="card"><h3>お支払い</h3><p style="margin:0">この画面をスタッフにお見せいただき、<b>${h(payLabel(o.payment))}</b>でお支払いください。<br>お支払いを確認後、領収書をメールでお送りします。</p></div>
       <div class="card"><p style="margin:0">ご注文の確認メールを <b>${h(o.email)}</b> にお送りします。<br>${h(C.S.deliveryNote || '')}発送の際は伝票番号をメールでお知らせします。</p></div>
       <p class="xs mut">${this.sellerLine()}</p><p class="center"><button class="btn block" onclick="location.reload()">続けて別の注文をする</button></p></div>`;
   }
@@ -619,7 +651,7 @@ const Admin = {
     return list.map(o => `<button class="ocard ${o.status === 'キャンセル' ? 'cancel' : ''}" onclick="Admin.open('${o.id}')">
       <div class="top"><span class="nm">${h(o.name)} 様</span><span class="tt num">${yen(o.total)}</span></div>
       <div class="meta">${h(o.id)}　${h(o.memo || o.source || '')}${o.storage ? '　' + h(o.storage) : ''}</div>
-      <div class="chipsr"><span class="chip c-${o.status}">${o.status}</span>${o.paid ? '<span class="chip c-paid">入金済</span>' : '<span class="chip c-unpaid">未入金</span>'}${o.payment ? `<span class="chip c-gray">${o.payment}</span>` : ''}${o.receipt ? '<span class="chip c-gray">領収書</span>' : ''}${!o.email ? '<span class="chip c-warn">メールなし</span>' : (o.mail && o.mail.confirm ? '' : '<span class="chip c-gray">確認メール未</span>')}${o.status === '発送済' && o.email && !(o.mail && o.mail.ship) ? '<span class="chip c-warn">発送メール未</span>' : ''}${o.paid && o.email && !(o.mail && o.mail.paid) ? '<span class="chip c-warn">入金メール未</span>' : ''}${(o.checks || '').trim() ? '<span class="chip c-warn">要確認</span>' : ''}</div>
+      <div class="chipsr"><span class="chip c-${o.status}">${o.status}</span>${o.paid ? '<span class="chip c-paid">入金済</span>' : '<span class="chip c-unpaid">未入金</span>'}${o.payment ? `<span class="chip c-gray">${h(payLabel(o.payment))}</span>` : ''}${o.receipt ? '<span class="chip c-gray">領収書</span>' : ''}${!o.email ? '<span class="chip c-warn">メールなし</span>' : (o.mail && o.mail.confirm ? '' : '<span class="chip c-gray">確認メール未</span>')}${o.status === '発送済' && o.email && !(o.mail && o.mail.ship) ? '<span class="chip c-warn">発送メール未</span>' : ''}${o.paid && o.email && !(o.mail && (o.mail.receipt || o.mail.paid)) ? '<span class="chip c-warn">領収書メール未</span>' : ''}${(o.checks || '').trim() ? '<span class="chip c-warn">要確認</span>' : ''}${Admin.perkChip(o)}</div>
       <div class="items">${h((o.items || []).map(i => i.name.replace(/^\S+\s/, '') + ' ' + gl(i.g) + (i.count > 1 ? '×' + i.count : '')).join('、'))}</div></button>`).join('');
   },
   /* ---- 注文の編集 ---- */
@@ -641,7 +673,7 @@ const Admin = {
     <div class="bd">
       ${(E.checks || '').trim() ? `<div class="warnbox"><b>要確認</b><br>${h(E.checks)}</div>` : ''}
       <div class="card"><h3>状態</h3>${segE('status', STATUSES)}
-        <div class="g2"><div><label class="f">お支払い方法</label><select class="in" onchange="Admin.setE('payment',this.value)"><option value="">未設定</option>${['振込', '当日現金'].map(p => `<option ${E.payment === p ? 'selected' : ''}>${p}</option>`).join('')}</select></div>
+        <div class="g2"><div><label class="f">お支払い方法</label><select class="in" onchange="Admin.setE('payment',this.value)"><option value="">未設定</option>${PAYMENTS.concat(E.payment && !PAYMENTS.includes(E.payment) ? [E.payment] : []).map(p => `<option value="${h(p)}" ${E.payment === p ? 'selected' : ''}>${h(payLabel(p))}</option>`).join('')}</select></div>
         <div><label class="f">入金</label><label class="tog" style="padding:6px 0"><input type="checkbox" ${E.paid ? 'checked' : ''} onchange="Admin.setPaid(this.checked)">入金済み ${E.paid && E.paidAt ? `<span class="sm mut">（${h(E.paidAt)}）</span>` : ''}</label></div></div>
         ${E.paid ? fld('paidAt', '入金日', { type: 'date' }) : ''}
       </div>
@@ -672,7 +704,7 @@ const Admin = {
       <div class="card"><h3>発送</h3>
         <div class="g2"><div>${fld('shipDate', '発送日', { type: 'date' })}</div><div><label class="f">配送業者</label><select class="in" onchange="Admin.setE('carrier',this.value)">${CARRIERS.map(c => `<option ${E.carrier === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div></div>
         ${fld('tracking', '伝票番号', { ph: '精肉店が入力します' })}
-        <div class="row wrapf" style="margin-top:10px"><label class="tog"><input type="checkbox" ${E.mail.confirm ? 'checked' : ''} onchange="Admin.setE('mail.confirm',this.checked)">確認メール送信済み</label><label class="tog"><input type="checkbox" ${E.mail.ship ? 'checked' : ''} onchange="Admin.setE('mail.ship',this.checked)">発送メール送信済み</label><label class="tog"><input type="checkbox" ${E.mail.paid ? 'checked' : ''} onchange="Admin.setE('mail.paid',this.checked)">入金メール送信済み</label></div>
+        <div class="row wrapf" style="margin-top:10px"><label class="tog"><input type="checkbox" ${E.mail.confirm ? 'checked' : ''} onchange="Admin.setE('mail.confirm',this.checked)">確認メール送信済み</label><label class="tog"><input type="checkbox" ${E.mail.ship ? 'checked' : ''} onchange="Admin.setE('mail.ship',this.checked)">発送メール送信済み</label><label class="tog"><input type="checkbox" ${E.mail.receipt || E.mail.paid ? 'checked' : ''} onchange="Admin.setE('mail.receipt',this.checked)">領収書メール送信済み</label></div>
       </div>
       <div class="card"><h3>社内メモ</h3>
         <label class="f">要確認（解決したら消してください）</label><textarea class="in" oninput="Admin.setE('checks',this.value)">${h(E.checks)}</textarea>
@@ -682,10 +714,12 @@ const Admin = {
       </div>
     </div>
     <div class="ft"><button class="btn pri" style="flex:1" id="savebtn" onclick="Admin.saveE()">保存</button>
-      ${E.id ? `<button class="btn" onclick="Admin.mail('confirm')">確認メール</button><button class="btn" onclick="Admin.mail('ship')">発送メール</button><button class="btn" onclick="Admin.mail('paid')">入金メール</button><button class="btn" onclick="Admin.receipt()">領収書PDF</button><button class="btn danger" onclick="Admin.askDelOrder()">削除</button>` : ''}</div>`);
+      ${E.id ? `<button class="btn" onclick="Admin.mail('confirm')">確認メール</button><button class="btn" onclick="Admin.autoMail('ship')">発送メール送信</button><button class="btn" onclick="Admin.autoMail('receipt')">領収書メール送信</button><button class="btn" onclick="Admin.receipt()">領収書PDF</button><button class="btn danger" onclick="Admin.askDelOrder()">削除</button>` : ''}</div>`);
   },
+  perkOf(o) { const e = this.A.events.find(x => x.id === o.eventId); return e ? perkFor(parsePerks(e.perks), o.subtotal).cur : null; },
+  perkChip(o) { const p = this.perkOf(o); return p && o.status !== 'キャンセル' ? `<span class="chip" style="background:var(--goldl);color:#7a5a12">🍷${yen(p.val)}相当</span>` : ''; },
   totHtml(t) {
-    return `<tr><td>小計（税抜）</td><td class="right num">${yen(t.subtotal)}</td></tr>${t.shipping ? `<tr><td>送料</td><td class="right num">${yen(t.shipping)}</td></tr>` : ''}<tr><td>消費税（${t.taxRate}%）</td><td class="right num">${yen(t.tax)}</td></tr><tr class="g t"><td>合計（税込）</td><td class="right num">${yen(t.total)}</td></tr>${t.back ? `<tr class="t"><td>うち販売店バック（税抜・上乗せ${t.markup}%分）</td><td class="right num" style="color:var(--amb)">${yen(t.back)}</td></tr><tr><td>手元に残る額（税抜）</td><td class="right num">${yen(t.subtotal - t.back)}</td></tr>` : ''}`;
+    return `<tr><td>小計（税抜）</td><td class="right num">${yen(t.subtotal)}</td></tr>${t.shipping ? `<tr><td>送料</td><td class="right num">${yen(t.shipping)}</td></tr>` : ''}<tr><td>消費税（${t.taxRate}%）</td><td class="right num">${yen(t.tax)}</td></tr><tr class="g t"><td>合計（税込）</td><td class="right num">${yen(t.total)}</td></tr>${this.perkOf(t) ? `<tr><td colspan="2" style="color:#7a5a12">🍷 購入特典：${yen(this.perkOf(t).val)}相当のワイン（店頭でお渡し）</td></tr>` : ''}${t.back ? `<tr class="t"><td>うち販売店バック（税抜・上乗せ${t.markup}%分）</td><td class="right num" style="color:var(--amb)">${yen(t.back)}</td></tr><tr><td>手元に残る額（税抜）</td><td class="right num">${yen(t.subtotal - t.back)}</td></tr>` : ''}`;
   },
   get(path) { return path.split('.').reduce((o, k) => (o == null ? '' : o[k]), this.E) ?? ''; },
   setE(path, v, re) {
@@ -697,7 +731,32 @@ const Admin = {
     if (re) this.rerenderEdit();
   },
   rerenderEdit() { const s = $('#sheet').scrollTop; this.renderEdit(); $('#sheet').scrollTop = s; },
-  setPaid(on) { this.E.paid = on; if (on && !this.E.paidAt) this.E.paidAt = today(); if (!on) this.E.paidAt = ''; this.rerenderEdit(); },
+  setPaid(on) {
+    if (!on) { this.E.paid = false; this.E.paidAt = ''; return this.rerenderEdit(); }
+    const E = this.E, pm = PAYMENTS.includes(E.payment) ? E.payment : '';
+    this._pay = { method: pm, date: today() };
+    openSheet(`<div class="hd"><button class="x" onclick="Admin.renderEdit()">←</button><div class="t">入金済みにする：${h(E.name)} 様</div></div>
+      <div class="bd"><div class="card"><p class="b" style="font-size:20px;margin:0 0 6px">${yen(this.calcE().total)} <span class="sm mut">（税込）</span></p>
+      <label class="f">お支払い方法</label><div class="seg">${PAYMENTS.map(p => `<label class="${pm === p ? 'on' : ''}"><input type="radio" name="pm" ${pm === p ? 'checked' : ''} onchange="Admin._pay.method='${p}';document.querySelectorAll('.seg label').forEach(l=>l.classList.remove('on'));this.parentNode.classList.add('on')">${p === 'クレジットカード' ? 'クレジットカード（Square）' : p}</label>`).join('')}</div>
+      <label class="f">入金日</label><input class="in" type="date" value="${today()}" onchange="Admin._pay.date=this.value">
+      <p class="hint">${E.email ? '次の画面で、領収書メールの内容を確認してから送信できます。' : 'この注文にはメールアドレスがないため、領収書メールは送れません（入金済みの記録だけ残ります）。'}</p></div></div>
+      <div class="ft"><button class="btn pri" style="flex:1" onclick="Admin.confirmPaid()">入金済みにする</button><button class="btn" onclick="Admin.renderEdit()">やめる</button></div>`);
+  },
+  async confirmPaid() {
+    const P = this._pay; if (!P.method) { toast('お支払い方法を選んでください', true); return; }
+    const E = this.E; E.paid = true; E.paidAt = P.date || today(); E.payment = P.method;
+    if (!(await this.saveE(true))) return;
+    toast('入金済みにしました');
+    if (!this.E.email) return this.renderEdit();
+    mailFlow({ pass: this.pass(), id: this.E.id, kind: 'receipt', onSent: o => this.afterMail(o), onCancel: () => this.renderEdit() });
+  },
+  async autoMail(kind) {
+    if (kind === 'ship' && (!this.E.shipDate || !this.E.tracking)) { toast('発送日と伝票番号を入れてください', true); return; }
+    if (kind === 'receipt' && !this.E.paid) { toast('先に「入金済み」にしてください', true); return; }
+    if (!(await this.saveE(true))) return;
+    mailFlow({ pass: this.pass(), id: this.E.id, kind, onSent: o => this.afterMail(o), onCancel: () => this.renderEdit() });
+  },
+  afterMail(o) { const i = this.A.orders.findIndex(x => x.id === o.id); if (i >= 0) this.A.orders[i] = o; this.E = clone(o); this.E.shipTo = this.E.shipTo || { on: false }; this.E.mail = this.E.mail || {}; this.render(); this.renderEdit(); },
   updTot() { const el = $('#etot'); if (el) el.innerHTML = this.totHtml(this.calcE()); },
   setItem(i, k, v, re) {
     const it = this.E.items[i];
@@ -737,7 +796,7 @@ const Admin = {
     const dest = E.shipTo && E.shipTo.on ? `${shipAddr(E)}\n${shipName(E)} 様` : `〒${E.zip} ${E.address}\n${E.name} 様`;
     const variable = o.items.some(i => i.variable) || (o.extras || []).some(x => !x.amount);
     if (kind === 'confirm') {
-      const pay = E.payment === '振込' ? `銀行振込\n${S.bankInfo ? S.bankInfo + '\n' : '（振込先は別途ご案内いたします）\n'}※お振込み手数料はお客様のご負担でお願いいたします。` : E.payment === '当日現金' ? `当日現金${E.paid ? '（お支払い済み）' : ''}` : '別途ご案内いたします';
+      const pay = E.payment ? `${payLabel(E.payment)}${E.paid ? '（お支払い済み）' : '（会場でお支払い）'}` : '別途ご案内いたします';
       return {
         subject: `【${S.sellerName || 'NATURE KOBE'}】ご注文ありがとうございます（注文番号 ${E.id}）`,
         body: `${E.name} 様\n\nこのたびは${ev.name ? '「' + ev.name + '」にて、' : ''}但馬牛・神戸ビーフをご注文いただき、誠にありがとうございます。\n以下の内容でご注文を承りました。\n\n■注文番号：${E.id}\n\n■ご注文内容\n${lines.join('\n')}\n\n小計（税抜）　${yen(o.subtotal)}\n${o.shipping ? '送料　' + yen(o.shipping) + '\n' : ''}消費税（${o.taxRate}%）　${yen(o.tax)}\n合計（税込）　${yen(o.total)}\n${variable ? '※価格変動の商品は、部位・入荷状況により金額が変わる場合がございます。確定しましたら改めてご連絡いたします。\n' : ''}\n■お届け先\n${dest}\n\n■保存状態：${E.storage || '（ご希望をお知らせください）'}\n■お支払い方法：${pay}\n${E.receipt ? `■領収書：ご用意いたします（宛名：${E.receiptTo || E.name} 様）\n` : ''}${E.note ? `■備考：${E.note}\n` : ''}■販売者：${S.sellerName || 'NATURE KOBE'}${S.processorName ? '（加工元：' + S.processorName + '）' : ''}\n\n${S.deliveryNote || ''}\n発送の際は、配送伝票番号をあらためてご連絡いたします。\n\nご不明な点がございましたら、本メールにご返信ください。\n今後ともよろしくお願いいたします。\n\n${sig}`
@@ -851,12 +910,14 @@ const Admin = {
       <div class="g2"><div><label class="f">イベント名</label><input class="in" id="nev-name" placeholder="例）〇〇ワインショップ試食会"></div><div><label class="f">日付</label><input class="in" id="nev-date" type="date" value="${today()}"></div></div>
       <label class="f">会場</label><input class="in" id="nev-venue" placeholder="例）農と発酵zen">
       <div class="g2"><div><label class="f">販売店（バック先）<span class="opt">任意</span></label><input class="in" id="nev-partner" placeholder="例）農と発酵zen"></div><div><label class="f">上乗せ率（%）</label><input class="in" id="nev-markup" type="number" inputmode="numeric" value="0" oninput="Admin.markupPreview('nev')"></div></div>
+      <label class="f">購入特典<span class="opt">任意・税抜お肉代：特典額をカンマ区切り</span></label><input class="in" id="nev-perks" placeholder="例）13000:2000,26000:4000,39000:6000,50000:10000">
       <p class="hint" id="nev-prev">0%なら元の価格のまま。25%にすると、元の価格に25%上乗せ（100円単位に切り上げ）した価格がお客さんに表示され、上乗せ分が販売店へのバックとして計算されます。</p>
       <p><button class="btn pri" id="nev-btn" onclick="Admin.addEvent()">作成する（受付開始）</button></p></div>
       ${A.events.map(e => {
         const url = baseUrl() + '?e=' + encodeURIComponent(e.id); const n = A.orders.filter(o => o.eventId === e.id && o.status !== 'キャンセル');
         const bk = n.reduce((a, o) => a + (+o.back || 0), 0), sb = n.reduce((a, o) => a + o.subtotal, 0);
         return `<div class="card"><div class="row"><div class="grow"><b>${h(e.name)}</b><div class="sm mut">${h(jdate(e.date))}　${h(e.venue)}　注文 ${n.length}件 ${yen(n.reduce((a, o) => a + o.total, 0))}</div>
+          ${parsePerks(e.perks).length ? `<div class="sm" style="margin-top:4px">🍷 特典：${parsePerks(e.perks).map(p => { const c = n.filter(o => { const r = perkFor(parsePerks(e.perks), o.subtotal).cur; return r && r.min === p.min; }).length; return `${yen(p.val)}相当 ${c}件`; }).join('／')}</div>` : ''}
           ${+e.markup ? `<div class="sm" style="margin-top:4px"><span class="chip c-warn">上乗せ${+e.markup}%</span> 販売店：${h(e.partner || '（未入力）')}　バック ${yen(bk)}（税抜）／手元 ${yen(sb - bk)}${bk ? `　<a href="javascript:void 0" onclick="Admin.copyBack('${h(e.id)}')">バック明細をコピー</a>` : ''}</div>` : ''}</div>
           <span class="chip ${e.open ? 'c-paid' : 'c-gray'}">${e.open ? '受付中' : '受付終了'}</span></div>
           <div class="urlbox">${h(url)}</div>
@@ -872,7 +933,7 @@ const Admin = {
     const name = $('#nev-name').value.trim(); if (!name) { toast('イベント名を入力してください', true); return; }
     if (this._adding) return; this._adding = true;
     const b = $('#nev-btn'); if (b) { b.disabled = true; b.textContent = '作成中…'; }
-    try { await this.saveEvent({ name, date: $('#nev-date').value, venue: $('#nev-venue').value.trim(), partner: $('#nev-partner').value.trim(), markup: Math.max(0, +$('#nev-markup').value || 0), open: true }); } finally { this._adding = false; }
+    try { await this.saveEvent({ name, date: $('#nev-date').value, venue: $('#nev-venue').value.trim(), partner: $('#nev-partner').value.trim(), markup: Math.max(0, +$('#nev-markup').value || 0), perks: $('#nev-perks').value.trim(), open: true }); } finally { this._adding = false; }
   },
   confirmBox(title, msg, okLabel, onOk) {
     this._onOk = onOk;
@@ -903,8 +964,9 @@ const Admin = {
     openSheet(`<div class="hd"><button class="x" onclick="closeSheet()">✕</button><div class="t">イベントを変更</div></div><div class="bd"><div class="card">
       <label class="f">イベント名</label><input class="in" id="ee-name" value="${h(e.name)}"><label class="f">日付</label><input class="in" id="ee-date" type="date" value="${h(e.date)}"><label class="f">会場</label><input class="in" id="ee-venue" value="${h(e.venue)}">
       <div class="g2"><div><label class="f">販売店（バック先）</label><input class="in" id="ee-partner" value="${h(e.partner || '')}"></div><div><label class="f">上乗せ率（%）</label><input class="in" id="ee-markup" type="number" inputmode="numeric" value="${h(+e.markup || 0)}" oninput="Admin.markupPreview('ee')"></div></div>
+      <label class="f">購入特典（税抜お肉代：特典額）</label><input class="in" id="ee-perks" value="${h(e.perks || '')}" placeholder="例）13000:2000,26000:4000,39000:6000,50000:10000">
       <p class="hint" id="ee-prev"></p><p class="hint">上乗せ率の変更は、これから入る注文に反映されます（すでに入っている注文の金額は変わりません）。</p></div></div>
-      <div class="ft"><button class="btn pri" style="flex:1" onclick="Admin.saveEvent(Object.assign({},Admin.A.events.find(x=>x.id==='${h(id)}'),{name:$('#ee-name').value,date:$('#ee-date').value,venue:$('#ee-venue').value,partner:$('#ee-partner').value.trim(),markup:Math.max(0,+$('#ee-markup').value||0)}));closeSheet()">保存</button></div>`);
+      <div class="ft"><button class="btn pri" style="flex:1" onclick="Admin.saveEvent(Object.assign({},Admin.A.events.find(x=>x.id==='${h(id)}'),{name:$('#ee-name').value,date:$('#ee-date').value,venue:$('#ee-venue').value,partner:$('#ee-partner').value.trim(),markup:Math.max(0,+$('#ee-markup').value||0),perks:$('#ee-perks').value.trim()}));closeSheet()">保存</button></div>`);
     this.markupPreview('ee');
   },
   markupPreview(pre) {
@@ -948,7 +1010,6 @@ const Admin = {
       <div class="g2"><div>${sf('taxRate', '消費税率（%）')}</div><div>${sf('shippingFee', '送料（税抜・1注文あたり、無料は0）')}</div></div>
       ${sf('sellerName', '販売者名（領収書・メールに表示）')}${sf('sellerAddress', '販売者の住所（領収書に表示）')}
       <div class="g2"><div>${sf('sellerTel', '電話番号')}</div><div>${sf('sellerEmail', 'メールアドレス')}</div></div>
-      ${sf('bankInfo', '振込先（完了画面とメールに表示）', '例）〇〇銀行 〇〇支店 普通 1234567 ナチュールコウベ', true)}
       ${sf('deliveryNote', '発送の目安（注文画面・メールに表示）')}
       ${sf('processorName', '加工元（注文画面・メールに表示）', '例）神戸うすなが牧場')}
       ${sf('shopName', '精肉店名（発注文の宛名）')}
@@ -999,12 +1060,12 @@ const Shop = {
       <div class="filters"><select onchange="Shop.D.ev=this.value;Shop.render()"><option value="all">すべてのイベント</option>${D.events.map(e => `<option value="${h(e.id)}" ${D.ev === e.id ? 'selected' : ''}>${h(e.date)} ${h(e.name)}</option>`).join('')}</select></div>
       <div class="chips" style="margin-top:8px">${['未発送', '発送済', 'すべて'].map(f => `<button class="${D.f === f ? 'on' : ''}" onclick="Shop.D.f='${f}';Shop.render()">${f} ${f === '未発送' ? pending.length : f === '発送済' ? inEv.length - pending.length : inEv.length}</button>`).join('')}</div>
       ${pending.length ? `<details class="card" ${D.f === '未発送' ? 'open' : ''}><summary class="b" style="cursor:pointer">未発送の合計（${pending.length}件）</summary>${aggTable(pending)}</details>` : ''}
-      <p class="sm mut">発送したら「発送日」と「伝票番号」を入れて保存してください。お客様への連絡はこちらで行います。</p>
+      <p class="sm mut">発送したら「発送日」と「伝票番号」を入れて「発送完了」を押してください。確認画面のあと、お客様に発送のお知らせメールが届きます。</p>
       ${list.length ? list.map(o => this.card(o, evName(o.eventId))).join('') : '<p class="mut">該当する注文はありません</p>'}
     </div>`;
   },
   card(o, evn) {
-    return `<div class="card" id="sc-${o.id}"><div class="row wrapf"><b style="font-size:17px">${h(shipName(o))} 様</b><span class="store ${o.storage || 'none'}">${h(o.storage || '保存状態 未定')}</span><span class="chip c-${o.status}">${o.status === '発注済' ? '未発送' : '発送済'}</span></div>
+    return `<div class="card" id="sc-${o.id}"><div class="row wrapf"><b style="font-size:17px">${h(shipName(o))} 様</b><span class="store ${o.storage || 'none'}">${h(o.storage || '保存状態 未定')}</span><span class="chip c-${o.status}">${o.status === '発注済' ? '未発送' : '発送済'}</span>${o.shipMailSent ? '<span class="chip c-paid">発送メール送信済</span>' : ''}</div>
       <div class="xs mut">${h(o.id)}　${h(evn)}${o.shipTo && o.shipTo.on ? `　（ご注文者：${h(o.name)} 様）` : ''}</div>
       <div style="margin:8px 0" class="sm">${h(shipAddr(o))}<br>TEL ${h(shipTel(o) || '（なし）')}</div>
       <table class="agg">${o.items.map(i => `<tr><td>${h(i.name)}${i.note ? `<div class="xs mut">${h(i.note)}</div>` : ''}</td><td class="n">${gl(i.g)} × ${i.count}</td></tr>`).join('')}${(o.extras || []).map(x => `<tr><td colspan="2">${h(x.name)}</td></tr>`).join('')}</table>
@@ -1012,8 +1073,11 @@ const Shop = {
       <div class="g2" style="margin-top:6px"><div><label class="f">発送日</label><input class="in" type="date" id="sd-${o.id}" value="${h(o.shipDate)}"></div>
       <div><label class="f">配送業者</label><select class="in" id="sca-${o.id}">${CARRIERS.map(c => `<option ${(o.carrier || 'ヤマト運輸') === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div></div>
       <label class="f">伝票番号</label><input class="in" id="st-${o.id}" inputmode="numeric" value="${h(o.tracking)}" placeholder="例）1234-5678-9012">
-      <p><button class="btn ${o.status === '発送済' ? '' : 'pri'} block" onclick="Shop.save('${o.id}')">${o.status === '発送済' ? '修正して保存' : '発送済みにする'}</button></p></div>`;
+      <p><button class="btn ${o.status === '発送済' ? '' : 'pri'} block" onclick="Shop.save('${o.id}')">${o.status === '発送済' ? '修正して保存' : '発送完了'}</button></p>
+      ${o.status === '発送済' && o.hasEmail && !o.shipMailSent ? `<p><button class="btn gold block" onclick="Shop.mail('${o.id}')">お客様に発送メールを送る</button></p>` : ''}
+      ${!o.hasEmail ? '<p class="xs mut">この注文はメールアドレスがないため、お客様への連絡はNATURE KOBEから行います。</p>' : ''}</div>`;
   },
+  mail(id) { mailFlow({ pass: this.pass(), id, kind: 'ship', onSent: o => { const i = this.D.orders.findIndex(x => x.id === id); this.D.orders[i] = o; this.render(); } }); },
   async save(id) {
     const shipDate = $('#sd-' + id).value, carrier = $('#sca-' + id).value, tracking = $('#st-' + id).value.trim();
     if (!shipDate || !tracking) { toast('発送日と伝票番号を入力してください', true); return; }
@@ -1021,6 +1085,7 @@ const Shop = {
       const r = await api('shopUpdate', { pass: this.pass(), id, shipDate, carrier, tracking });
       const i = this.D.orders.findIndex(o => o.id === id); this.D.orders[i] = r.order;
       toast('保存しました'); this.render();
+      if (r.order.hasEmail && !r.order.shipMailSent) this.mail(id);
     } catch (e) { toast(e.message, true); }
   }
 };
