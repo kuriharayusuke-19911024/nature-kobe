@@ -184,7 +184,8 @@ let M='2026-09';
 try{const t=localStorage.getItem('usn-tab'); if(t) tab=t;}catch(e){}
 if(location.hash&&/^#[a-z]+$/.test(location.hash)) tab=location.hash.slice(1);
 
-const DEF={fyStart:4,farms:['神出','平野','岩岡','小野','大分','淡路'],barns:['神出','平野','岩岡','小野','大分','淡路'],addrBarn:{'法人':'神出','よしき':'平野','よしひこ':'岩岡'},costCenters:['受精卵'],office:'神戸うすなが牧場',owners:['法人','よしき','よしひこ'],usefulLife:6,dailyCost:null,
+const DEF={fyStart:4,farms:['神出','平野','岩岡','小野','大分','淡路'],barns:['神出','平野','岩岡','小野','大分','淡路'],addrBarn:{'法人':'神出','よしき':'平野','よしひこ':'岩岡'},costCenters:['受精卵'],categories:[{name:'飼料費',cls:'直接変動費'},{name:'水道光熱費',cls:'間接変動費'},{name:'消耗品費',cls:'間接変動費'},{name:'燃料費',cls:'間接変動費'},{name:'獣医費',cls:'間接変動費'},{name:'薬剤費',cls:'間接変動費'},{name:'診療費',cls:'間接変動費'},{name:'リース料',cls:'固定費'},{name:'修繕費',cls:'固定費'},{name:'修繕費（立替）',cls:'固定費'},{name:'削蹄費',cls:'固定費'},{name:'外注費',cls:'固定費'},{name:'広告宣伝費',cls:'固定費'},{name:'支払保険料',cls:'固定費'},{name:'支払利息',cls:'固定費'},{name:'支払手数料',cls:'固定費'},{name:'検査料',cls:'固定費'},{name:'租税公課',cls:'固定費'},{name:'立替金',cls:'固定費'},{name:'給料',cls:'固定費'},{name:'繁殖費',cls:'固定費'},{name:'肥料費',cls:'固定費'},{name:'諸会費',cls:'固定費'},{name:'貯蔵品',cls:'固定費'},{name:'車両費',cls:'固定費'},{name:'返金',cls:'固定費'},{name:'通信費',cls:'固定費'},{name:'運搬費',cls:'固定費'},{name:'雑費',cls:'固定費'},{name:'預託料',cls:'固定費'},{name:'仕入',cls:'その他'},{name:'仕入（営業外）',cls:'その他'},{name:'売上',cls:'その他'},{name:'建物',cls:'その他'},{name:'設備',cls:'その他'},{name:'雑収入',cls:'その他'},{name:'雑所得',cls:'その他'},{name:'預託牛',cls:'その他'}],
+  catAlias:{'光熱費':'水道光熱費','水道費':'水道光熱費','賃借料':'リース料','保険料':'支払保険料','薬品費':'薬剤費','資材費':'消耗品費','その他':'雑費'},office:'神戸うすなが牧場',owners:['法人','よしき','よしひこ'],usefulLife:6,dailyCost:null,
   targets:{conception:55,cultured:420,produced:200,freshET:90,calvingRate:90,carcassWeight:500,semenMin:5,
     growing:{}}};
 const GDEF={shipWeight:290,shipAge:280,dg:0.95,mortality:3};
@@ -254,7 +255,7 @@ const FORMS={
     {k:'stock',l:'現在の在庫',t:'number',req:1},{k:'reorderPoint',l:'この数を切ったら発注',t:'number',req:1},{k:'orderQty',l:'1回の発注数',t:'number'},{k:'supplier',l:'発注先'}]},
   invoices:{title:'請求書',fields:()=>[
     {k:'date',l:'請求日',t:'date',req:1,def:TODAY},{k:'vendor',l:'請求元',req:1},{k:'addressee',l:'請求書の宛名',t:'select',opts:[['','—']].concat(cfg().owners.map(o=>[o,o]))},{k:'barn',l:'どの牛舎の経費か（宛名を選ぶと自動で入ります）',t:'select',opts:[['','決めない（頭数×日数で按分）']].concat(cfg().barns.map(o=>[o,o]),(cfg().costCenters||[]).map(o=>[o,o]))},{k:'total',l:'税込合計（円）',t:'number',req:1},{k:'taxRate',l:'税率',t:'select',opts:['10%','8%','非課税','10%と8%が混在'],def:'10%'},{k:'tax',l:'うち消費税（円）',t:'number'},
-    {k:'category',l:'費目',t:'select',opts:CAT_ORDER.map(c=>[c,`${c}（${costClass(c)}）`])},
+    {k:'category',l:'費目',t:'select',opts:catOrder().map(c=>[c,`${c}（${costClass(c)}）`])},
     {k:'checked',l:'内容確認',t:'select',opts:[['no','未確認'],['yes','確認済み']],def:'no'},{k:'memo',l:'メモ',full:1}]}
 };
 function field(f,val){
@@ -340,7 +341,7 @@ function stockStats(){
   return {need,needNew:need.filter(i=>!open.has(i.id)),open,last,stale:!last||dayDiff(last.slice(0,10),TODAY)>7}}
 function invStats(m){
   const mo=S.invoices.filter(r=>ym(r.date)===m);
-  const cats={};mo.forEach(r=>{const c=r.category||'その他';cats[c]=(cats[c]||0)+(num(r.total)||0)});
+  const cats={};mo.forEach(r=>{const c=normCat(r.category||'雑費');cats[c]=(cats[c]||0)+(num(r.total)||0)});
   return {n:mo.length,total:sum(mo.map(r=>r.total)),unchecked:mo.filter(r=>r.checked!=='yes').length,cats}}
 
 function buildReport(m){
@@ -573,7 +574,7 @@ V.invoice=()=>{
   <section class="sec"><div class="sec-h"><h2>${jpM(M)}の経費</h2><span class="sub">${iv.n}件・未確認 ${iv.unchecked}件</span></div>
     <div class="grid">${stat('合計（税込）',yen(iv.total))}</div>
     ${cats.length?`<div style="display:flex;flex-direction:column;gap:6px">${cats.map(([c,v])=>`<div style="display:grid;grid-template-columns:5.5em 1fr 7em;gap:8px;align-items:center;font-size:14px"><span>${esc(c)}</span><div class="bar"><i style="width:${v/mx*100}%"></i></div><span style="text-align:right">${yen(v)}</span></div>`).join('')}</div>`:''}
-    ${table(['請求日','請求元','費目','牛舎',{t:'金額',n:1},'確認',''],recs.map(r=>[jpD(r.date),esc(r.vendor),esc(r.category||'—'),(r.barn?esc(r.barn):invBarn(r)?`${esc(invBarn(r))}<span class="muted">（宛名）</span>`:'<span class="muted">按分</span>'),yen(r.total),r.checked==='yes'?pill('good','確認済み'):`<button class="btn sm" data-chk="${r.id}">確認した</button>`,`<button class="btn sm" data-edit="invoices" data-id="${r.id}">直す</button>`]),'この月の請求書はありません')}</section>`};
+    ${table(['請求日','請求元','費目','牛舎',{t:'金額',n:1},'確認',''],recs.map(r=>[jpD(r.date),esc(r.vendor),`${esc(normCat(r.category||'—'))}<span class="muted">（${costClass(r.category||'')}）</span>`,(r.barn?esc(r.barn):invBarn(r)?`${esc(invBarn(r))}<span class="muted">（宛名）</span>`:'<span class="muted">按分</span>'),yen(r.total),r.checked==='yes'?pill('good','確認済み'):`<button class="btn sm" data-chk="${r.id}">確認した</button>`,`<button class="btn sm" data-edit="invoices" data-id="${r.id}">直す</button>`]),'この月の請求書はありません')}</section>`};
 V.invoice.bind=()=>{
   const p=$('#invPhoto');if(p)p.onclick=()=>photoRead('invoices');
   document.querySelectorAll('[data-chk]').forEach(b=>b.onclick=async()=>{const r=S.invoices.find(x=>x.id===b.dataset.chk);b.disabled=true;if(await save('invoices',r.id,{...strip(r),checked:'yes'}))toast('確認済みにしました')})};
@@ -593,7 +594,7 @@ async function photoRead(kind){
     const out=$('#phOut');out.textContent='読み取っています…（30秒〜1分ほどかかります）';ctl=new AbortController();
     const yr=M.slice(0,4);
     const prompt=kind==='invoices'
-      ?`この画像は牧場に届いた請求書です。次の形のJSONオブジェクトだけを返してください。\n{"vendor":"請求元の会社名","addressee":"請求書の宛名（会社名・個人名）","taxRate":"10%・8%・非課税・10%と8%が混在 のどれか","date":"YYYY-MM-DD（請求日）","total":税込の合計金額（数値）,"tax":消費税額（数値、書かれていなければnull）,"category":"飼料費・獣医費・診療費・薬剤費・水道費・光熱費・消耗品費・燃料費・修繕費・賃借料・保険料・繁殖費・その他 のうち最も合うもの","lines":[{"name":"品名","qty":数量,"amount":金額}]}\n読めない項目はnullにしてください。金額は数字だけ（円やカンマは付けない）。`
+      ?`この画像は牧場に届いた請求書です。次の形のJSONオブジェクトだけを返してください。\n{"vendor":"請求元の会社名","addressee":"請求書の宛名（会社名・個人名）","taxRate":"10%・8%・非課税・10%と8%が混在 のどれか","date":"YYYY-MM-DD（請求日）","total":税込の合計金額（数値）,"tax":消費税額（数値、書かれていなければnull）,"category":"${catOrder().join('・')} のうち最も合うもの","lines":[{"name":"品名","qty":数量,"amount":金額}]}\n読めない項目はnullにしてください。金額は数字だけ（円やカンマは付けない）。`
       :`この画像は牛の分娩の手書き記録です。書かれている子牛1頭ごとに1つのオブジェクトにして、JSON配列だけを返してください。\n[{"date":"YYYY-MM-DD（分娩日）","damId":"母牛の番号","calfId":"子牛の番号（なければnull）","sex":"雌 または 雄","weight":生時体重kg（数値、なければnull）,"status":"正常・難産・死産 のどれか（書かれていなければ正常）","note":"備考（なければ空文字）"}]\n年が書かれていない日付は${yr}年とします。読めない項目はnullにしてください。`;
     try{
       const data=await sample.json(prompt,{images:files,signal:ctl.signal,onText:()=>{out.textContent='読み取っています…'}});
@@ -631,15 +632,18 @@ const exitOf=c=>c.status==='出荷'?c.shipDate:c.status==='死亡'?c.deathDate:n
 const aliveOn=(c,d)=>c.introDate&&c.introDate<=d&&!(exitOf(c)&&exitOf(c)<=d);
 function daysIn(c,from,to){if(!c.introDate)return 0;const s=c.introDate>from?c.introDate:from;const ex=exitOf(c);let e=to;if(ex&&ex<=to)e=addDays(ex,-1);return e<s?0:dayDiff(s,e)+1}
 const ownOK=(r,o)=>!o||r.owner===o;
-const COST_CLASS={'飼料費':'直接変動費','獣医費':'間接変動費','診療費':'間接変動費','薬剤費':'間接変動費','水道費':'間接変動費','光熱費':'間接変動費','消耗品費':'間接変動費','燃料費':'間接変動費'};
-const costClass=c=>COST_CLASS[c]||'固定費';
+const CLASSES=['直接変動費','間接変動費','固定費','その他'];
+const catList=()=>(cfg().categories&&cfg().categories.length?cfg().categories:DEF.categories);
+const normCat=c=>((cfg().catAlias||DEF.catAlias)[c])||c;
+const costClass=c=>(catList().find(x=>x.name===normCat(c))||{}).cls||'固定費';
+const catOrder=()=>catList().map(x=>x.name);
 const CLS_KEY={'直接変動費':'direct','間接変動費':'indirect','固定費':'fixed'};
 const invBarn=r=>r.barn||((cfg().addrBarn||{})[r.addressee])||'';
 function barnCost(from,to){ // 牛舎ごとの経費と延べ頭日（使用頭数×対象日数）
   const barns=cfg().farms,res={};barns.forEach(b=>res[b]={hd:0,direct:0,indirect:0,fixed:0,cats:{}});
   S.cattle.forEach(c=>{const r=res[c.farm];if(r)r.hd+=daysIn(c,from,to)});
   const hdAll=sum(barns.map(b=>res[b].hd));const cc={};res.__cc=cc;res.__hdAll=hdAll;
-  S.invoices.filter(r=>r.date>=from&&r.date<=to).forEach(r=>{const amt=num(r.total)||0,cat=r.category||'その他',k=CLS_KEY[costClass(cat)];
+  S.invoices.filter(r=>r.date>=from&&r.date<=to).forEach(r=>{const amt=num(r.total)||0,cat=normCat(r.category||'雑費'),k=CLS_KEY[costClass(cat)];if(!k)return;
     const eb=invBarn(r);
     if(eb&&(cfg().costCenters||[]).includes(eb)){const x=cc[eb]=cc[eb]||{direct:0,indirect:0,fixed:0,cats:{}};x.cats[cat]=(x.cats[cat]||0)+amt;x[k]+=amt;return}
     const tg=eb&&res[eb]?[[eb,1]]:barns.map(b=>[b,hdAll?res[b].hd/hdAll:1/barns.length]);
@@ -681,11 +685,10 @@ function assetCalc(m,o){
     const exp=pool.total+dep;return {salesC,salesS,sales:salesC+salesS,misc,cats:pool.cats,dep,exp,profit:salesC+salesS+misc-exp}};
   return {rows,alive,stock,breed,byOwner,mo,fy,dMo,dFy,setD,plMo:pl(ms,me,mo),plFy:pl(fs,me,fy),
     stockVal:sum(stock.map(x=>x.val)),bookVal:sum(breed.map(x=>x.book))}}
-const CAT_ORDER=['飼料費','獣医費','診療費','薬剤費','水道費','光熱費','消耗品費','燃料費','修繕費','賃借料','保険料','繁殖費','その他'];
 function finText(A,m,o){const L=[`【${jpM(m)} 牛の在庫・会計（試算）】${o||'全体'}`,'','■ 損益計算書（今月／年度累計）'];
   const r=(n,a,b)=>L.push(`${n}：${yen(a)}／${yen(b)}`);
   r('売上高',A.plMo.sales,A.plFy.sales);r('　枝肉売上',A.plMo.salesC,A.plFy.salesC);r('　出荷販売額',A.plMo.salesS,A.plFy.salesS);r('雑収入など',A.plMo.misc,A.plFy.misc);
-  CAT_ORDER.forEach(c=>{if(A.plMo.cats[c]||A.plFy.cats[c])r('　'+c,A.plMo.cats[c]||0,A.plFy.cats[c]||0)});
+  catOrder().forEach(c=>{if(A.plMo.cats[c]||A.plFy.cats[c])r('　'+c,A.plMo.cats[c]||0,A.plFy.cats[c]||0)});
   r('　減価償却費（繁殖牛）',A.plMo.dep,A.plFy.dep);r('費用合計',A.plMo.exp,A.plFy.exp);r('差引損益',A.plMo.profit,A.plFy.profit);
   L.push('',`■ 貸借対照表（牛の部分・${jpD(monthEnd(m))}時点）`,`棚卸資産（育成・肥育牛 ${A.stock.length}頭）：${yen(A.stockVal)}`,`固定資産（繁殖牛 ${A.breed.length}頭・簿価）：${yen(A.bookVal)}`,`飼育管理費（全体平均）：${A.dFy==null?'—':f0(A.dFy)+'円/頭日'}`);
   return L.join('\n')}
@@ -699,7 +702,7 @@ V.asset=()=>{
   const A=assetCalc(M,OWN),c=cfg();
   const tot=A.rows.reduce((t,r)=>({start:t.start+r.start,inn:t.inn+r.inn,ship:t.ship+r.ship,dead:t.dead+r.dead,end:t.end+r.end}),{start:0,inn:0,ship:0,dead:0,end:0});
   const plRow=(n,a,b,bold)=>[bold?`<b>${n}</b>`:n,bold?`<b>${yen(a)}</b>`:yen(a),bold?`<b>${yen(b)}</b>`:yen(b)];
-  const catRows=[];['直接変動費','間接変動費','固定費'].forEach(cl=>{const ks=CAT_ORDER.filter(k=>costClass(k)===cl&&(A.plMo.cats[k]||A.plFy.cats[k]));if(!ks.length)return;
+  const catRows=[];['直接変動費','間接変動費','固定費'].forEach(cl=>{const ks=catOrder().concat(Object.keys(A.plFy.cats).filter(k=>!catOrder().includes(k))).filter(k=>costClass(k)===cl&&(A.plMo.cats[k]||A.plFy.cats[k]));if(!ks.length)return;
     catRows.push(plRow(cl,sum(ks.map(k=>A.plMo.cats[k]||0)),sum(ks.map(k=>A.plFy.cats[k]||0)),1));ks.forEach(k=>catRows.push(plRow('　'+k,A.plMo.cats[k]||0,A.plFy.cats[k]||0)))});
   return `
   <div class="row"><h1 class="pg">牛の在庫・会計</h1>
@@ -730,7 +733,7 @@ V.asset.bind=()=>{
   const fc=$('#finCsv');if(fc)fc.onclick=async()=>{const rows=[['区分','科目','今月','年度累計']];
     const pr=(n,a,b)=>rows.push(['損益計算書',n,Math.round(a),Math.round(b)]);
     pr('枝肉売上',A.plMo.salesC,A.plFy.salesC);pr('出荷販売額',A.plMo.salesS,A.plFy.salesS);pr('雑収入など',A.plMo.misc,A.plFy.misc);
-    CAT_ORDER.forEach(c=>{if(A.plMo.cats[c]||A.plFy.cats[c])pr(c,A.plMo.cats[c]||0,A.plFy.cats[c]||0)});
+    catOrder().forEach(c=>{if(A.plMo.cats[c]||A.plFy.cats[c])pr(c,A.plMo.cats[c]||0,A.plFy.cats[c]||0)});
     pr('減価償却費（繁殖牛）',A.plMo.dep,A.plFy.dep);pr('差引損益',A.plMo.profit,A.plFy.profit);
     rows.push(['貸借対照表','棚卸資産（育成・肥育牛）',Math.round(A.stockVal),'']);rows.push(['貸借対照表','繁殖牛（簿価）',Math.round(A.bookVal),'']);
     cfg().farms.forEach(b=>{const m=A.mo.bc[b],f=A.fy.bc[b];[['直接変動費','dPer'],['間接変動費','iPer'],['変動費','vPer'],['固定費','fPer'],['飼育管理費','mgmt']].forEach(([n,k])=>rows.push(['1頭1日コスト',`${b} ${n}`,m[k]==null?'':Math.round(m[k]),f[k]==null?'':Math.round(f[k])]))});
@@ -738,6 +741,8 @@ V.asset.bind=()=>{
     const csv='﻿'+rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\r\n');
     try{await downloads.save({filename:`牛の在庫と損益_${OWN||'全体'}_${M}.csv`,data:csv});toast('保存しました')}catch(e){if(e.code!=='declined')toast('保存できませんでした')}}};
 
+let catSeq=0;
+const catRowHtml=(x,i)=>{const id='c'+(catSeq++);return `<tr data-cat="${id}"><td><input id="cn_${id}" value="${esc(x.name)}" style="width:100%;min-width:9em;border:1px solid var(--line);border-radius:6px;padding:5px 8px;background:var(--surface)"></td><td><select id="cc_${id}" style="border:1px solid var(--line);border-radius:6px;padding:5px 8px;background:var(--surface)">${CLASSES.map(c=>`<option${x.cls===c?' selected':''}>${c}</option>`).join('')}</select></td><td><button class="btn sm dng" data-catdel="${id}">削除</button></td></tr>`};
 V.goals=()=>{
   const c=cfg(),T=c.targets;const hasSample=COLS.some(k=>S[k].some(r=>r.sample));
   const inp=(id,l,v,step)=>`<div class="fld"><label for="${id}">${l}</label><input id="${id}" type="number" inputmode="decimal" step="${step||'any'}" value="${v??''}"></div>`;
@@ -747,6 +752,9 @@ V.goals=()=>{
     <div class="form">${inp('t_conception','受胎率（%）',T.conception)}${inp('t_calvingRate','分娩率（%）',T.calvingRate)}${inp('t_cultured','培養卵数（年間・個）',T.cultured)}${inp('t_produced','生産個数（年間・個）',T.produced)}${inp('t_freshET','新鮮卵移植個数（年間・個）',T.freshET)}${inp('t_carcassWeight','平均枝肉重量（kg）',T.carcassWeight)}${inp('t_semenMin','精液の発注点（本・標準）',T.semenMin)}</div></section>
   <section class="sec"><div class="sec-h"><h2>育成の目標（牛舎ごと）</h2></div>
     ${c.farms.map(f=>{const t=T.growing[f]||GDEF;return `<div class="kg-h">${esc(f)}</div><div class="form">${inp(`g_${f}_shipWeight`,'出荷時の平均体重（kg）',t.shipWeight)}${inp(`g_${f}_shipAge`,'出荷時の平均日齢（日・以下）',t.shipAge)}${inp(`g_${f}_dg`,'DG（kg/日）',t.dg)}${inp(`g_${f}_mortality`,'死亡率（%・以下）',t.mortality)}</div>`}).join('')}</section>
+  <section class="sec"><div class="sec-h"><h2>勘定科目</h2><span class="sub">請求書の「費目」に出てくる一覧です。区分で1頭1日コストの分け方が決まります（「その他」は経費に入れません）</span><button class="btn" id="catAdd">＋ 科目を追加</button></div>
+    <div class="tbl"><table><thead><tr><th>科目名</th><th>区分</th><th></th></tr></thead><tbody id="catRows">${catList().map((x,i)=>catRowHtml(x,i)).join('')}</tbody></table></div>
+    <p class="sub" style="margin:0">科目名を変えると、その名前で入力した過去の請求書は「固定費」扱いになります。名前を変えるときは、新しい名前で追加してから古い科目を消してください。</p></section>
   <section class="sec"><div class="sec-h"><h2>基本の設定</h2></div>
     <div class="form"><div class="fld"><label for="s_fy">年度の始まりの月</label><select id="s_fy">${Array.from({length:12},(_,i)=>`<option value="${i+1}"${c.fyStart===i+1?' selected':''}>${i+1}月</option>`).join('')}</select></div>
     <div class="fld"><label for="s_farms">牛舎（読点で区切る）</label><input id="s_farms" value="${esc(c.farms.join('、'))}"></div>
@@ -755,16 +763,21 @@ V.goals=()=>{
     ${c.owners.map(o=>`<div class="fld"><label for="ab_${esc(o)}">「${esc(o)}」宛ての請求書の牛舎（請求書入力のときの標準。入力時に変えられます）</label><select id="ab_${esc(o)}" data-ab="${esc(o)}"><option value="">決めない（頭数×日数で按分）</option>${c.barns.map(b=>`<option${(c.addrBarn||{})[o]===b?' selected':''}>${esc(b)}</option>`).join('')}</select></div>`).join('')}
     <div class="fld"><label for="s_life">繁殖牛の耐用年数（年）</label><input id="s_life" type="number" inputmode="decimal" value="${c.usefulLife??''}"></div>
     <div class="fld"><label for="s_daily">1頭1日コストを固定する（円・空欄なら牛舎ごとに自動計算）</label><input id="s_daily" type="number" inputmode="decimal" value="${c.dailyCost??''}"></div></div>
-    <div class="row"><button class="btn pri" id="saveGoals">目標と設定を保存</button></div></section>
+    <div class="row"><button class="btn pri" id="saveGoals">目標・勘定科目・設定を保存</button></div></section>
   ${false?`<section class="sec"><div class="sec-h"><h2>サンプルデータ</h2></div><p class="sub" style="margin:0">今入っている記録の多くは、使い方を見るためのサンプルです。本番の入力を始める前に消してください（目標・設定は残ります）。</p><div class="row"><button class="btn dng" id="delSample">サンプルデータを全部消す</button></div></section>`:''}`};
 V.goals.bind=()=>{
+  const bindCatDel=()=>document.querySelectorAll('[data-catdel]').forEach(b=>b.onclick=()=>{const tr=document.querySelector(`[data-cat="${b.dataset.catdel}"]`);if(tr)tr.remove()});
+  bindCatDel();
+  $('#catAdd').onclick=()=>{$('#catRows').insertAdjacentHTML('beforeend',catRowHtml({name:'',cls:'固定費'}));bindCatDel();const rows=$('#catRows').querySelectorAll('input');rows[rows.length-1].focus()};
   $('#saveGoals').onclick=async()=>{const c=cfg();const g=id=>num(document.getElementById(id).value);
+    const categories=[...document.querySelectorAll('[data-cat]')].map(tr=>{const id=tr.dataset.cat;return {name:document.getElementById('cn_'+id).value.trim(),cls:document.getElementById('cc_'+id).value}}).filter(x=>x.name);
+    const dup=categories.map(x=>x.name).find((n,i,a)=>a.indexOf(n)!==i);if(dup){toast(`「${dup}」が2つあります。どちらかを消してください`);return}
     const split=s=>s.split(/[、,，\s]+/).map(x=>x.trim()).filter(Boolean);
     const farms=split($('#s_farms').value);
     const growing={};farms.forEach(f=>{const el=k=>document.getElementById(`g_${f}_${k}`);growing[f]=el('shipWeight')?{shipWeight:num(el('shipWeight').value),shipAge:num(el('shipAge').value),dg:num(el('dg').value),mortality:num(el('mortality').value)}:{...GDEF}});
     const owners=split($('#s_owners').value);
     const s={fyStart:Number($('#s_fy').value),farms:farms.length?farms:c.farms,barns:farms.length?farms:c.barns,office:$('#s_office').value.trim()||c.office,
-      owners:owners.length?owners:c.owners,addrBarn:Object.fromEntries([...document.querySelectorAll('[data-ab]')].filter(e=>e.value).map(e=>[e.dataset.ab,e.value])),usefulLife:num($('#s_life').value)||c.usefulLife,dailyCost:num($('#s_daily').value),
+      categories:categories.length?categories:catList(),owners:owners.length?owners:c.owners,addrBarn:Object.fromEntries([...document.querySelectorAll('[data-ab]')].filter(e=>e.value).map(e=>[e.dataset.ab,e.value])),usefulLife:num($('#s_life').value)||c.usefulLife,dailyCost:num($('#s_daily').value),
       targets:{conception:g('t_conception'),calvingRate:g('t_calvingRate'),cultured:g('t_cultured'),produced:g('t_produced'),freshET:g('t_freshET'),carcassWeight:g('t_carcassWeight'),semenMin:g('t_semenMin'),growing}};
     if(await save('settings','main',s))toast('保存しました')};
   const ds=$('#delSample');if(ds)ds.onclick=async()=>{if(!ds.dataset.sure){ds.dataset.sure=1;ds.textContent='本当に消す（元に戻せません）';return}
