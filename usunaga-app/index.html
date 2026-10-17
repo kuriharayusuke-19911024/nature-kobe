@@ -215,7 +215,16 @@ async function boot(){
   try{const j=await call({op:'get',since:0});apply(j.docs||[]);since=j.now||Date.now();start()}
   catch(e){if(String(e.message).includes('wrong pass')){showForm('合言葉が変わったようです。新しい合言葉を入れてください。');return}
     lastErr=String(e.message||e);start()}}
-window.claude={use:async n=>n==='db'?dbReady:n==='downloads'?downloads:null};
+const toImg=f=>new Promise((res,rej)=>{const u=URL.createObjectURL(f);const im=new Image();im.onload=()=>{const M=1600,k=Math.min(1,M/Math.max(im.width,im.height));const cv=document.createElement('canvas');cv.width=Math.round(im.width*k);cv.height=Math.round(im.height*k);cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);URL.revokeObjectURL(u);res({type:'image/jpeg',data:cv.toDataURL('image/jpeg',0.85).split(',')[1]})};im.onerror=()=>{URL.revokeObjectURL(u);rej({code:'bad_image'})};im.src=u});
+const aiCall=async(prompt,opts={})=>{const images=await Promise.all((opts.images||[]).map(toImg));opts.onText&&opts.onText({text:''});
+  const p=call({op:'ai',prompt,images});const ab=opts.signal?new Promise((_,rej)=>opts.signal.addEventListener('abort',()=>rej({code:'aborted'}))):null;
+  let j;try{j=await (ab?Promise.race([p,ab]):p)}catch(e){if(e&&e.code)throw e;throw {code:'ai_error',message:String(e.message||e)}}
+  return j.text||''};
+const sample=Object.assign(async(prompt,opts={})=>{const text=await aiCall(prompt,opts);opts.onText&&opts.onText({text});return {text}},{
+  json:async(prompt,opts={})=>{const t=await aiCall(prompt+'\n\nJSONだけを返してください。説明文やコードブロックの記号は付けないでください。',opts);const m=t.replace(/```(json)?/g,'').trim();const a=m.search(/[\[{]/);const b=Math.max(m.lastIndexOf('}'),m.lastIndexOf(']'));try{return JSON.parse(m.slice(a,b+1))}catch(e){throw {code:'invalid_json'}}},
+  limits:async()=>({images:{maxCount:5,mediaTypes:['image/*']}})});
+let aiOn=null;const aiReady=async()=>{await dbReady;if(aiOn===null){try{aiOn=!!(await call({op:'aiStatus'})).ai}catch(e){aiOn=false}}return aiOn?sample:null};
+window.claude={use:async n=>n==='db'?dbReady:n==='downloads'?downloads:n==='sample'?aiReady():null};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();
 </script><script>
@@ -638,7 +647,7 @@ V.invoice=()=>{
   <h1 class="pg">請求書</h1>
   <section class="sec"><div class="sec-h"><h2>請求書を入れる</h2></div>
     <div class="row">${sample?'<button class="btn ai" id="invPhoto">写真から読み取る</button>':''}<button class="btn" data-add="invoices">手で入力</button></div>
-    <p class="sub" style="margin:0">${sample?'請求書を撮った写真を選ぶと、AIが請求元・日付・金額・品目を読み取ります。内容を確認してから保存します。':'写真のAI読み取りは、このバージョンではまだ使えません。手で入力してください。'}</p></section>
+    <p class="sub" style="margin:0">${sample?'請求書を撮った写真を選ぶと、AIが請求元・日付・金額・品目を読み取ります。内容を確認してから保存します。':'AIの読み取りはまだ設定されていません（管理者がAIのキーを入れると使えます）。手で入力してください。'}</p></section>
   <section class="sec"><div class="sec-h"><h2>${jpM(M)}の経費</h2><span class="sub">${iv.n}件・未確認 ${iv.unchecked}件</span></div>
     <div class="grid">${stat('合計（税込）',yen(iv.total))}</div>
     ${cats.length?`<div style="display:flex;flex-direction:column;gap:6px">${cats.map(([c,v])=>`<div style="display:grid;grid-template-columns:5.5em 1fr 7em;gap:8px;align-items:center;font-size:14px"><span>${esc(c)}</span><div class="bar"><i style="width:${v/mx*100}%"></i></div><span style="text-align:right">${yen(v)}</span></div>`).join('')}</div>`:''}
