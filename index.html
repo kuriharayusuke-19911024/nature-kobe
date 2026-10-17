@@ -811,7 +811,7 @@ const Admin = {
     const future = E.shipDate && E.shipDate > today();
     const url = trackUrl(E.carrier, E.tracking);
     return {
-      subject: `【${S.sellerName || 'NATURE KOBE'}】商品${future ? 'の発送日' : 'を発送いたしました'}のお知らせ（注文番号 ${E.id}）`,
+      subject: `【${S.sellerName || 'NATURE KOBE'}】商品${future ? '発送日' : '発送'}のお知らせ（注文番号 ${E.id}）`,
       body: `${E.name} 様\n\nこのたびはご注文いただき、誠にありがとうございます。\nご注文の商品を${E.shipDate ? mdw(E.shipDate) : '（発送日）'}に${future ? '発送予定です' : '発送いたしました'}。\n\n■配送業者：${E.carrier || ''}（${E.storage === '冷蔵' ? 'クール便・冷蔵' : 'クール便・冷凍'}）\n■お問い合わせ伝票番号：${E.tracking || '（伝票番号）'}\n${url ? '■配送状況の確認：' + url + '\n' : ''}\n■お届け先\n${dest}\n\n■ご注文内容\n${lines.join('\n')}\n合計（税込）　${yen(o.total)}\n\n■販売者：${S.sellerName || 'NATURE KOBE'}${S.processorName ? '（加工元：' + S.processorName + '）' : ''}\n\nお届け日時のご変更は、上記の伝票番号で配送業者へお問い合わせください。\nお受け取り後は、お早めに${E.storage === '冷蔵' ? '冷蔵庫' : '冷凍庫'}で保存してください。\n\n今後ともよろしくお願いいたします。\n\n${sig}`
     };
   },
