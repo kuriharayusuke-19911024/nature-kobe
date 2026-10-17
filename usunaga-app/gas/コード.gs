@@ -44,6 +44,14 @@ function doPost(e) {
   try { body = JSON.parse(e.postData.contents); } catch (err) { return json_({ ok: false, error: 'bad request' }); }
   if (!PASS || body.pass !== PASS) return json_({ ok: false, error: 'wrong pass' });
 
+  if (body.op === 'ai') {
+    try { return json_(ai_(body)); } catch (err) { return json_({ ok: false, error: 'ai: ' + err }); }
+  }
+  if (body.op === 'aiStatus') {
+    const props = PropertiesService.getScriptProperties();
+    return json_({ ok: true, ai: !!(props.getProperty('ANTHROPIC_API_KEY') || props.getProperty('GEMINI_API_KEY')) });
+  }
+
   const sh = sheet_();
   const lock = LockService.getScriptLock();
   lock.waitLock(20000);
@@ -93,4 +101,44 @@ function doPost(e) {
   } finally {
     lock.releaseLock();
   }
+}
+
+/**
+ * AI読み取り（請求書・分娩記録の写真、所見コメント）
+ * APIキーはコードに書かず、「プロジェクトの設定」→「スクリプト プロパティ」に入れる
+ *   ANTHROPIC_API_KEY … Claude を使う場合
+ *   GEMINI_API_KEY    … Gemini を使う場合（どちらか一方でよい。両方あれば Claude を使う）
+ */
+function ai_(body) {
+  const props = PropertiesService.getScriptProperties();
+  const ak = props.getProperty('ANTHROPIC_API_KEY');
+  const gk = props.getProperty('GEMINI_API_KEY');
+  const images = (body.images || []).slice(0, 5);
+  if (ak) {
+    const content = images.map(im => ({ type: 'image', source: { type: 'base64', media_type: im.type, data: im.data } }));
+    content.push({ type: 'text', text: String(body.prompt || '') });
+    const res = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
+      method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+      headers: { 'x-api-key': ak, 'anthropic-version': '2023-06-01' },
+      payload: JSON.stringify({ model: props.getProperty('ANTHROPIC_MODEL') || 'claude-sonnet-5-5', max_tokens: 4000, messages: [{ role: 'user', content: content }] })
+    });
+    const j = JSON.parse(res.getContentText());
+    if (res.getResponseCode() !== 200) return { ok: false, error: 'ai: ' + ((j.error && j.error.message) || res.getResponseCode()) };
+    return { ok: true, text: (j.content || []).filter(c => c.type === 'text').map(c => c.text).join('') };
+  }
+  if (gk) {
+    const parts = images.map(im => ({ inline_data: { mime_type: im.type, data: im.data } }));
+    parts.push({ text: String(body.prompt || '') });
+    const model = props.getProperty('GEMINI_MODEL') || 'gemini-2.5-flash';
+    const res = UrlFetchApp.fetch('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent', {
+      method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+      headers: { 'x-goog-api-key': gk },
+      payload: JSON.stringify({ contents: [{ parts: parts }] })
+    });
+    const j = JSON.parse(res.getContentText());
+    if (res.getResponseCode() !== 200) return { ok: false, error: 'ai: ' + ((j.error && j.error.message) || res.getResponseCode()) };
+    const c = (j.candidates || [])[0];
+    return { ok: true, text: c ? (c.content.parts || []).map(x => x.text || '').join('') : '' };
+  }
+  return { ok: false, error: 'no ai key' };
 }
