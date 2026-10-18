@@ -93,6 +93,10 @@ hr.sep{border:0;border-top:1px solid var(--line);margin:14px 0}
 .prod.has{border-color:#9fbfae;box-shadow:0 0 0 1px #9fbfae}
 .prow{display:flex;align-items:center;gap:10px;padding:12px 14px}
 .prow .nm{font-weight:700}
+.pimg{width:64px;height:64px;border-radius:8px;object-fit:cover;flex:none;cursor:zoom-in;background:#eee}
+.pview{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px}
+.pview img{max-width:100%;max-height:85vh;border-radius:10px}
+.pview .cap{position:absolute;bottom:20px;left:0;right:0;text-align:center;color:#fff;font-size:14px}
 .prow .pr{font-size:14px;color:var(--mut)}
 .prow .pr b{color:var(--ink);font-weight:500}
 .var{font-size:11px;color:var(--amb);background:var(--ambl);padding:1px 6px;border-radius:4px;margin-left:4px;white-space:nowrap}
@@ -304,6 +308,14 @@ const isCut = p => false;
 const gOpts = p => [300, 600, 900, 1200, 1500];
 const gOk = (p, g) => g >= 300 && g % 300 === 0;
 const MIN_PACK = 300;
+/* 商品写真（写真がある商品だけ表示。タップで拡大） */
+const PHOTOS = { 's-aka': 'img/s-aka.jpg?v=1', 's-shimo': 'img/s-shimo.jpg?v=1', 'st-aka': 'img/st-aka.jpg?v=1', 'st-shimo': 'img/st-shimo.jpg?v=1', 'o-kiri': 'img/o-kiri.jpg?v=1' };
+function showPhoto(pid) {
+  const p = (Customer.C.products || []).find(x => x.id === pid); if (!PHOTOS[pid]) return;
+  const d = document.createElement('div'); d.className = 'pview'; d.onclick = () => d.remove();
+  d.innerHTML = `<img src="${PHOTOS[pid]}" alt=""><div class="cap">${p ? h(p.cat + ' ' + p.name) : ''}　（タップで閉じる）<br><span style="font-size:12px;opacity:.8">※写真はイメージです</span></div>`;
+  document.body.appendChild(d);
+}
 /* 購入特典：「13000:2000,26000:4000」→ [{min:13000,val:2000},...] */
 const parsePerks = s => String(s || '').split(/[,、\s]+/).map(x => x.split(/[:：]/)).filter(x => +x[0] > 0).map(x => ({ min: +x[0], val: +x[1] || 0 })).sort((a, b) => a.min - b.min);
 const perkFor = (perks, sub) => { let cur = null, next = null; perks.forEach(p => { if (sub >= p.min) cur = p; else if (!next) next = p; }); return { cur, next }; };
@@ -410,7 +422,7 @@ const Customer = {
   prodHtml(p) {
     const lines = this.C.cart[p.id] || [];
     return `<div class="prod ${lines.length ? 'has' : ''}" id="prod-${p.id}">
-      <div class="prow"><div class="grow"><div class="nm">${h(p.name)}${p.variable ? '<span class="var">価格変動</span>' : ''}</div><div class="pr"><b>${yen(p.price)}${p.variable ? '〜' : ''}</b> / kg（100gあたり ${yen(p.price / 10)}）</div></div>
+      <div class="prow">${PHOTOS[p.id] ? `<img class="pimg" src="${PHOTOS[p.id]}" alt="${h(p.cat + ' ' + p.name)}" loading="lazy" onclick="showPhoto('${p.id}')">` : ''}<div class="grow"><div class="nm">${h(p.name)}${p.variable ? '<span class="var">価格変動</span>' : ''}</div><div class="pr"><b>${yen(p.price)}${p.variable ? '〜' : ''}</b> / kg（100gあたり ${yen(p.price / 10)}）</div></div>
       ${lines.length ? '' : `<button class="btn sm pri" onclick="Customer.add('${p.id}')">＋ 追加</button>`}</div>
       ${lines.map((l, i) => this.lineHtml(p, l, i)).join('')}
       ${lines.length ? `<button class="addmore" onclick="Customer.add('${p.id}')">＋ 別の量でも追加</button>` : ''}</div>`;
