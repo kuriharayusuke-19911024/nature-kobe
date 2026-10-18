@@ -299,8 +299,11 @@ function closeSheet() { $('#ov').hidden = true; document.body.style.overflow = '
 function brandBar(title, right, tabs) {
   return `${DEMO ? '<div class="demo">プレビュー（デモデータ）：ここでの操作は保存されません</div>' : ''}<div class="topbar"><div class="tin"><div class="logo">NATURE <span>KOBE</span></div><div class="ttl">${h(title)}</div><div class="sp"></div>${right || ''}</div>${tabs || ''}</div>`;
 }
+/* 量の選択肢：ステーキは100g単位のオーダーカット、それ以外（焼き肉・スライス・切り落とし・スジ）は300gパック単位 */
+const isCut = p => (p && p.cat) === 'ステーキ';
+const gOpts = p => isCut(p) ? [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000] : [300, 600, 900, 1200, 1500];
+const gOk = (p, g) => isCut(p) ? g >= 100 && g % 100 === 0 : g >= 300 && g % 300 === 0;
 const MIN_PACK = 300;
-const GOPTS = [300, 400, 500, 600, 700, 800, 900, 1000, 1200, 1500, 2000];
 /* 購入特典：「13000:2000,26000:4000」→ [{min:13000,val:2000},...] */
 const parsePerks = s => String(s || '').split(/[,、\s]+/).map(x => x.split(/[:：]/)).filter(x => +x[0] > 0).map(x => ({ min: +x[0], val: +x[1] || 0 })).sort((a, b) => a.min - b.min);
 const perkFor = (perks, sub) => { let cur = null, next = null; perks.forEach(p => { if (sub >= p.min) cur = p; else if (!next) next = p; }); return { cur, next }; };
@@ -359,6 +362,7 @@ const Customer = {
       this.C = { eid, ev: r.event, products: r.products, S: r.settings, step: 1, cart: {}, err: '', sending: false,
         info: { name: '', email: '', phone: '', zip: '', address: '', storage: '', payment: '', receipt: false, receiptTo: '', shipOn: false, shipName: '', shipPhone: '', shipZip: '', shipAddress: '', note: '', clientKey: 'c' + Date.now() + Math.random().toString(36).slice(2, 7) } };
       if (draft) { this.C.cart = draft.cart || {}; Object.assign(this.C.info, draft.info || {}); }
+      Object.keys(this.C.cart).forEach(pid => { const pr = r.products.find(x => x.id === pid); if (!pr) { delete this.C.cart[pid]; return; } this.C.cart[pid].forEach(l => { if (!gOk(pr, +l.g)) l.g = gOpts(pr).find(g => g >= +l.g) || gOpts(pr).slice(-1)[0]; }); });
       this.render();
     } catch (e) {
       $('#app').innerHTML = `<div class="brand"><div class="logo">NATURE <span>KOBE</span></div></div><div class="wrap"><div class="errbox">${h(e.message)}</div></div>`;
@@ -399,7 +403,7 @@ const Customer = {
   renderItems() {
     const C = this.C, cats = [];
     C.products.forEach(p => { if (!cats.includes(p.cat)) cats.push(p.cat); });
-    return `<p class="sm mut" style="margin:12px 0 0">量（g）と個数を選ぶと金額が自動で計算されます。表示価格は<b>税抜・1kgあたり</b>です。<br><b>小分けは1パック300g以上</b>でお願いします（例：1kgを500g×2）。</p>${parsePerks(C.ev.perks).length ? `<div class="card" style="background:var(--goldl);border-color:#e6d3a8;margin-top:10px"><b>🍷 ご購入特典（税抜のお肉代の合計）</b><div class="sm">${parsePerks(C.ev.perks).map(p => `${yen(p.min)}以上 → ${yen(p.val)}相当のワイン`).join('<br>')}</div><div class="xs mut">ワインは発送完了後、店頭でお渡しします。</div></div>` : ''}` +
+    return `<p class="sm mut" style="margin:12px 0 0">量（g）と個数を選ぶと金額が自動で計算されます。表示価格は<b>税抜・1kgあたり</b>です。<br>焼き肉・スライスなどは<b>300gパック単位</b>、ステーキは<b>100g単位</b>でカットします。多めに欲しいときは個数を増やしてください。</p>${parsePerks(C.ev.perks).length ? `<div class="card" style="background:var(--goldl);border-color:#e6d3a8;margin-top:10px"><b>🍷 ご購入特典（税抜のお肉代の合計）</b><div class="sm">${parsePerks(C.ev.perks).map(p => `${yen(p.min)}以上 → ${yen(p.val)}相当のワイン`).join('<br>')}</div><div class="xs mut">ワインは発送完了後、店頭でお渡しします。</div></div>` : ''}` +
       cats.map(cat => `<div class="cat"><h3>${h(cat)}</h3>${C.products.filter(p => p.cat === cat).map(p => this.prodHtml(p)).join('')}</div>`).join('') +
       `<p class="xs mut">${Customer.sellerLine()}<br>${+C.S.shippingFee ? '※送料は1回のご注文につき ' + yen(C.S.shippingFee) + '（税別）です。<br>' : ''}※<span class="var">価格変動</span>の商品は、部位・入荷状況により価格が変わる場合があります。確定額はメールでご連絡します。<br>※${h(C.S.deliveryNote || '')}</p>`;
   },
@@ -412,10 +416,8 @@ const Customer = {
       ${lines.length ? `<button class="addmore" onclick="Customer.add('${p.id}')">＋ 別の量でも追加</button>` : ''}</div>`;
   },
   lineHtml(p, l, i) {
-    const custom = l.custom || !GOPTS.includes(+l.g);
     return `<div class="line">
-      <select aria-label="量" onchange="Customer.setG('${p.id}',${i},this.value)">${GOPTS.map(g => `<option value="${g}" ${!custom && +l.g === g ? 'selected' : ''}>${gl(g)}</option>`).join('')}<option value="custom" ${custom ? 'selected' : ''}>その他（g入力）</option></select>
-      ${custom ? `<input class="g" type="number" inputmode="numeric" min="300" step="50" value="${h(l.g)}" oninput="Customer.setCustomG('${p.id}',${i},this.value)" aria-label="グラム"><span class="sm">g</span>` : ''}
+      <select aria-label="量" onchange="Customer.setG('${p.id}',${i},this.value)">${gOpts(p).map(g => `<option value="${g}" ${+l.g === g ? 'selected' : ''}>${gl(g)}</option>`).join('')}</select>
       <span class="mut">×</span>
       <span class="stepper"><button onclick="Customer.cnt('${p.id}',${i},-1)" aria-label="減らす">−</button><span>${l.count}</span><button onclick="Customer.cnt('${p.id}',${i},1)" aria-label="増やす">＋</button></span>
       <span class="amt num" id="amt-${p.id}-${i}">${yen(lineAmt(p.price, l.g, l.count))}</span>
@@ -427,7 +429,7 @@ const Customer = {
     if (el) el.outerHTML = this.prodHtml(p);
     this.updateBar(); this.save();
   },
-  add(pid) { const C = this.C; (C.cart[pid] = C.cart[pid] || []).push({ g: MIN_PACK, count: 1 }); this.rerenderProd(pid); },
+  add(pid) { const C = this.C, p = C.products.find(x => x.id === pid); (C.cart[pid] = C.cart[pid] || []).push({ g: gOpts(p)[isCut(p) ? 1 : 0], count: 1 }); this.rerenderProd(pid); },
   del(pid, i) { const C = this.C; C.cart[pid].splice(i, 1); if (!C.cart[pid].length) delete C.cart[pid]; this.rerenderProd(pid); },
   setG(pid, i, v) { const l = this.C.cart[pid][i]; if (v === 'custom') { l.custom = true; } else { l.custom = false; l.g = +v; } this.rerenderProd(pid); },
   setCustomG(pid, i, v) {
@@ -453,7 +455,7 @@ const Customer = {
     if (nb) nb.disabled = !t.count;
   },
   go(step) {
-    if (step === 2 && this.items().some(i => i.g < MIN_PACK)) { toast('小分けは1パック300g以上でお願いします', true); return; }
+    if (step === 2 && this.items().some(i => !gOk(i.p, i.g))) { toast('焼き肉・スライスなどは300g単位、ステーキは100g単位で選んでください', true); return; }
     this.C.step = step; this.C.err = ''; this.render(); window.scrollTo(0, 0);
   },
   set(k, v) { this.C.info[k] = v; this.save(); },
