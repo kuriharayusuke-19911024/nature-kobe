@@ -272,7 +272,12 @@ function computeOrder(o, S, prods, trust) {
   o.back = back;
   o.shipping = trust && o.shipping !== '' && o.shipping != null ? +o.shipping : (+S.shippingFee || 0);
   o.taxRate = trust && o.taxRate !== '' && o.taxRate != null ? +o.taxRate : (+S.taxRate || 10);
-  o.tax = Math.floor((sub + o.shipping) * o.taxRate / 100);
+  /* 軽減税率：お肉は taxRate（8%）、送料は shipTaxRate（10%）。旧データ（shipTaxRate なし）は従来どおり同じ税率 */
+  const legacy = trust && (o.shipTaxRate === '' || o.shipTaxRate == null) && o.createdAt && String(o.createdAt) < '2026-10-18 09';
+  o.shipTaxRate = trust && o.shipTaxRate !== '' && o.shipTaxRate != null ? +o.shipTaxRate : legacy ? o.taxRate : (+S.shipTaxRate || 10);
+  o.taxFood = Math.floor(sub * o.taxRate / 100);
+  o.taxShip = Math.floor(o.shipping * o.shipTaxRate / 100);
+  o.tax = o.taxFood + o.taxShip;
   o.total = sub + o.shipping + o.tax;
   return o;
 }
@@ -368,9 +373,9 @@ const Customer = {
   },
   totals() {
     const S = this.C.S, its = this.items();
-    const sub = its.reduce((a, b) => a + b.amount, 0), ship = +S.shippingFee || 0, rate = +S.taxRate || 10;
-    const tax = Math.floor((sub + ship) * rate / 100);
-    return { sub, ship, rate, tax, total: sub + ship + tax, count: its.length, variable: its.some(i => i.p.variable) };
+    const sub = its.reduce((a, b) => a + b.amount, 0), ship = +S.shippingFee || 0, rate = +S.taxRate || 10, srate = +S.shipTaxRate || 10;
+    const taxFood = Math.floor(sub * rate / 100), taxShip = Math.floor(ship * srate / 100), tax = taxFood + taxShip;
+    return { sub, ship, rate, srate, taxFood, taxShip, tax, total: sub + ship + tax, count: its.length, variable: its.some(i => i.p.variable) };
   },
   render() {
     const C = this.C;
@@ -511,7 +516,8 @@ const Customer = {
       ${its.map(i => `<tr><td>${h(i.p.cat)} ${h(i.p.name)}${i.p.variable ? '<span class="var">価格変動</span>' : ''}<div class="xs mut">${gl(i.g)} × ${i.count}</div></td><td class="right num">${yen(i.amount)}</td></tr>`).join('')}
       <tr class="t"><td>小計（税抜）</td><td class="right num">${yen(t.sub)}</td></tr>
       ${t.ship ? `<tr><td>送料</td><td class="right num">${yen(t.ship)}</td></tr>` : ''}
-      <tr><td>消費税（${t.rate}%）</td><td class="right num">${yen(t.tax)}</td></tr>
+      <tr><td>消費税（お肉 ${t.rate}%）</td><td class="right num">${yen(t.taxFood)}</td></tr>
+      ${t.ship ? `<tr><td>消費税（送料 ${t.srate}%）</td><td class="right num">${yen(t.taxShip)}</td></tr>` : ''}
       <tr class="g"><td>合計（税込）</td><td class="right num">${yen(t.total)}</td></tr></table>
       ${t.variable ? '<p class="xs mut">※価格変動の商品は、確定額が変わる場合があります。確定しましたらメールでご連絡します。</p>' : ''}
       <button class="btn sm" onclick="Customer.go(1)">商品を変更</button></div>
@@ -688,7 +694,7 @@ const Admin = {
         <h3 style="margin-top:16px">その他（テールなど表にない品）</h3>
         ${(E.extras || []).map((x, i) => `<div class="row" style="margin:6px 0"><input class="in grow" placeholder="品名" value="${h(x.name)}" oninput="Admin.setExtra(${i},'name',this.value)"><input class="in" style="width:120px" type="number" inputmode="numeric" placeholder="金額(税抜)" value="${h(x.amount)}" oninput="Admin.setExtra(${i},'amount',this.value)"><button class="x" onclick="Admin.delExtra(${i})">✕</button></div>`).join('')}
         <button class="btn sm" onclick="Admin.addExtra()">＋ その他を追加</button>
-        <div class="g2" style="margin-top:8px"><div>${fld('shipping', '送料（税抜）', { type: 'number' })}</div><div>${fld('taxRate', '消費税率（%）', { type: 'number' })}</div></div>
+        <div class="g2" style="margin-top:8px"><div>${fld('shipping', '送料（税抜）', { type: 'number' })}</div><div>${fld('taxRate', 'お肉の税率（%）', { type: 'number' })}</div></div>
         <table class="summary" style="margin-top:12px" id="etot">${this.totHtml(t)}</table>
       </div>
       <div class="card"><h3>お客様</h3>
@@ -719,7 +725,7 @@ const Admin = {
   perkOf(o) { const e = this.A.events.find(x => x.id === o.eventId); return e ? perkFor(parsePerks(e.perks), o.subtotal).cur : null; },
   perkChip(o) { const p = this.perkOf(o); return p && o.status !== 'キャンセル' ? `<span class="chip" style="background:var(--goldl);color:#7a5a12">🍷${yen(p.val)}相当</span>` : ''; },
   totHtml(t) {
-    return `<tr><td>小計（税抜）</td><td class="right num">${yen(t.subtotal)}</td></tr>${t.shipping ? `<tr><td>送料</td><td class="right num">${yen(t.shipping)}</td></tr>` : ''}<tr><td>消費税（${t.taxRate}%）</td><td class="right num">${yen(t.tax)}</td></tr><tr class="g t"><td>合計（税込）</td><td class="right num">${yen(t.total)}</td></tr>${this.perkOf(t) ? `<tr><td colspan="2" style="color:#7a5a12">🍷 購入特典：${yen(this.perkOf(t).val)}相当のワイン（店頭でお渡し）</td></tr>` : ''}${t.back ? `<tr class="t"><td>うち販売店バック（税抜・上乗せ${t.markup}%分）</td><td class="right num" style="color:var(--amb)">${yen(t.back)}</td></tr><tr><td>手元に残る額（税抜）</td><td class="right num">${yen(t.subtotal - t.back)}</td></tr>` : ''}`;
+    return `<tr><td>小計（税抜）</td><td class="right num">${yen(t.subtotal)}</td></tr>${t.shipping ? `<tr><td>送料</td><td class="right num">${yen(t.shipping)}</td></tr>` : ''}${t.shipping && t.shipTaxRate !== t.taxRate ? `<tr><td>消費税（お肉 ${t.taxRate}%）</td><td class="right num">${yen(t.taxFood)}</td></tr><tr><td>消費税（送料 ${t.shipTaxRate}%）</td><td class="right num">${yen(t.taxShip)}</td></tr>` : `<tr><td>消費税（${t.taxRate}%）</td><td class="right num">${yen(t.tax)}</td></tr>`}<tr class="g t"><td>合計（税込）</td><td class="right num">${yen(t.total)}</td></tr>${this.perkOf(t) ? `<tr><td colspan="2" style="color:#7a5a12">🍷 購入特典：${yen(this.perkOf(t).val)}相当のワイン（店頭でお渡し）</td></tr>` : ''}${t.back ? `<tr class="t"><td>うち販売店バック（税抜・上乗せ${t.markup}%分）</td><td class="right num" style="color:var(--amb)">${yen(t.back)}</td></tr><tr><td>手元に残る額（税抜）</td><td class="right num">${yen(t.subtotal - t.back)}</td></tr>` : ''}`;
   },
   get(path) { return path.split('.').reduce((o, k) => (o == null ? '' : o[k]), this.E) ?? ''; },
   setE(path, v, re) {
@@ -799,7 +805,7 @@ const Admin = {
       const pay = E.payment ? `${payLabel(E.payment)}${E.paid ? '（お支払い済み）' : '（会場でお支払い）'}` : '別途ご案内いたします';
       return {
         subject: `【${S.sellerName || 'NATURE KOBE'}】ご注文ありがとうございます（注文番号 ${E.id}）`,
-        body: `${E.name} 様\n\nこのたびは${ev.name ? '「' + ev.name + '」にて、' : ''}但馬牛・神戸ビーフをご注文いただき、誠にありがとうございます。\n以下の内容でご注文を承りました。\n\n■注文番号：${E.id}\n\n■ご注文内容\n${lines.join('\n')}\n\n小計（税抜）　${yen(o.subtotal)}\n${o.shipping ? '送料　' + yen(o.shipping) + '\n' : ''}消費税（${o.taxRate}%）　${yen(o.tax)}\n合計（税込）　${yen(o.total)}\n${variable ? '※価格変動の商品は、部位・入荷状況により金額が変わる場合がございます。確定しましたら改めてご連絡いたします。\n' : ''}\n■お届け先\n${dest}\n\n■保存状態：${E.storage || '（ご希望をお知らせください）'}\n■お支払い方法：${pay}\n${E.receipt ? `■領収書：ご用意いたします（宛名：${E.receiptTo || E.name} 様）\n` : ''}${E.note ? `■備考：${E.note}\n` : ''}■販売者：${S.sellerName || 'NATURE KOBE'}${S.processorName ? '（加工元：' + S.processorName + '）' : ''}\n\n${S.deliveryNote || ''}\n発送の際は、配送伝票番号をあらためてご連絡いたします。\n\nご不明な点がございましたら、本メールにご返信ください。\n今後ともよろしくお願いいたします。\n\n${sig}`
+        body: `${E.name} 様\n\nこのたびは${ev.name ? '「' + ev.name + '」にて、' : ''}但馬牛・神戸ビーフをご注文いただき、誠にありがとうございます。\n以下の内容でご注文を承りました。\n\n■注文番号：${E.id}\n\n■ご注文内容\n${lines.join('\n')}\n\n小計（税抜）　${yen(o.subtotal)}\n${o.shipping ? '送料　' + yen(o.shipping) + '\n' : ''}${o.shipping && o.shipTaxRate !== o.taxRate ? `消費税（お肉 ${o.taxRate}%）　${yen(o.taxFood)}\n消費税（送料 ${o.shipTaxRate}%）　${yen(o.taxShip)}\n` : `消費税（${o.taxRate}%）　${yen(o.tax)}\n`}合計（税込）　${yen(o.total)}\n${variable ? '※価格変動の商品は、部位・入荷状況により金額が変わる場合がございます。確定しましたら改めてご連絡いたします。\n' : ''}\n■お届け先\n${dest}\n\n■保存状態：${E.storage || '（ご希望をお知らせください）'}\n■お支払い方法：${pay}\n${E.receipt ? `■領収書：ご用意いたします（宛名：${E.receiptTo || E.name} 様）\n` : ''}${E.note ? `■備考：${E.note}\n` : ''}■販売者：${S.sellerName || 'NATURE KOBE'}${S.processorName ? '（加工元：' + S.processorName + '）' : ''}\n\n${S.deliveryNote || ''}\n発送の際は、配送伝票番号をあらためてご連絡いたします。\n\nご不明な点がございましたら、本メールにご返信ください。\n今後ともよろしくお願いいたします。\n\n${sig}`
       };
     }
     if (kind === 'paid') {
@@ -846,7 +852,7 @@ const Admin = {
       <div class="to">${h(E.receiptTo || E.name)}　様</div>
       <div class="amt">金額　${yen(o.total)} −<span style="font-size:15px">（税込）</span></div>
       <div class="tadashi">但し　但馬牛・神戸ビーフ代として</div><div class="tadashi">上記正に領収いたしました。</div>
-      <div class="bd2"><table><tr><td colspan="2">内訳</td></tr><tr><td>税抜金額</td><td class="right">${yen(o.subtotal + o.shipping)}</td></tr><tr><td>消費税額（${o.taxRate}%）</td><td class="right">${yen(o.tax)}</td></tr></table>
+      <div class="bd2"><table><tr><td colspan="2">内訳</td></tr>${o.shipping && o.shipTaxRate !== o.taxRate ? `<tr><td>${o.taxRate}%対象（税抜）</td><td class="right">${yen(o.subtotal)}</td></tr><tr><td>　消費税額（${o.taxRate}%）</td><td class="right">${yen(o.taxFood)}</td></tr><tr><td>${o.shipTaxRate}%対象（送料・税抜）</td><td class="right">${yen(o.shipping)}</td></tr><tr><td>　消費税額（${o.shipTaxRate}%）</td><td class="right">${yen(o.taxShip)}</td></tr>` : `<tr><td>税抜金額</td><td class="right">${yen(o.subtotal + o.shipping)}</td></tr><tr><td>消費税額（${o.taxRate}%）</td><td class="right">${yen(o.tax)}</td></tr>`}<tr><td>消費税額 合計</td><td class="right">${yen(o.tax)}</td></tr></table>
       <div class="iss"><b>${h(S.sellerName || 'NATURE KOBE')}</b><br>${h(S.sellerAddress || '')}${S.sellerTel ? '<br>TEL ' + h(S.sellerTel) : ''}</div></div></div>`;
     setTimeout(() => window.print(), 50);
   },
@@ -1007,7 +1013,7 @@ const Admin = {
       <div class="row wrapf" style="margin-top:8px"><button class="btn sm" onclick="Admin._P.push({id:'',cat:'その他',name:'',price:0,variable:false,active:true});Admin.render()">＋ 商品を追加</button><span class="grow"></span><button class="btn pri" onclick="Admin.saveProducts()">商品を保存</button></div>
       <p class="hint">販売をやめる商品は「販売中」のチェックを外してください（過去の注文のために残ります）。</p></div>
       <div class="card"><h3>販売者・お支払い・メール</h3>
-      <div class="g2"><div>${sf('taxRate', '消費税率（%）')}</div><div>${sf('shippingFee', '送料（税抜・1注文あたり、無料は0）')}</div></div>
+      <div class="g2"><div>${sf('taxRate', 'お肉の消費税率（%）')}</div><div>${sf('shipTaxRate', '送料の消費税率（%）')}</div></div><div class="g2"><div>${sf('shippingFee', '送料（税抜・1注文あたり、無料は0）')}</div><div></div></div>
       ${sf('sellerName', '販売者名（領収書・メールに表示）')}${sf('sellerAddress', '販売者の住所（領収書に表示）')}
       <div class="g2"><div>${sf('sellerTel', '電話番号')}</div><div>${sf('sellerEmail', 'メールアドレス')}</div></div>
       ${sf('deliveryNote', '発送の目安（注文画面・メールに表示）')}
