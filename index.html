@@ -309,7 +309,7 @@ const gOpts = p => [300, 600, 900, 1200, 1500];
 const gOk = (p, g) => g >= 300 && g % 300 === 0;
 const MIN_PACK = 300;
 /* 商品写真（写真がある商品だけ表示。タップで拡大） */
-const PHOTOS = { 's-aka': 'img/s-aka.jpg?v=1', 's-shimo': 'img/s-shimo.jpg?v=1', 'st-aka': 'img/st-aka.jpg?v=1', 'st-shimo': 'img/st-shimo.jpg?v=1', 'o-kiri': 'img/o-kiri.jpg?v=1' };
+const PHOTOS = { 's-aka': 'img/s-aka.jpg?v=2', 's-shimo': 'img/s-shimo.jpg?v=2', 'st-aka': 'img/st-aka.jpg?v=2', 'st-shimo': 'img/st-shimo.jpg?v=2', 'o-kiri': 'img/o-kiri.jpg?v=2' };
 function showPhoto(pid) {
   const p = (Customer.C.products || []).find(x => x.id === pid); if (!PHOTOS[pid]) return;
   const d = document.createElement('div'); d.className = 'pview'; d.onclick = () => d.remove();
