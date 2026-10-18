@@ -23,6 +23,12 @@ a{color:var(--g2)}
 .brand{background:var(--g);color:#fff;padding:18px 0 16px;text-align:center}
 .brand .logo{font-family:'Noto Serif JP',serif;letter-spacing:.28em;font-size:20px;font-weight:700}
 .brand .logo span{color:#d9bd7c}
+body.net{--g:#1b2d5c;--g2:#2a3f7a;--gl:#e6ebf5;--gold:#4a5f94;--goldl:#e9edf6;--blue:#1b2d5c;--bluel:#e6ebf5}
+body.net .netbar{background:#0f1c3d;color:#fff;text-align:center;font-weight:700;padding:8px 10px;letter-spacing:.08em;font-size:14px}
+body.net .brand{background:#1b2d5c}
+body.net .brand .logo span{color:#c9d6f2}
+body.net .btn.pri{background:#1b2d5c;border-color:#1b2d5c}
+body.net .wrap h1{color:#1b2d5c}
 .brand .sub{font-size:12px;opacity:.8;letter-spacing:.1em;margin-top:2px}
 .topbar{background:var(--g);color:#fff;position:sticky;top:0;z-index:20}
 .topbar .tin{display:flex;align-items:center;gap:12px;padding:10px 16px;max-width:1100px;margin:0 auto}
@@ -394,6 +400,7 @@ const Customer = {
     return { sub, ship, rate, srate, taxFood, taxShip, tax, total: sub + ship + tax, count: its.length, variable: its.some(i => i.p.variable) };
   },
   render() {
+    document.body.classList.toggle('net', !!this.C.ev.net);
     const C = this.C;
     const steps = ['商品を選ぶ', 'お客様情報', '確認'];
     let body = '';
@@ -409,8 +416,8 @@ const Customer = {
   },
   head() {
     const ev = this.C.ev;
-    return `${DEMO ? '<div class="demo">プレビュー（デモデータ）：ここでの注文は保存されません</div>' : ''}<div class="brand"><div class="logo">NATURE <span>KOBE</span></div><div class="sub">但馬牛・神戸ビーフ ご注文</div></div>
-    <div class="wrap"><h1 class="serif">${h(ev.name)}</h1><div class="mut sm">${h(jdate(ev.date))}${ev.venue ? '　' + h(ev.venue) : ''}　ご参加の皆さま限定</div></div>`;
+    return `${DEMO ? '<div class="demo">プレビュー（デモデータ）：ここでの注文は保存されません</div>' : ''}${ev.net ? '<div class="netbar">🛒 ネット販売　※お振込みでのご注文</div>' : ''}<div class="brand"><div class="logo">NATURE <span>KOBE</span></div><div class="sub">但馬牛・神戸ビーフ ご注文</div></div>
+    <div class="wrap"><h1 class="serif">${h(ev.name)}</h1><div class="mut sm">${h(jdate(ev.date))}${ev.venue ? '　' + h(ev.venue) : ''}　${ev.net ? 'ネットでのご注文' : 'ご参加の皆さま限定'}</div></div>`;
   },
   renderItems() {
     const C = this.C, cats = [];
@@ -473,6 +480,7 @@ const Customer = {
   set(k, v) { this.C.info[k] = v; this.save(); },
   setRe(k, v) { this.C.info[k] = v; this.save(); const y = window.scrollY; this.render(); window.scrollTo(0, y); },
   renderInfo() {
+    if (this.C.ev.net) this.C.info.payment = '振込';
     const f = this.C.info;
     const inp = (k, label, opt = {}) => `<label class="f" for="f-${k}">${label}${opt.req === false ? '<span class="opt">任意</span>' : '<span class="req">必須</span>'}</label>
       <input class="in" id="f-${k}" type="${opt.type || 'text'}" ${opt.im ? `inputmode="${opt.im}"` : ''} ${opt.ac ? `autocomplete="${opt.ac}"` : ''} placeholder="${h(opt.ph || '')}" value="${h(f[k])}" oninput="Customer.set('${k}',this.value)">${opt.hint ? `<div class="hint">${opt.hint}</div>` : ''}`;
@@ -494,8 +502,7 @@ const Customer = {
         ${inp('shipAddress', 'お届け先のご住所')}` : '<p class="hint" style="margin:0">上のご住所にお届けします</p>'}
     </div>
     <div class="card"><h3>ご希望の保存状態<span class="req" style="font-size:11px;color:#fff;background:var(--red);padding:0 6px;border-radius:4px;margin-left:6px;vertical-align:2px">必須</span></h3>${radio('storage', [['冷凍', '冷凍'], ['冷蔵', '冷蔵']])}</div>
-    <div class="card"><h3>お支払い方法<span class="req" style="font-size:11px;color:#fff;background:var(--red);padding:0 6px;border-radius:4px;margin-left:6px;vertical-align:2px">必須</span></h3>${radio('payment', [['現金', '現金'], ['クレジットカード', 'クレジットカード（Square）']])}
-      <p class="hint">お支払いはこの場でスタッフにお願いします。お支払いを確認後、領収書をメールでお送りします。</p></div>
+    <div class="card"><h3>お支払い方法<span class="req" style="font-size:11px;color:#fff;background:var(--red);padding:0 6px;border-radius:4px;margin-left:6px;vertical-align:2px">必須</span></h3>${this.C.ev.net ? '<p class="hint" style="margin:0"><b>銀行振込のみ</b>です。ご注文後に振込先をご案内します。ご注文から7日以内にお振込みください。</p>' : radio('payment', [['現金', '現金'], ['クレジットカード', 'クレジットカード（Square）']]) + '\n      <p class="hint">お支払いはこの場でスタッフにお願いします。お支払いを確認後、領収書をメールでお送りします。</p>'}</div>
     <div class="card"><h3>領収書</h3>
       <label class="tog"><input type="checkbox" ${f.receipt ? 'checked' : ''} onchange="Customer.setRe('receipt',this.checked)">領収書が必要</label>
       ${f.receipt ? `<label class="f">宛名<span class="opt">空欄ならお名前で発行します</span></label><input class="in" placeholder="例）株式会社〇〇" value="${h(f.receiptTo)}" oninput="Customer.set('receiptTo',this.value)">` : ''}
@@ -539,7 +546,7 @@ const Customer = {
       <dt>お名前</dt><dd>${h(f.name)} 様</dd><dt>メール</dt><dd>${h(f.email)}</dd><dt>電話</dt><dd>${h(f.phone)}</dd>
       <dt>ご住所</dt><dd>〒${h(f.zip)}<br>${h(f.address)}</dd>
       <dt>お届け先</dt><dd>${f.shipOn ? `${h(f.shipName)} 様<br>〒${h(f.shipZip)} ${h(f.shipAddress)}${f.shipPhone ? '<br>' + h(f.shipPhone) : ''}` : 'ご住所と同じ'}</dd>
-      <dt>保存状態</dt><dd>${h(f.storage)}</dd><dt>お支払い</dt><dd>${h(payLabel(f.payment))}（この場でお支払い）</dd>
+      <dt>保存状態</dt><dd>${h(f.storage)}</dd><dt>お支払い</dt><dd>${C.ev.net ? '銀行振込（ご注文後にご案内する口座へお振込み）' : h(payLabel(f.payment)) + '（この場でお支払い）'}</dd>
       <dt>領収書</dt><dd>${f.receipt ? '必要（宛名：' + h(f.receiptTo || f.name) + ' 様）' : '不要'}</dd>
       ${f.note ? `<dt>備考</dt><dd>${h(f.note)}</dd>` : ''}</dl>
       <button class="btn sm" onclick="Customer.go(2)" style="margin-top:10px">お客様情報を変更</button></div>
@@ -551,7 +558,7 @@ const Customer = {
     C.sending = true; C.err = ''; this.render();
     const order = { eventId: C.ev.id, clientKey: f.clientKey, name: f.name, email: f.email, phone: f.phone, zip: f.zip, address: f.address,
       shipTo: f.shipOn ? { on: true, name: f.shipName, phone: f.shipPhone, zip: f.shipZip, address: f.shipAddress } : { on: false },
-      storage: f.storage, payment: f.payment, receipt: f.receipt, receiptTo: f.receiptTo, note: f.note,
+      storage: f.storage, payment: C.ev.net ? '振込' : f.payment, receipt: f.receipt, receiptTo: f.receiptTo, note: f.note,
       items: this.items().map(i => ({ pid: i.pid, g: i.g, count: i.count })) };
     try {
       const r = await api('submit', { order });
@@ -562,11 +569,15 @@ const Customer = {
   },
   renderDone() {
     const C = this.C, o = C.done;
+    const dueYmd = new Date(new Date(String(o.createdAt || '').slice(0, 10) + 'T00:00:00+09:00').getTime() + 7 * 864e5 + 9 * 36e5).toISOString().slice(0, 10);
+    const payCard = C.ev.net
+      ? `<div class="card"><h3>お支払い</h3><p style="margin:0">下記の口座へ、<b>ご注文から7日以内</b>（${h(jdate(dueYmd))}まで）にお振込みください。<br>振込先はご注文の確認メールでお知らせします。<br>ご入金を確認次第、発送の準備をいたします。</p></div>`
+      : `<div class="card"><h3>お支払い</h3><p style="margin:0">この画面をスタッフにお見せいただき、<b>${h(payLabel(o.payment))}</b>でお支払いください。<br>お支払いを確認後、領収書をメールでお送りします。</p></div>`;
     $('#app').innerHTML = this.head() + `<div class="wrap"><div class="card" style="text-align:center;padding:26px 16px">
       <div style="font-size:40px;color:var(--g)">✓</div><h2 style="margin:4px 0">ご注文ありがとうございます</h2>
       <p class="mut sm">注文番号</p><p class="b" style="font-size:20px;margin:0">${h(o.id)}</p>
       <p style="font-size:22px;font-weight:700;margin:12px 0 0">${yen(o.total)} <span class="sm mut">（税込）</span></p></div>
-      <div class="card"><h3>お支払い</h3><p style="margin:0">この画面をスタッフにお見せいただき、<b>${h(payLabel(o.payment))}</b>でお支払いください。<br>お支払いを確認後、領収書をメールでお送りします。</p></div>
+      ${payCard}
       <div class="card"><p style="margin:0">ご注文の確認メールを <b>${h(o.email)}</b> にお送りします。<br>${h(C.S.deliveryNote || '')}発送の際は伝票番号をメールでお知らせします。</p></div>
       <p class="xs mut">${this.sellerLine()}</p><p class="center"><button class="btn block" onclick="location.reload()">続けて別の注文をする</button></p></div>`;
   }
@@ -816,10 +827,11 @@ const Admin = {
     const dest = E.shipTo && E.shipTo.on ? `${shipAddr(E)}\n${shipName(E)} 様` : `〒${E.zip} ${E.address}\n${E.name} 様`;
     const variable = o.items.some(i => i.variable) || (o.extras || []).some(x => !x.amount);
     if (kind === 'confirm') {
-      const pay = E.payment ? `${payLabel(E.payment)}${E.paid ? '（お支払い済み）' : '（会場でお支払い）'}` : '別途ご案内いたします';
+      const pay = E.payment ? `${payLabel(E.payment)}${E.paid ? '（お支払い済み）' : (E.payment === '振込' ? '' : '（会場でお支払い）')}` : '別途ご案内いたします';
+      const netDue = E.payment === '振込' && !E.paid ? `■お振込先：\n${S.bankInfo || '（別途ご案内いたします）'}\n■お振込期限：ご注文日から7日以内（${jdate(new Date(new Date(String(E.createdAt || '').slice(0, 10) + 'T00:00:00+09:00').getTime() + 7 * 864e5 + 9 * 36e5).toISOString().slice(0, 10))}）\n` : '';
       return {
         subject: `【${S.sellerName || 'NATURE KOBE'}】ご注文ありがとうございます（注文番号 ${E.id}）`,
-        body: `${E.name} 様\n\nこのたびは${ev.name ? '「' + ev.name + '」にて、' : ''}但馬牛・神戸ビーフをご注文いただき、誠にありがとうございます。\n以下の内容でご注文を承りました。\n\n■注文番号：${E.id}\n\n■ご注文内容\n${lines.join('\n')}\n\n小計（税抜）　${yen(o.subtotal)}\n${o.shipping ? '送料　' + yen(o.shipping) + '\n' : ''}${o.shipping && o.shipTaxRate !== o.taxRate ? `消費税（お肉 ${o.taxRate}%）　${yen(o.taxFood)}\n消費税（送料 ${o.shipTaxRate}%）　${yen(o.taxShip)}\n` : `消費税（${o.taxRate}%）　${yen(o.tax)}\n`}合計（税込）　${yen(o.total)}\n${variable ? '※価格変動の商品は、部位・入荷状況により金額が変わる場合がございます。確定しましたら改めてご連絡いたします。\n' : ''}\n■お届け先\n${dest}\n\n■保存状態：${E.storage || '（ご希望をお知らせください）'}\n■お支払い方法：${pay}\n${E.receipt ? `■領収書：ご用意いたします（宛名：${E.receiptTo || E.name} 様）\n` : ''}${E.note ? `■備考：${E.note}\n` : ''}■販売者：${S.sellerName || 'NATURE KOBE'}${S.processorName ? '（加工元：' + S.processorName + '）' : ''}\n\n${S.deliveryNote || ''}\n発送の際は、配送伝票番号をあらためてご連絡いたします。\n\nご不明な点がございましたら、本メールにご返信ください。\n今後ともよろしくお願いいたします。\n\n${sig}`
+        body: `${E.name} 様\n\nこのたびは${ev.name ? '「' + ev.name + '」にて、' : ''}但馬牛・神戸ビーフをご注文いただき、誠にありがとうございます。\n以下の内容でご注文を承りました。\n\n■注文番号：${E.id}\n\n■ご注文内容\n${lines.join('\n')}\n\n小計（税抜）　${yen(o.subtotal)}\n${o.shipping ? '送料　' + yen(o.shipping) + '\n' : ''}${o.shipping && o.shipTaxRate !== o.taxRate ? `消費税（お肉 ${o.taxRate}%）　${yen(o.taxFood)}\n消費税（送料 ${o.shipTaxRate}%）　${yen(o.taxShip)}\n` : `消費税（${o.taxRate}%）　${yen(o.tax)}\n`}合計（税込）　${yen(o.total)}\n${variable ? '※価格変動の商品は、部位・入荷状況により金額が変わる場合がございます。確定しましたら改めてご連絡いたします。\n' : ''}\n■お届け先\n${dest}\n\n■保存状態：${E.storage || '（ご希望をお知らせください）'}\n■お支払い方法：${pay}\n${netDue}${E.receipt ? `■領収書：ご用意いたします（宛名：${E.receiptTo || E.name} 様）\n` : ''}${E.note ? `■備考：${E.note}\n` : ''}■販売者：${S.sellerName || 'NATURE KOBE'}${S.processorName ? '（加工元：' + S.processorName + '）' : ''}\n\n${S.deliveryNote || ''}\n発送の際は、配送伝票番号をあらためてご連絡いたします。\n\nご不明な点がございましたら、本メールにご返信ください。\n今後ともよろしくお願いいたします。\n\n${sig}`
       };
     }
     if (kind === 'paid') {
@@ -1027,7 +1039,7 @@ const Admin = {
       <div class="row wrapf" style="margin-top:8px"><button class="btn sm" onclick="Admin._P.push({id:'',cat:'その他',name:'',price:0,variable:false,active:true});Admin.render()">＋ 商品を追加</button><span class="grow"></span><button class="btn pri" onclick="Admin.saveProducts()">商品を保存</button></div>
       <p class="hint">販売をやめる商品は「販売中」のチェックを外してください（過去の注文のために残ります）。</p></div>
       <div class="card"><h3>販売者・お支払い・メール</h3>
-      <div class="g2"><div>${sf('taxRate', 'お肉の消費税率（%）')}</div><div>${sf('shipTaxRate', '送料の消費税率（%）')}</div></div><div class="g2"><div>${sf('shippingFee', '送料（税抜・1注文あたり、無料は0）')}</div><div></div></div>
+      <div class="g2"><div>${sf('taxRate', 'お肉の消費税率（%）')}</div><div>${sf('shipTaxRate', '送料の消費税率（%）')}</div></div><div class="g2"><div>${sf('shippingFee', '送料（税抜・1注文あたり、無料は0）')}</div><div></div></div><div style="margin-top:8px">${sf('bankInfo', '振込先（ネット販売の振込案内・督促メールに使用。改行可）', '例）○○銀行 ○○支店 普通 1234567 ナチュール神戸', true)}</div>
       ${sf('sellerName', '販売者名（領収書・メールに表示）')}${sf('sellerAddress', '販売者の住所（領収書に表示）')}
       <div class="g2"><div>${sf('sellerTel', '電話番号')}</div><div>${sf('sellerEmail', 'メールアドレス')}</div></div>
       ${sf('deliveryNote', '発送の目安（注文画面・メールに表示）')}
