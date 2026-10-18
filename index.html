@@ -299,10 +299,10 @@ function closeSheet() { $('#ov').hidden = true; document.body.style.overflow = '
 function brandBar(title, right, tabs) {
   return `${DEMO ? '<div class="demo">プレビュー（デモデータ）：ここでの操作は保存されません</div>' : ''}<div class="topbar"><div class="tin"><div class="logo">NATURE <span>KOBE</span></div><div class="ttl">${h(title)}</div><div class="sp"></div>${right || ''}</div>${tabs || ''}</div>`;
 }
-/* 量の選択肢：ステーキは100g単位のオーダーカット、それ以外（焼き肉・スライス・切り落とし・スジ）は300gパック単位 */
-const isCut = p => (p && p.cat) === 'ステーキ';
-const gOpts = p => isCut(p) ? [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000] : [300, 600, 900, 1200, 1500];
-const gOk = (p, g) => isCut(p) ? g >= 100 && g % 100 === 0 : g >= 300 && g % 300 === 0;
+/* 量の選択肢：全商品300gパック単位（多い場合は個数で調整） */
+const isCut = p => false;
+const gOpts = p => [300, 600, 900, 1200, 1500];
+const gOk = (p, g) => g >= 300 && g % 300 === 0;
 const MIN_PACK = 300;
 /* 購入特典：「13000:2000,26000:4000」→ [{min:13000,val:2000},...] */
 const parsePerks = s => String(s || '').split(/[,、\s]+/).map(x => x.split(/[:：]/)).filter(x => +x[0] > 0).map(x => ({ min: +x[0], val: +x[1] || 0 })).sort((a, b) => a.min - b.min);
@@ -403,7 +403,7 @@ const Customer = {
   renderItems() {
     const C = this.C, cats = [];
     C.products.forEach(p => { if (!cats.includes(p.cat)) cats.push(p.cat); });
-    return `<p class="sm mut" style="margin:12px 0 0">量（g）と個数を選ぶと金額が自動で計算されます。表示価格は<b>税抜・1kgあたり</b>です。<br>焼き肉・スライスなどは<b>300gパック単位</b>、ステーキは<b>100g単位</b>でカットします。多めに欲しいときは個数を増やしてください。</p>${parsePerks(C.ev.perks).length ? `<div class="card" style="background:var(--goldl);border-color:#e6d3a8;margin-top:10px"><b>🍷 ご購入特典（税抜のお肉代の合計）</b><div class="sm">${parsePerks(C.ev.perks).map(p => `${yen(p.min)}以上 → ${yen(p.val)}相当のワイン`).join('<br>')}</div><div class="xs mut">ワインは発送完了後、店頭でお渡しします。</div></div>` : ''}` +
+    return `<p class="sm mut" style="margin:12px 0 0">量（g）と個数を選ぶと金額が自動で計算されます。表示価格は<b>税抜・1kgあたり</b>です。<br>お肉はすべて<b>300gパック単位</b>です。多めに欲しいときは個数を増やしてください（例：1.5kg×2）。</p>${parsePerks(C.ev.perks).length ? `<div class="card" style="background:var(--goldl);border-color:#e6d3a8;margin-top:10px"><b>🍷 ご購入特典（税抜のお肉代の合計）</b><div class="sm">${parsePerks(C.ev.perks).map(p => `${yen(p.min)}以上 → ${yen(p.val)}相当のワイン`).join('<br>')}</div><div class="xs mut">ワインは発送完了後、店頭でお渡しします。</div></div>` : ''}` +
       cats.map(cat => `<div class="cat"><h3>${h(cat)}</h3>${C.products.filter(p => p.cat === cat).map(p => this.prodHtml(p)).join('')}</div>`).join('') +
       `<p class="xs mut">${Customer.sellerLine()}<br>${+C.S.shippingFee ? '※送料は1回のご注文につき ' + yen(C.S.shippingFee) + '（税別）です。<br>' : ''}※<span class="var">価格変動</span>の商品は、部位・入荷状況により価格が変わる場合があります。確定額はメールでご連絡します。<br>※${h(C.S.deliveryNote || '')}</p>`;
   },
@@ -455,7 +455,7 @@ const Customer = {
     if (nb) nb.disabled = !t.count;
   },
   go(step) {
-    if (step === 2 && this.items().some(i => !gOk(i.p, i.g))) { toast('焼き肉・スライスなどは300g単位、ステーキは100g単位で選んでください', true); return; }
+    if (step === 2 && this.items().some(i => !gOk(i.p, i.g))) { toast('お肉は300g単位で選んでください', true); return; }
     this.C.step = step; this.C.err = ''; this.render(); window.scrollTo(0, 0);
   },
   set(k, v) { this.C.info[k] = v; this.save(); },
