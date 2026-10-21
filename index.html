@@ -1047,7 +1047,7 @@ const Admin = {
       ${sf('shopName', '精肉店名（発注文の宛名）')}
       ${sf('mailSignature', 'メールの署名（空欄なら販売者名・住所・電話で作成）', '', true)}
       <p><button class="btn pri" onclick="Admin.saveSettings()">設定を保存</button></p></div>
-      <div class="card"><h3>LINE通知</h3><p class="hint">注文が入るとLINEグループに通知します。トークンは保存後、画面には表示されません。</p><input class="in" id="line-token" type="password" autocomplete="off" placeholder="チャネルアクセストークン（長期）"><p><button class="btn pri" onclick="Admin.saveLine()">LINE設定を保存</button></p></div>
+      <div class="card"><h3>LINE通知</h3><p class="hint">注文が入るとLINEグループに通知します。トークンは保存後、画面には表示されません。</p><input class="in" id="line-token" type="password" autocomplete="off" placeholder="チャネルアクセストークン（長期）"><p><button class="btn pri" onclick="Admin.saveLine()">LINE設定を保存</button> <button class="btn" onclick="Admin.testLine()">テスト送信</button></p></div>
       <div class="card"><h3>ログイン</h3><button class="btn" onclick="Admin.logout()">この端末からログアウト</button></div>`;
   },
   mvP(i, d) { const P = this._P, j = i + d; if (j < 0 || j >= P.length) return; [P[i], P[j]] = [P[j], P[i]]; this.render(); },
@@ -1059,6 +1059,10 @@ const Admin = {
     const token = ($('#line-token').value || '').trim();
     if (!token) { toast('トークンを入力してください', true); return; }
     try { const r = await api('setLine', { pass: this.pass(), token }); $('#line-token').value = ''; toast(r.groupSet ? 'LINE設定を保存しました（グループ登録済み）' : 'LINE設定を保存しました（グループはまだ未登録です）'); }
+    catch (e) { toast(e.message, true); }
+  },
+  async testLine() {
+    try { const r = await api('testLine', { pass: this.pass() }); toast(r.sent ? 'グループにテストを送信しました' : 'テスト送信できませんでした：' + (r.reason || '')); }
     catch (e) { toast(e.message, true); }
   },
   async saveSettings() {
