@@ -327,7 +327,7 @@ const parsePerks = s => String(s || '').split(/[,、\s]+/).map(x => x.split(/[:�
 const perkFor = (perks, sub) => { let cur = null, next = null; perks.forEach(p => { if (sub >= p.min) cur = p; else if (!next) next = p; }); return { cur, next }; };
 const perkText = (perks, sub) => { if (!perks.length) return ''; const { cur, next } = perkFor(perks, sub); return (cur ? `🍷 ${yen(cur.val)}相当のワイン特典の対象です` : '') + (next ? `${cur ? '（' : '🍷 '}あと ${yen(next.min - sub)} で ${yen(next.val)}相当のワイン${cur ? '）' : ''}` : ''); };
 
-const PAYMENTS = ['現金', 'クレジットカード'];
+const PAYMENTS = ['現金', 'クレジットカード', '振込'];
 const payLabel = p => p === 'クレジットカード' ? 'クレジットカード' : (p === '現金' || p === '当日現金') ? '現金' : p === '振込' ? '銀行振込' : (p || '');
 /* 自動メール：送信前に内容を見せて確認してから送る */
 async function mailFlow(opt) {
@@ -502,7 +502,7 @@ const Customer = {
         ${inp('shipAddress', 'お届け先のご住所')}` : '<p class="hint" style="margin:0">上のご住所にお届けします</p>'}
     </div>
     <div class="card"><h3>ご希望の保存状態<span class="req" style="font-size:11px;color:#fff;background:var(--red);padding:0 6px;border-radius:4px;margin-left:6px;vertical-align:2px">必須</span></h3>${radio('storage', [['冷凍', '冷凍'], ['冷蔵', '冷蔵']])}</div>
-    <div class="card"><h3>お支払い方法<span class="req" style="font-size:11px;color:#fff;background:var(--red);padding:0 6px;border-radius:4px;margin-left:6px;vertical-align:2px">必須</span></h3>${this.C.ev.net ? '<p class="hint" style="margin:0"><b>銀行振込のみ</b>です。ご注文後に振込先をご案内します。ご注文から7日以内にお振込みください。</p>' : radio('payment', [['現金', '現金'], ['クレジットカード', 'クレジットカード（Square）']]) + '\n      <p class="hint">お支払いはこの場でスタッフにお願いします。お支払いを確認後、領収書をメールでお送りします。</p>'}</div>
+    <div class="card"><h3>お支払い方法<span class="req" style="font-size:11px;color:#fff;background:var(--red);padding:0 6px;border-radius:4px;margin-left:6px;vertical-align:2px">必須</span></h3>${this.C.ev.net ? '<p class="hint" style="margin:0"><b>銀行振込のみ</b>です。ご注文後に振込先をご案内します。ご注文から7日以内にお振込みください。</p>' : radio('payment', [['現金', '現金'], ['クレジットカード', 'クレジットカード（Square）'], ['振込', '銀行振込']]) + '\n      <p class="hint">現金・クレジットカードはこの場でスタッフにお支払いください。お支払いを確認後、領収書をメールでお送りします。</p><p class="hint">銀行振込を選んだ場合は、ご注文後に振込先をメールでご案内します。ご注文から7日以内にお振込みください。期限を過ぎた場合はキャンセル扱いとさせていただきます。</p>'}</div>
     <div class="card"><h3>領収書</h3>
       <label class="tog"><input type="checkbox" ${f.receipt ? 'checked' : ''} onchange="Customer.setRe('receipt',this.checked)">領収書が必要</label>
       ${f.receipt ? `<label class="f">宛名<span class="opt">空欄ならお名前で発行します</span></label><input class="in" placeholder="例）株式会社〇〇" value="${h(f.receiptTo)}" oninput="Customer.set('receiptTo',this.value)">` : ''}
@@ -570,9 +570,12 @@ const Customer = {
   renderDone() {
     const C = this.C, o = C.done;
     const dueYmd = new Date(new Date(String(o.createdAt || '').slice(0, 10) + 'T00:00:00+09:00').getTime() + 7 * 864e5 + 9 * 36e5).toISOString().slice(0, 10);
+    const bankBox = C.S.bankInfo && o.payment === '振込' ? `<p style="margin:10px 0 0;white-space:pre-wrap;background:#f6f6f2;padding:10px 12px;border-radius:8px;font-size:14px">■お振込先\n${h(C.S.bankInfo)}</p>` : '';
     const payCard = C.ev.net
-      ? `<div class="card"><h3>お支払い</h3><p style="margin:0">下記の口座へ、<b>ご注文から7日以内</b>（${h(jdate(dueYmd))}まで）にお振込みください。<br>振込先はご注文の確認メールでお知らせします。<br>ご入金を確認次第、発送の準備をいたします。</p></div>`
-      : `<div class="card"><h3>お支払い</h3><p style="margin:0">この画面をスタッフにお見せいただき、<b>${h(payLabel(o.payment))}</b>でお支払いください。<br>お支払いを確認後、領収書をメールでお送りします。</p></div>`;
+      ? `<div class="card"><h3>お支払い</h3><p style="margin:0">下記の口座へ、<b>ご注文から7日以内</b>（${h(jdate(dueYmd))}まで）にお振込みください。<br>ご入金を確認次第、発送の準備をいたします。</p>${bankBox}</div>`
+      : o.payment === '振込'
+        ? `<div class="card"><h3>お支払い</h3><p style="margin:0">ご注文から<b>3日以内</b>にお振込みください。<br>3日を過ぎても、<b>7日以内</b>にご入金いただければ受付いたします。<br>7日を過ぎた場合は、キャンセル扱いとさせていただきます。<br>ご入金を確認次第、領収書をメールでお送りします。</p>${bankBox}</div>`
+        : `<div class="card"><h3>お支払い</h3><p style="margin:0">この画面をスタッフにお見せいただき、<b>${h(payLabel(o.payment))}</b>でお支払いください。<br>お支払いを確認後、領収書をメールでお送りします。</p></div>`;
     $('#app').innerHTML = this.head() + `<div class="wrap"><div class="card" style="text-align:center;padding:26px 16px">
       <div style="font-size:40px;color:var(--g)">✓</div><h2 style="margin:4px 0">ご注文ありがとうございます</h2>
       <p class="mut sm">注文番号</p><p class="b" style="font-size:20px;margin:0">${h(o.id)}</p>
