@@ -49,6 +49,31 @@ function doPost(e) {
     const last = sh.getLastRow();
     const rows = last > 1 ? sh.getRange(2, 1, last - 1, 4).getValues() : [];
 
+    // ナチュール神戸のアプリから、注文を受注として取り込む（部位名→部位ID、単価は取引先の単価表から）
+    if (body.op === 'importOrder') {
+      const o = body.order || {};
+      const docs = rows.map(r => ({ col: r[0], id: String(r[1]), doc: JSON.parse(r[2]) }));
+      const cust = docs.find(d => d.col === 'customers' && d.doc.name === 'ナチュール神戸');
+      if (!cust) return json_({ ok: false, error: '取引先「ナチュール神戸」が未登録です' });
+      const parts = docs.filter(d => d.col === 'parts');
+      const lines = [];
+      for (const l of (o.lines || [])) {
+        const p = parts.find(d => d.doc.name === l.partName);
+        if (!p) return json_({ ok: false, error: '部位が見つかりません：' + l.partName });
+        lines.push({ partId: p.id, qty: +l.qty || 0, price: +((cust.doc.prices || {})[p.id]) || 0, stockIds: [], kg: +l.kg || 0, note: '' });
+      }
+      const id = 'nk-' + String(o.id);
+      const doc = { id: id, no: 'NK' + String(o.id), customerId: cust.id, date: o.date || '', deliver: o.shipDate || '', shipDate: o.shipDate || '',
+        memo: 'ナチュール神戸（自動取込）', lines: lines, status: o.status === 'shipped' ? 'shipped' : 'alloc', disc: 0,
+        createdAt: new Date().toISOString(), source: 'NK', _u: Date.now() };
+      const row = ['orders', id, JSON.stringify(doc), doc._u];
+      let found = -1;
+      rows.forEach((r, i) => { if (r[0] === 'orders' && String(r[1]) === id) found = i; });
+      if (found >= 0) sh.getRange(found + 2, 1, 1, 4).setValues([row]);
+      else sh.appendRow(row);
+      return json_({ ok: true, id: id });
+    }
+
     if (body.op === 'get') {
       const docs = rows.map(r => ({ col: r[0], id: String(r[1]), doc: JSON.parse(r[2]) }));
       return json_({ ok: true, docs: docs });

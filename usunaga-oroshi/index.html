@@ -160,6 +160,11 @@ const SSTATUS = {in:'在庫', reserved:'引当中', out:'出荷済'};
 function lotTotalKg(lotId){ return S.stock.filter(s => s.lotId === lotId).reduce((a,s)=>a + (+s.kg||0), 0); }
 function lotCostPerKg(lotId){ const l = byId('lots', lotId); const t = lotTotalKg(lotId); return l && t > 0 ? (+l.cost||0) / t : 0; }
 function lineCalc(line){
+  // 自動取込（ナチュール神戸など）の明細は、在庫と紐づかないので、重量（kg）をそのまま使う
+  if (line.kg != null && line.kg !== '') {
+    const kg0 = +line.kg || 0;
+    return {items: [], kg: kg0, amount: Math.round(kg0 * (+line.price||0)), cost: 0};
+  }
   const items = (line.stockIds||[]).map(id => byId('stock', id)).filter(Boolean);
   const kg = items.reduce((a,s)=>a + (+s.kg||0), 0);
   const amount = Math.round(kg * (+line.price||0));
