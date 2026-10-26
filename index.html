@@ -990,7 +990,7 @@ const Admin = {
           <span class="chip ${e.open ? 'c-paid' : 'c-gray'}">${e.open ? '受付中' : '受付終了'}</span></div>
           <div class="urlbox">${h(url)}</div>
           <div class="row wrapf"><button class="btn sm" onclick="copy('${h(url)}','URLを')">URLをコピー</button><button class="btn sm" onclick="Admin.qr('${h(e.id)}')">QRコード</button><a class="btn sm" href="${h(url)}" target="_blank" rel="noopener">注文画面を開く</a>
-          <button class="btn sm" onclick="Admin.toggleEvent('${h(e.id)}')">${e.open ? '受付を締め切る' : '受付を再開する'}</button><button class="btn sm ghost" onclick="Admin.editEvent('${h(e.id)}')">名前・日付を変更</button><button class="btn sm danger" onclick="Admin.askDelEvent('${h(e.id)}')">削除</button></div></div>`;
+          <button class="btn sm" onclick="Admin.toggleEvent('${h(e.id)}')">${e.open ? '受付を締め切る' : '受付を再開する'}</button><button class="btn sm ghost" onclick="Admin.editEvent('${h(e.id)}')">編集</button><button class="btn sm danger" onclick="Admin.askDelEvent('${h(e.id)}')">削除</button></div></div>`;
       }).join('')}`;
   },
   async saveEvent(ev) {
