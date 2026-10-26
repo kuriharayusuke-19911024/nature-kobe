@@ -328,6 +328,33 @@ const perkFor = (perks, sub) => { let cur = null, next = null; perks.forEach(p =
 const perkText = (perks, sub) => { if (!perks.length) return ''; const { cur, next } = perkFor(perks, sub); return (cur ? `🍷 ${yen(cur.val)}相当のワイン特典の対象です` : '') + (next ? `${cur ? '（' : '🍷 '}あと ${yen(next.min - sub)} で ${yen(next.val)}相当のワイン${cur ? '）' : ''}` : ''); };
 
 const PAYMENTS = ['現金', 'クレジットカード', '振込'];
+// 原価（うすなが牧場の卸価格・税抜・円/kg）。商品名（カテゴリ＋名前）ごとに設定。幅がある価格は、確認が取れるまで下限で計算
+const COST_PER_KG = {
+  'スライス 赤身': 8000, 'スライス 霜降り': 26000,
+  '焼き肉 赤身（上）': 15000, '焼き肉 赤身（並）': 10000,
+  '焼き肉 霜降り（上）': 16000, '焼き肉 霜降り（並）': 10000,
+  'ステーキ 赤身': 16000, 'ステーキ 霜降り': 26000,
+  'その他 切り落とし': 5500, 'その他 スジ肉': 2200
+};
+// 販売会の追加商品の入力欄（名前:税抜単価:原価 のカンマ区切り）⇄ データ
+function parseExtras(s){
+  return String(s || '').split(/[,，]/).map(t => t.trim()).filter(Boolean).map(t => {
+    const [n, p, c] = t.split(':').map(x => (x || '').trim());
+    return { name: n, price: +p || 0, cost: +c || 0 };
+  }).filter(x => x.name && x.price > 0);
+}
+function extrasText(list){ return (list || []).map(x => `${x.name}:${x.price}:${x.cost || 0}`).join(','); }
+// 注文ひとつの原価（円）と、原価が不明な商品の有無
+function orderCostOf(o){
+  let cost = 0, unknown = false;
+  (o.items || []).forEach(i => {
+    // 販売会ごとの追加商品は、注文に原価（cost）が入っている。それ以外は商品の原価表を使う
+    const p = i.cost != null && i.cost !== '' ? +i.cost : COST_PER_KG[i.name];
+    if (p == null || p === '' || isNaN(p)) { unknown = true; return; }
+    cost += (+i.g || 0) * (+i.count || 0) / 1000 * p;
+  });
+  return { cost: Math.round(cost), unknown };
+}
 const payLabel = p => p === 'クレジットカード' ? 'クレジットカード' : (p === '現金' || p === '当日現金') ? '現金' : p === '振込' ? '銀行振込' : (p || '');
 /* 自動メール：送信前に内容を見せて確認してから送る */
 async function mailFlow(opt) {
@@ -672,10 +699,15 @@ const Admin = {
     const list = this.filtered();
     const sum = k => base.reduce((a, o) => a + (+o[k] || 0), 0);
     const unpaid = base.filter(o => !o.paid).reduce((a, o) => a + o.total, 0);
+    const costs = base.map(o => orderCostOf(o));
+    const costTotal = costs.reduce((a, c) => a + c.cost, 0);
+    const costUnknownCount = costs.filter(c => c.unknown).length;
+    const costUnknown = costUnknownCount > 0;
+    const gross = sum('subtotal') - sum('back') - costTotal;
     const cnt = st => st === 'all' ? base.length : st === '未入金' ? base.filter(o => !o.paid).length : st === '要確認' ? base.filter(o => (o.checks || '').trim()).length : st === 'メール未' ? base.filter(o => !o.email || !(o.mail && o.mail.confirm)).length : A.orders.filter(o => (A.ev === 'all' || o.eventId === A.ev) && o.status === st).length;
     const chips = ['all', '受付', '発注済', '発送済', '未入金', '要確認', 'メール未', 'キャンセル'];
     return `<div class="filters">${this.evSelect(A.ev, "Admin.A.ev=this.value;Admin.render()", true)}<input type="search" placeholder="名前・電話・番号で検索" value="${h(A.q)}" oninput="Admin.A.q=this.value;Admin.refreshList()" style="flex:1;min-width:180px"></div>
-      <div class="stats"><div class="stat"><div class="l">注文数</div><div class="v">${base.length}件</div></div><div class="stat"><div class="l">税抜合計</div><div class="v num">${yen(sum('subtotal'))}</div></div><div class="stat"><div class="l">税込合計</div><div class="v num">${yen(sum('total'))}</div></div><div class="stat"><div class="l">未入金</div><div class="v num" style="color:var(--red)">${yen(unpaid)}</div></div>${sum('back') ? `<div class="stat"><div class="l">販売店バック（税抜）</div><div class="v num" style="color:var(--amb)">${yen(sum('back'))}</div></div><div class="stat"><div class="l">手元に残る額（税抜）</div><div class="v num">${yen(sum('subtotal') - sum('back'))}</div></div>` : ''}</div>
+      <div class="stats"><div class="stat"><div class="l">注文数</div><div class="v">${base.length}件</div></div><div class="stat"><div class="l">税抜合計</div><div class="v num">${yen(sum('subtotal'))}</div></div><div class="stat"><div class="l">税込合計</div><div class="v num">${yen(sum('total'))}</div></div><div class="stat"><div class="l">未入金</div><div class="v num" style="color:var(--red)">${yen(unpaid)}</div></div>${sum('back') ? `<div class="stat"><div class="l">販売店バック（税抜）</div><div class="v num" style="color:var(--amb)">${yen(sum('back'))}</div></div><div class="stat"><div class="l">手元に残る額（税抜）</div><div class="v num">${yen(sum('subtotal') - sum('back'))}</div></div>` : ''}<div class="stat"><div class="l">原価（卸値×重量・概算）</div><div class="v num">${yen(costTotal)}</div></div><div class="stat"><div class="l">粗利（税抜・概算）</div><div class="v num" style="color:${gross < 0 ? 'var(--red)' : 'inherit'}">${yen(gross)}</div></div>${costUnknown ? `<div class="stat" style="grid-column:1/-1"><div class="l" style="color:var(--amb)">※原価が不明な商品があるため、粗利は実際より多く出ています（${costUnknownCount}件）</div></div>` : ''}</div>
       <div class="chips">${chips.map(c => `<button class="${A.st === c ? 'on' : ''}" onclick="Admin.A.st='${c}';Admin.render()">${c === 'all' ? 'すべて' : c === 'メール未' ? '確認メール未送信' : c} ${cnt(c)}</button>`).join('')}</div>
       <div class="olist" id="olist">${this.cards(list)}</div>`;
   },
@@ -946,6 +978,7 @@ const Admin = {
       <label class="f">会場</label><input class="in" id="nev-venue" placeholder="例）農と発酵zen">
       <div class="g2"><div><label class="f">販売店（バック先）<span class="opt">任意</span></label><input class="in" id="nev-partner" placeholder="例）農と発酵zen"></div><div><label class="f">上乗せ率（%）</label><input class="in" id="nev-markup" type="number" inputmode="numeric" value="0" oninput="Admin.markupPreview('nev')"></div></div>
       <label class="f">購入特典<span class="opt">任意・税抜お肉代：特典額をカンマ区切り</span></label><input class="in" id="nev-perks" placeholder="例）13000:2000,26000:4000,39000:6000,50000:10000">
+      <label class="f">この販売会だけの追加商品<span class="opt">任意・名前:税抜単価(円/kg):原価(円/kg) をカンマ区切り</span></label><input class="in" id="nev-extras" placeholder="例）テール:12000:9000,タン:6000:4000">
       <p class="hint" id="nev-prev">0%なら元の価格のまま。25%にすると、元の価格に25%上乗せ（100円単位に切り上げ）した価格がお客さんに表示され、上乗せ分が販売店へのバックとして計算されます。</p>
       <p><button class="btn pri" id="nev-btn" onclick="Admin.addEvent()">作成する（受付開始）</button></p></div>
       ${A.events.map(e => {
@@ -968,7 +1001,7 @@ const Admin = {
     const name = $('#nev-name').value.trim(); if (!name) { toast('イベント名を入力してください', true); return; }
     if (this._adding) return; this._adding = true;
     const b = $('#nev-btn'); if (b) { b.disabled = true; b.textContent = '作成中…'; }
-    try { await this.saveEvent({ name, date: $('#nev-date').value, venue: $('#nev-venue').value.trim(), partner: $('#nev-partner').value.trim(), markup: Math.max(0, +$('#nev-markup').value || 0), perks: $('#nev-perks').value.trim(), open: true }); } finally { this._adding = false; }
+    try { await this.saveEvent({ name, date: $('#nev-date').value, venue: $('#nev-venue').value.trim(), partner: $('#nev-partner').value.trim(), markup: Math.max(0, +$('#nev-markup').value || 0), perks: $('#nev-perks').value.trim(), extras: parseExtras($('#nev-extras').value), open: true }); } finally { this._adding = false; }
   },
   confirmBox(title, msg, okLabel, onOk) {
     this._onOk = onOk;
@@ -1000,8 +1033,9 @@ const Admin = {
       <label class="f">イベント名</label><input class="in" id="ee-name" value="${h(e.name)}"><label class="f">日付</label><input class="in" id="ee-date" type="date" value="${h(e.date)}"><label class="f">会場</label><input class="in" id="ee-venue" value="${h(e.venue)}">
       <div class="g2"><div><label class="f">販売店（バック先）</label><input class="in" id="ee-partner" value="${h(e.partner || '')}"></div><div><label class="f">上乗せ率（%）</label><input class="in" id="ee-markup" type="number" inputmode="numeric" value="${h(+e.markup || 0)}" oninput="Admin.markupPreview('ee')"></div></div>
       <label class="f">購入特典（税抜お肉代：特典額）</label><input class="in" id="ee-perks" value="${h(e.perks || '')}" placeholder="例）13000:2000,26000:4000,39000:6000,50000:10000">
+      <label class="f">この販売会だけの追加商品<span class="opt">名前:税抜単価(円/kg):原価(円/kg) をカンマ区切り</span></label><input class="in" id="ee-extras" value="${h(extrasText(e.extras))}" placeholder="例）テール:12000:9000,タン:6000:4000">
       <p class="hint" id="ee-prev"></p><p class="hint">上乗せ率の変更は、これから入る注文に反映されます（すでに入っている注文の金額は変わりません）。</p></div></div>
-      <div class="ft"><button class="btn pri" style="flex:1" onclick="Admin.saveEvent(Object.assign({},Admin.A.events.find(x=>x.id==='${h(id)}'),{name:$('#ee-name').value,date:$('#ee-date').value,venue:$('#ee-venue').value,partner:$('#ee-partner').value.trim(),markup:Math.max(0,+$('#ee-markup').value||0),perks:$('#ee-perks').value.trim()}));closeSheet()">保存</button></div>`);
+      <div class="ft"><button class="btn pri" style="flex:1" onclick="Admin.saveEvent(Object.assign({},Admin.A.events.find(x=>x.id==='${h(id)}'),{name:$('#ee-name').value,date:$('#ee-date').value,venue:$('#ee-venue').value,partner:$('#ee-partner').value.trim(),markup:Math.max(0,+$('#ee-markup').value||0),perks:$('#ee-perks').value.trim(),extras:parseExtras($('#ee-extras').value)}));closeSheet()">保存</button></div>`);
     this.markupPreview('ee');
   },
   markupPreview(pre) {
