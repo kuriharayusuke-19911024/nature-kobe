@@ -764,6 +764,7 @@ const Admin = {
         ${E.shipTo.on ? `${fld('shipTo.name', 'お届け先のお名前')}${fld('shipTo.phone', 'お届け先の電話')}${fld('shipTo.zip', 'お届け先の郵便番号')}${fld('shipTo.address', 'お届け先の住所')}` : ''}
         <label class="f">保存状態</label>${segE('storage', ['冷凍', '冷蔵'])}
         <label class="tog"><input type="checkbox" ${E.receipt ? 'checked' : ''} onchange="Admin.setE('receipt',this.checked,1)">領収書が必要</label>
+        <label class="tog"><input type="checkbox" ${E.noBack ? 'checked' : ''} onchange="Admin.setE('noBack',this.checked,1)">販売店バックなし（個人販売）</label>
         ${E.receipt ? fld('receiptTo', '領収書の宛名', { ph: E.name }) : ''}
         <label class="f">備考（お客様から）</label><textarea class="in" oninput="Admin.setE('note',this.value)">${h(E.note)}</textarea>
       </div>
