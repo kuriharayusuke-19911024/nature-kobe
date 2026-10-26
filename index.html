@@ -1034,8 +1034,9 @@ const Admin = {
       <div class="g2"><div><label class="f">販売店（バック先）</label><input class="in" id="ee-partner" value="${h(e.partner || '')}"></div><div><label class="f">上乗せ率（%）</label><input class="in" id="ee-markup" type="number" inputmode="numeric" value="${h(+e.markup || 0)}" oninput="Admin.markupPreview('ee')"></div></div>
       <label class="f">購入特典（税抜お肉代：特典額）</label><input class="in" id="ee-perks" value="${h(e.perks || '')}" placeholder="例）13000:2000,26000:4000,39000:6000,50000:10000">
       <label class="f">この販売会だけの追加商品<span class="opt">名前:税抜単価(円/kg):原価(円/kg) をカンマ区切り</span></label><input class="in" id="ee-extras" value="${h(extrasText(e.extras))}" placeholder="例）テール:12000:9000,タン:6000:4000">
+      <label class="f">請求書リンク<span class="opt">任意・Googleドライブの共有リンク</span></label><input class="in" id="ee-invoice" value="${h(e.invoice || '')}" placeholder="https://drive.google.com/…">${e.invoice ? `<p class="sm" style="margin:6px 0 0"><a href="${h(e.invoice)}" target="_blank" rel="noopener">請求書を開く</a></p>` : ''}
       <p class="hint" id="ee-prev"></p><p class="hint">上乗せ率の変更は、これから入る注文に反映されます（すでに入っている注文の金額は変わりません）。</p></div></div>
-      <div class="ft"><button class="btn pri" style="flex:1" onclick="Admin.saveEvent(Object.assign({},Admin.A.events.find(x=>x.id==='${h(id)}'),{name:$('#ee-name').value,date:$('#ee-date').value,venue:$('#ee-venue').value,partner:$('#ee-partner').value.trim(),markup:Math.max(0,+$('#ee-markup').value||0),perks:$('#ee-perks').value.trim(),extras:parseExtras($('#ee-extras').value)}));closeSheet()">保存</button></div>`);
+      <div class="ft"><button class="btn pri" style="flex:1" onclick="Admin.saveEvent(Object.assign({},Admin.A.events.find(x=>x.id==='${h(id)}'),{name:$('#ee-name').value,date:$('#ee-date').value,venue:$('#ee-venue').value,partner:$('#ee-partner').value.trim(),markup:Math.max(0,+$('#ee-markup').value||0),perks:$('#ee-perks').value.trim(),extras:parseExtras($('#ee-extras').value),invoice:$('#ee-invoice').value.trim()}));closeSheet()">保存</button></div>`);
     this.markupPreview('ee');
   },
   markupPreview(pre) {
