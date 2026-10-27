@@ -311,8 +311,8 @@ function brandBar(title, right, tabs) {
 }
 /* 量の選択肢：全商品300gパック単位（多い場合は個数で調整） */
 const isCut = p => false;
-const gOpts = p => [300, 600, 900, 1200, 1500];
-const gOk = (p, g) => g >= 300 && g % 300 === 0;
+const gOpts = p => { const a = []; for (let g = 300; g <= 3000; g += 100) a.push(g); return a; }; // 100g単位（300g以上）
+const gOk = (p, g) => g >= 300 && g % 100 === 0;
 const MIN_PACK = 300;
 /* 商品写真（写真がある商品だけ表示。タップで拡大） */
 const PHOTOS = { 's-aka': 'img/s-aka.jpg?v=3', 's-shimo': 'img/s-shimo.jpg?v=2', 'st-aka': 'img/st-aka.jpg?v=2', 'st-shimo': 'img/st-shimo.jpg?v=2', 'o-kiri': 'img/o-kiri.jpg?v=2' };
@@ -490,7 +490,7 @@ const Customer = {
     if (el) el.outerHTML = this.prodHtml(p);
     this.updateBar(); this.save();
   },
-  add(pid) { const C = this.C, p = C.products.find(x => x.id === pid); (C.cart[pid] = C.cart[pid] || []).push({ g: gOpts(p)[isCut(p) ? 1 : 0], count: 1 }); this.rerenderProd(pid); },
+  add(pid) { const C = this.C, p = C.products.find(x => x.id === pid); (C.cart[pid] = C.cart[pid] || []).push({ g: isCut(p) ? 600 : 300, count: 1 }); this.rerenderProd(pid); },
   del(pid, i) { const C = this.C; C.cart[pid].splice(i, 1); if (!C.cart[pid].length) delete C.cart[pid]; this.rerenderProd(pid); },
   setG(pid, i, v) { const l = this.C.cart[pid][i]; if (v === 'custom') { l.custom = true; } else { l.custom = false; l.g = +v; } this.rerenderProd(pid); },
   setCustomG(pid, i, v) {
@@ -516,7 +516,7 @@ const Customer = {
     if (nb) nb.disabled = !t.count;
   },
   go(step) {
-    if (step === 2 && this.items().some(i => !gOk(i.p, i.g))) { toast('お肉は300g単位で選んでください', true); return; }
+    if (step === 2 && this.items().some(i => !gOk(i.p, i.g))) { toast('お肉は100g単位（300g以上）で選んでください', true); return; }
     this.C.step = step; this.C.err = ''; this.render(); window.scrollTo(0, 0);
   },
   set(k, v) { this.C.info[k] = v; this.save(); },
