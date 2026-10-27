@@ -338,6 +338,8 @@ const COST_PER_KG = {
   'その他 切り落とし': 5500, 'その他 スジ肉': 2200
 };
 // 販売会ごとの原価（上の表と違うものだけ、またはその販売会の全部）。ここに無い販売会は COST_PER_KG を使う
+// 販売会ごとの送料の原価（碓永さん請求書の送料・税抜）
+const SHIP_COST_BY_EVENT = { 'e20260927': 15390 };
 const COST_BY_EVENT = {
   // 9/27奈良販売会（1回目・碓永さん請求書 INV-0000002882 の単価）
   'e20260927': {
@@ -718,11 +720,12 @@ const Admin = {
     const costTotal = costs.reduce((a, c) => a + c.cost, 0);
     const costUnknownCount = costs.filter(c => c.unknown).length;
     const costUnknown = costUnknownCount > 0;
-    const gross = sum('subtotal') - sum('back') - costTotal;
+    const shipCost = [...new Set(base.map(o => o.eventId))].reduce((a, id) => a + (SHIP_COST_BY_EVENT[id] || 0), 0);
+    const gross = sum('subtotal') - sum('back') - costTotal - shipCost;
     const cnt = st => st === 'all' ? base.length : st === '未入金' ? base.filter(o => !o.paid).length : st === '要確認' ? base.filter(o => (o.checks || '').trim()).length : st === 'メール未' ? base.filter(o => !o.email || !(o.mail && o.mail.confirm)).length : A.orders.filter(o => (A.ev === 'all' || o.eventId === A.ev) && o.status === st).length;
     const chips = ['all', '受付', '発注済', '発送済', '未入金', '要確認', 'メール未', 'キャンセル'];
     return `<div class="filters">${this.evSelect(A.ev, "Admin.A.ev=this.value;Admin.render()", true)}<input type="search" placeholder="名前・電話・番号で検索" value="${h(A.q)}" oninput="Admin.A.q=this.value;Admin.refreshList()" style="flex:1;min-width:180px"></div>
-      ${invBar}<div class="stats"><div class="stat"><div class="l">注文数</div><div class="v">${base.length}件</div></div><div class="stat"><div class="l">税抜合計</div><div class="v num">${yen(sum('subtotal'))}</div></div><div class="stat"><div class="l">税込合計</div><div class="v num">${yen(sum('total'))}</div></div><div class="stat"><div class="l">未入金</div><div class="v num" style="color:var(--red)">${yen(unpaid)}</div></div>${sum('back') ? `<div class="stat"><div class="l">販売店バック（税抜）</div><div class="v num" style="color:var(--amb)">${yen(sum('back'))}</div></div><div class="stat"><div class="l">手元に残る額（税抜）</div><div class="v num">${yen(sum('subtotal') - sum('back'))}</div></div>` : ''}<div class="stat"><div class="l">原価（卸値×重量・概算）</div><div class="v num">${yen(costTotal)}</div></div><div class="stat"><div class="l">粗利（税抜・概算）</div><div class="v num" style="color:${gross < 0 ? 'var(--red)' : 'inherit'}">${yen(gross)}</div></div>${costUnknown ? `<div class="stat" style="grid-column:1/-1"><div class="l" style="color:var(--amb)">※原価が不明な商品があるため、粗利は実際より多く出ています（${costUnknownCount}件）</div></div>` : ''}</div>
+      ${invBar}<div class="stats"><div class="stat"><div class="l">注文数</div><div class="v">${base.length}件</div></div><div class="stat"><div class="l">税抜合計</div><div class="v num">${yen(sum('subtotal'))}</div></div><div class="stat"><div class="l">税込合計</div><div class="v num">${yen(sum('total'))}</div></div><div class="stat"><div class="l">未入金</div><div class="v num" style="color:var(--red)">${yen(unpaid)}</div></div>${sum('back') ? `<div class="stat"><div class="l">販売店バック（税抜）</div><div class="v num" style="color:var(--amb)">${yen(sum('back'))}</div></div><div class="stat"><div class="l">手元に残る額（税抜）</div><div class="v num">${yen(sum('subtotal') - sum('back'))}</div></div>` : ''}<div class="stat"><div class="l">原価（卸値×重量・概算）</div><div class="v num">${yen(costTotal)}</div></div>${shipCost ? `<div class="stat"><div class="l">送料の原価（概算）</div><div class="v num">${yen(shipCost)}</div></div>` : ''}<div class="stat"><div class="l">粗利（税抜・概算）</div><div class="v num" style="color:${gross < 0 ? 'var(--red)' : 'inherit'}">${yen(gross)}</div></div>${costUnknown ? `<div class="stat" style="grid-column:1/-1"><div class="l" style="color:var(--amb)">※原価が不明な商品があるため、粗利は実際より多く出ています（${costUnknownCount}件）</div></div>` : ''}</div>
       <div class="chips">${chips.map(c => `<button class="${A.st === c ? 'on' : ''}" onclick="Admin.A.st='${c}';Admin.render()">${c === 'all' ? 'すべて' : c === 'メール未' ? '確認メール未送信' : c} ${cnt(c)}</button>`).join('')}</div>
       <div class="olist" id="olist">${this.cards(list)}</div>`;
   },
@@ -1086,8 +1089,9 @@ const Admin = {
     const P = this._P;
     const sf = (k, label, ph, ta) => `<label class="f">${label}</label>${ta ? `<textarea class="in" oninput="Admin.A.settings['${k}']=this.value" placeholder="${h(ph || '')}">${h(S[k] || '')}</textarea>` : `<input class="in" value="${h(S[k] || '')}" placeholder="${h(ph || '')}" oninput="Admin.A.settings['${k}']=this.value">`}`;
     return `<div class="card"><h3>商品と価格（税抜・1kgあたり）</h3><p class="sm mut">変更はこれからの注文に反映されます（すでに入った注文の金額は変わりません）。</p>
-      <div style="overflow-x:auto"><table class="ptable" style="width:100%;min-width:560px"><tr class="xs mut"><td>区分</td><td>商品名</td><td>単価/kg</td><td>価格変動〜</td><td>販売中</td><td></td></tr>
+      <div style="overflow-x:auto"><table class="ptable" style="width:100%;min-width:560px"><tr class="xs mut"><td>区分</td><td>商品名</td><td>単価/kg</td><td>仕入れ価格/kg（2回目以降）</td><td>価格変動〜</td><td>販売中</td><td></td></tr>
       ${P.map((p, i) => `<tr><td style="width:110px"><input value="${h(p.cat)}" oninput="Admin._P[${i}].cat=this.value"></td><td><input value="${h(p.name)}" oninput="Admin._P[${i}].name=this.value"></td><td style="width:110px"><input type="number" value="${h(p.price)}" oninput="Admin._P[${i}].price=+this.value"></td>
+        <td style="width:120px;white-space:nowrap" class="num">${COST_PER_KG[(p.cat || '') + ' ' + (p.name || '')] != null ? yen(COST_PER_KG[(p.cat || '') + ' ' + (p.name || '')]) : '—'}</td>
         <td style="width:80px;text-align:center"><input type="checkbox" style="width:20px;height:20px;min-height:0" ${p.variable ? 'checked' : ''} onchange="Admin._P[${i}].variable=this.checked"></td><td style="width:70px;text-align:center"><input type="checkbox" style="width:20px;height:20px;min-height:0" ${p.active !== false ? 'checked' : ''} onchange="Admin._P[${i}].active=this.checked"></td>
         <td style="width:96px;white-space:nowrap"><button class="x" onclick="Admin.mvP(${i},-1)">↑</button><button class="x" onclick="Admin.mvP(${i},1)">↓</button></td></tr>`).join('')}</table></div>
       <div class="row wrapf" style="margin-top:8px"><button class="btn sm" onclick="Admin._P.push({id:'',cat:'その他',name:'',price:0,variable:false,active:true});Admin.render()">＋ 商品を追加</button><span class="grow"></span><button class="btn pri" onclick="Admin.saveProducts()">商品を保存</button></div>
