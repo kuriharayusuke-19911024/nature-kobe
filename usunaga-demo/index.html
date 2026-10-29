@@ -248,7 +248,7 @@ const FORMS={
     {k:'weight',l:'枝肉重量（kg）',t:'number',step:'0.1',req:1},{k:'grade',l:'格付',t:'select',opts:['A5','A4','A3','A2','B4','B3','B2']},
     {k:'bms',l:'BMS',t:'number'},{k:'price',l:'単価（円/kg）',t:'number'},{k:'received',l:'実際の入金額（預託を引いた後・円）',t:'number'}]},
   income:{title:'雑収入などの収入',fields:()=>[
-    {k:'date',l:'入金日',t:'date',req:1,def:TODAY},{k:'category',l:'区分',t:'select',opts:['雑収入','補助金・交付金','受取利息','その他']},{k:'payer',l:'入金元',req:1},
+    {k:'date',l:'入金日',t:'date',req:1,def:TODAY},{k:'category',l:'区分',t:'select',opts:['売上','雑収入','補助金・交付金','受取利息','その他']},{k:'payer',l:'入金元',req:1},
     {k:'amount',l:'金額（円）',t:'number',req:1},{k:'owner',l:'どの法人の収入か',t:'select',opts:[['','—']].concat(cfg().owners.map(o=>[o,o]))},{k:'memo',l:'内容・メモ',full:1}]},
   items:{title:'在庫品目',fields:()=>[
     {k:'name',l:'品名',req:1},{k:'category',l:'区分',t:'select',opts:['飼料','薬品','資材','繁殖資材','その他']},{k:'unit',l:'単位',def:'袋'},
@@ -341,8 +341,12 @@ function stockStats(){
   return {need,needNew:need.filter(i=>!open.has(i.id)),open,last,stale:!last||dayDiff(last.slice(0,10),TODAY)>7}}
 function invStats(m){
   const mo=S.invoices.filter(r=>ym(r.date)===m);
-  const cats={};mo.forEach(r=>{const c=normCat(r.category||'雑費');cats[c]=(cats[c]||0)+(num(r.total)||0)});
-  return {n:mo.length,total:sum(mo.map(r=>r.total)),unchecked:mo.filter(r=>r.checked!=='yes').length,cats}}
+  const cats={},other={};let total=0,oTotal=0;
+  mo.forEach(r=>{const c=normCat(r.category||'雑費'),v=num(r.total)||0;if(costClass(c)==='その他'){other[c]=(other[c]||0)+v;oTotal+=v}else{cats[c]=(cats[c]||0)+v;total+=v}});
+  return {n:mo.length,total,cats,other,oTotal,unchecked:mo.filter(r=>r.checked!=='yes').length}}
+const INCOME_CATS=['売上','雑収入','雑所得'];
+const catIdx=c=>{const i=catOrder().indexOf(normCat(c||''));return i<0?999:i};
+const invSort=(a,b)=>a.date!==b.date?(a.date<b.date?1:-1):(catIdx(a.category)-catIdx(b.category))||String(a.vendor||'').localeCompare(String(b.vendor||''),'ja');
 
 function buildReport(m){
   const T=cfg().targets, b=breedStats(m), o=opuStats(m), c=calvingStats(m), sm=semenStats(m), ca=carcassStats(m), st=stockStats(), iv=invStats(m);
@@ -383,8 +387,9 @@ function reportText(R){
   const lines=[`【${jpM(R.m)} 月次報告】神戸うすなが牧場`,''];
   let g='';R.K.forEach(k=>{if(k.g!==g){g=k.g;lines.push(`■ ${g}`)}
     lines.push(`・${k.name}：${k.fmt(k.v)}${k.v==null?'':k.unit}（目標 ${k.tl||(k.t==null?'—':k.fmt(k.t)+k.unit)}）… ${{good:'達成',warn:'あと少し',bad:'未達',none:'データなし'}[k.state]}`)});
-  lines.push('',`■ 経費（請求書）`,`・合計 ${yen(R.iv.total)}（${R.iv.n}件）`);
-  Object.entries(R.iv.cats).forEach(([c,v])=>lines.push(`　${c} ${yen(v)}`));
+  lines.push('',`■ 経費（請求書）`,`・合計 ${yen(R.iv.total)}`);
+  Object.entries(R.iv.cats).sort((a,b)=>catIdx(a[0])-catIdx(b[0])).forEach(([c,v])=>lines.push(`　${c} ${yen(v)}`));
+  if(R.iv.oTotal)lines.push(`・経費に入れないもの（売上・雑収入・仕入・設備など） ${yen(R.iv.oTotal)}`);
   lines.push(`■ 枝肉売上（今月）${yen(R.ca.mo.sales)}（${R.ca.mo.n}頭）`+(R.ca.mo.recN?`　入金額 ${yen(R.ca.mo.received)}（預託など差引 ${yen(R.ca.mo.deduct)}）`:''));
   {const inc=S.income.filter(r=>ym(r.date)===R.m);if(inc.length)lines.push(`■ 雑収入など（今月）${yen(sum(inc.map(r=>r.amount)))}（${inc.length}件）`)}
   {const F=feedCalc(R.m);lines.push(`■ 飼料（今月）請求書 ${yen(F.buy)}／実際に使った額 ${F.used==null?'在庫未入力':yen(F.used)}`);F.rows.forEach(r=>{if(r.used!=null)lines.push(`　${r.b} ${yen(r.used)}${r.per!=null?`（1頭1日 ${f0(r.per)}円）`:''}`)})}
@@ -564,20 +569,27 @@ V.stock.bind=()=>{
       closeModal();toast(`${n}品目の棚卸を保存しました`)}}};
 
 V.invoice=()=>{
-  const iv=invStats(M);const recs=S.invoices.filter(r=>ym(r.date)===M).sort((a,b)=>a.date<b.date?1:-1);
-  const cats=Object.entries(iv.cats).sort((a,b)=>b[1]-a[1]);const mx=Math.max(1,...cats.map(c=>c[1]));
+  const iv=invStats(M);const recs=S.invoices.filter(r=>ym(r.date)===M).sort(invSort);
+  const cats=Object.entries(iv.cats).sort((a,b)=>b[1]-a[1]);const oth=Object.entries(iv.other).sort((a,b)=>b[1]-a[1]);const mx=Math.max(1,...cats.map(c=>c[1]));
   return `
   <h1 class="pg">請求書</h1>
   <section class="sec"><div class="sec-h"><h2>請求書を入れる</h2></div>
     <div class="row">${sample?'<button class="btn ai" id="invPhoto">写真から読み取る</button>':''}<button class="btn" data-add="invoices">手で入力</button></div>
     <p class="sub" style="margin:0">${sample?'請求書を撮った写真を選ぶと、AIが請求元・日付・金額・品目を読み取ります。内容を確認してから保存します。':'AIの読み取りはこの画面では使えません。手で入力してください。'}</p></section>
   <section class="sec"><div class="sec-h"><h2>${jpM(M)}の経費</h2><span class="sub">${iv.n}件・未確認 ${iv.unchecked}件</span></div>
-    <div class="grid">${stat('合計（税込）',yen(iv.total))}</div>
+    <div class="grid">${stat('経費の合計（税込）',yen(iv.total))}${iv.oTotal?stat('経費に入れないもの',yen(iv.oTotal),'',oth.map(([c,v])=>`${esc(c)} ${yen(v)}`).join('・')):''}</div>
+    ${iv.oTotal?`<p class="sub" style="margin:0">売上・雑収入・仕入・建物・設備など（区分「その他」の科目）は経費に入れていません。売上や雑収入は「枝肉・収入」タブで入れると損益に入ります。下の一覧の「収入に移す」でも移せます。</p>`:''}
     ${cats.length?`<div style="display:flex;flex-direction:column;gap:6px">${cats.map(([c,v])=>`<div style="display:grid;grid-template-columns:5.5em 1fr 7em;gap:8px;align-items:center;font-size:14px"><span>${esc(c)}</span><div class="bar"><i style="width:${v/mx*100}%"></i></div><span style="text-align:right">${yen(v)}</span></div>`).join('')}</div>`:''}
-    ${table(['請求日','請求元','費目','牛舎',{t:'金額',n:1},'確認',''],recs.map(r=>[jpD(r.date),esc(r.vendor),`${esc(normCat(r.category||'—'))}<span class="muted">（${costClass(r.category||'')}）</span>`,(r.barn?esc(r.barn):invBarn(r)?`${esc(invBarn(r))}<span class="muted">（宛名）</span>`:'<span class="muted">按分</span>'),yen(r.total),r.checked==='yes'?pill('good','確認済み'):`<button class="btn sm" data-chk="${r.id}">確認した</button>`,`<button class="btn sm" data-edit="invoices" data-id="${r.id}">直す</button>`]),'この月の請求書はありません')}</section>`};
+    ${table(['請求日','請求元','費目','牛舎',{t:'金額',n:1},'確認',''],recs.map(r=>[jpD(r.date),esc(r.vendor),`${esc(normCat(r.category||'—'))}<span class="muted">（${costClass(r.category||'')}）</span>`,(r.barn?esc(r.barn):invBarn(r)?`${esc(invBarn(r))}<span class="muted">（宛名）</span>`:'<span class="muted">按分</span>'),yen(r.total),r.checked==='yes'?pill('good','確認済み'):`<button class="btn sm" data-chk="${r.id}">確認した</button>`,`<button class="btn sm" data-edit="invoices" data-id="${r.id}">直す</button>${INCOME_CATS.includes(normCat(r.category||''))?` <button class="btn sm" data-toinc="${r.id}">収入に移す</button>`:''}`]),'この月の請求書はありません')}</section>`};
 V.invoice.bind=()=>{
   const p=$('#invPhoto');if(p)p.onclick=()=>photoRead('invoices');
-  document.querySelectorAll('[data-chk]').forEach(b=>b.onclick=async()=>{const r=S.invoices.find(x=>x.id===b.dataset.chk);b.disabled=true;if(await save('invoices',r.id,{...strip(r),checked:'yes'}))toast('確認済みにしました')})};
+  document.querySelectorAll('[data-chk]').forEach(b=>b.onclick=async()=>{const r=S.invoices.find(x=>x.id===b.dataset.chk);b.disabled=true;if(await save('invoices',r.id,{...strip(r),checked:'yes'}))toast('確認済みにしました')});
+  document.querySelectorAll('[data-toinc]').forEach(b=>b.onclick=()=>{const r=S.invoices.find(x=>x.id===b.dataset.toinc);if(!r)return;
+    openModal(`<h2>収入に移す</h2><p>「${esc(r.vendor||'')}」${yen(r.total)}（${esc(normCat(r.category))}）を、請求書から「枝肉・収入」タブの収入に移します。損益の「雑収入など」に入ります。</p><div class="sheet-f"><button class="btn" id="tiX">やめる</button><button class="btn pri" id="tiOk">移す</button></div>`);
+    $('#tiX').onclick=closeModal;
+    $('#tiOk').onclick=async()=>{$('#tiOk').disabled=true;const c=normCat(r.category);
+      const ok=await save('income',null,{date:r.date,category:c==='売上'?'売上':'雑収入',payer:r.vendor||'',amount:num(r.total)||0,owner:r.addressee||'',memo:[r.memo,'請求書から移動'].filter(Boolean).join(' / ')});
+      if(ok&&await del('invoices',r.id)){closeModal();toast('収入に移しました')}}})};
 
 /* ---------- photo reading (AI) ---------- */
 async function photoRead(kind){
