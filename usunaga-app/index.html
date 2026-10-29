@@ -261,12 +261,18 @@ let M=ym(TODAY);
 try{const t=localStorage.getItem('usn-tab'); if(t) tab=t;}catch(e){}
 if(location.hash&&/^#[a-z]+$/.test(location.hash)) tab=location.hash.slice(1);
 
-const DEF={fyStart:4,farms:['神出','平野','岩岡','小野','大分','淡路'],barns:['神出','平野','岩岡','小野','大分','淡路'],addrBarn:{'法人':'神出','よしき':'平野','よしひこ':'岩岡'},costCenters:['受精卵'],categories:[{name:'飼料費',cls:'直接変動費'},{name:'水道光熱費',cls:'間接変動費'},{name:'消耗品費',cls:'間接変動費'},{name:'燃料費',cls:'間接変動費'},{name:'獣医費',cls:'間接変動費'},{name:'薬剤費',cls:'間接変動費'},{name:'診療費',cls:'間接変動費'},{name:'リース料',cls:'固定費'},{name:'修繕費',cls:'固定費'},{name:'修繕費（立替）',cls:'固定費'},{name:'削蹄費',cls:'固定費'},{name:'外注費',cls:'固定費'},{name:'広告宣伝費',cls:'固定費'},{name:'支払保険料',cls:'固定費'},{name:'支払利息',cls:'固定費'},{name:'支払手数料',cls:'固定費'},{name:'検査料',cls:'固定費'},{name:'租税公課',cls:'固定費'},{name:'立替金',cls:'固定費'},{name:'給料',cls:'固定費'},{name:'繁殖費',cls:'固定費'},{name:'肥料費',cls:'固定費'},{name:'諸会費',cls:'固定費'},{name:'貯蔵品',cls:'固定費'},{name:'車両費',cls:'固定費'},{name:'返金',cls:'固定費'},{name:'通信費',cls:'固定費'},{name:'運搬費',cls:'固定費'},{name:'雑費',cls:'固定費'},{name:'預託料',cls:'固定費'},{name:'仕入',cls:'その他'},{name:'仕入（営業外）',cls:'その他'},{name:'売上',cls:'その他'},{name:'建物',cls:'その他'},{name:'設備',cls:'その他'},{name:'雑収入',cls:'その他'},{name:'雑所得',cls:'その他'},{name:'預託牛',cls:'その他'}],
-  catAlias:{'光熱費':'水道光熱費','水道費':'水道光熱費','賃借料':'リース料','保険料':'支払保険料','薬品費':'薬剤費','資材費':'消耗品費','その他':'雑費'},office:'神戸うすなが牧場',owners:['法人','よしき','よしひこ'],usefulLife:6,dailyCost:null,
+const DEF={fyStart:4,farms:['神出','平野','岩岡','小野','大分','淡路'],barns:['神出','平野','岩岡','小野','大分','淡路'],addrBarn:{'法人':'神出','芳輝':'平野','嘉彦':'岩岡'},costCenters:['受精卵'],categories:[{name:'飼料費',cls:'直接変動費'},{name:'水道光熱費',cls:'間接変動費'},{name:'消耗品費',cls:'間接変動費'},{name:'燃料費',cls:'間接変動費'},{name:'獣医費',cls:'間接変動費'},{name:'薬剤費',cls:'間接変動費'},{name:'診療費',cls:'間接変動費'},{name:'リース料',cls:'固定費'},{name:'修繕費',cls:'固定費'},{name:'修繕費（立替）',cls:'固定費'},{name:'削蹄費',cls:'固定費'},{name:'外注費',cls:'固定費'},{name:'広告宣伝費',cls:'固定費'},{name:'支払保険料',cls:'固定費'},{name:'支払利息',cls:'固定費'},{name:'支払手数料',cls:'固定費'},{name:'検査料',cls:'固定費'},{name:'租税公課',cls:'固定費'},{name:'立替金',cls:'固定費'},{name:'給料',cls:'固定費'},{name:'繁殖費',cls:'固定費'},{name:'肥料費',cls:'固定費'},{name:'諸会費',cls:'固定費'},{name:'貯蔵品',cls:'固定費'},{name:'車両費',cls:'固定費'},{name:'返金',cls:'固定費'},{name:'通信費',cls:'固定費'},{name:'運搬費',cls:'固定費'},{name:'雑費',cls:'固定費'},{name:'預託料',cls:'固定費'},{name:'仕入',cls:'その他'},{name:'仕入（営業外）',cls:'その他'},{name:'売上',cls:'その他'},{name:'建物',cls:'その他'},{name:'設備',cls:'その他'},{name:'雑収入',cls:'その他'},{name:'雑所得',cls:'その他'},{name:'預託牛',cls:'その他'}],
+  catAlias:{'光熱費':'水道光熱費','水道費':'水道光熱費','賃借料':'リース料','保険料':'支払保険料','薬品費':'薬剤費','資材費':'消耗品費','その他':'雑費'},office:'神戸うすなが牧場',owners:['法人','芳輝','嘉彦'],usefulLife:6,dailyCost:null,
   targets:{conception:55,cultured:420,produced:200,freshET:90,calvingRate:90,carcassWeight:500,semenMin:5,
     growing:{}}};
 const GDEF={shipWeight:290,shipAge:280,dg:0.95,mortality:3};
-const cfg=()=>{const s=S.settings||{};return {...DEF,...s,targets:{...DEF.targets,...(s.targets||{}),growing:{...DEF.targets.growing,...((s.targets||{}).growing||{})}}}};
+const OWN_ALIAS={'よしき':'芳輝','よしひこ':'嘉彦'};
+const normOwn=o=>OWN_ALIAS[o]||o;
+const normRec=r=>{if(r.owner)r.owner=normOwn(r.owner);if(r.addressee)r.addressee=normOwn(r.addressee);return r};
+const cfg=()=>{const s0=S.settings||{};const s={...s0};
+  if(s.owners)s.owners=[...new Set(s.owners.map(normOwn))];
+  if(s.addrBarn)s.addrBarn=Object.fromEntries(Object.entries(s.addrBarn).map(([k,v])=>[normOwn(k),v]));
+  return {...DEF,...s,targets:{...DEF.targets,...(s.targets||{}),growing:{...DEF.targets.growing,...((s.targets||{}).growing||{})}}}};
 const fyStartM=m=>{const fs=cfg().fyStart||4;const [y,mm]=m.split('-').map(Number);return `${mm>=fs?y:y-1}-${pad(fs)}`};
 const inFY=(d,m)=>{const k=ym(d);return k&&k>=fyStartM(m)&&k<=m};
 const monthsIn=m=>{let s=fyStartM(m),n=1;while(s<m){s=monthAdd(s,1);n++}return n};
@@ -348,6 +354,8 @@ function openForm(col,rec,extra){
   <form id="gform" class="form" novalidate>${fs.map(f=>field(f,r[f.k])).join('')}</form>
   <div class="sheet-f">${rec&&rec.id?`<button class="btn dng dl" id="fDel">削除</button>`:''}<button class="btn" id="fCancel">やめる</button><button class="btn pri" id="fSave">保存</button></div>`);
   $('#fCancel').onclick=closeModal;
+  if(col==='carcass'){const t=$('#f_earTag');if(t)t.onchange=()=>{const c=findCattle(t.value);const o=$('#f_owner'),b=$('#f_barn');
+    if(c){if(o&&c.owner)o.value=c.owner;if(b&&c.farm)b.value=c.farm;toast(`在庫の牛が見つかりました（${c.farm||''}・${c.owner||''}）`)}else if(t.value.trim())toast('在庫に同じ個体識別番号の牛はいません')}}
   if(col==='invoices'){const a=$('#f_addressee'),b=$('#f_barn');if(a&&b){a.onchange=()=>{const d=(cfg().addrBarn||{})[a.value];if(d)b.value=d}; if(!r.barn&&!r.id&&a.value)a.onchange()}}
   if($('#fDel')) $('#fDel').onclick=async e=>{const b=e.currentTarget;if(b.dataset.sure){if(await del(col,rec.id)){closeModal();toast('削除しました')}}else{b.dataset.sure=1;b.textContent='本当に削除する'}};
   $('#fSave').onclick=async()=>{
@@ -358,7 +366,7 @@ function openForm(col,rec,extra){
     if(extra&&extra.merge) Object.assign(out,extra.merge);
     delete out.sample;
     $('#fSave').disabled=true;
-    if(await save(col,rec&&rec.id,out)){closeModal();toast('保存しました')}else $('#fSave').disabled=false};
+    if(await save(col,rec&&rec.id,out)){closeModal();if(col==='carcass')await shipLink(out);else toast('保存しました')}else $('#fSave').disabled=false};
 }
 
 /* ---------- calculations ---------- */
@@ -721,6 +729,31 @@ const exitOf=c=>c.status==='出荷'?c.shipDate:c.status==='死亡'?c.deathDate:n
 const aliveOn=(c,d)=>c.introDate&&c.introDate<=d&&!(exitOf(c)&&exitOf(c)<=d);
 function daysIn(c,from,to){if(!c.introDate)return 0;const s=c.introDate>from?c.introDate:from;const ex=exitOf(c);let e=to;if(ex&&ex<=to)e=addDays(ex,-1);return e<s?0:dayDiff(s,e)+1}
 const ownOK=(r,o)=>!o||r.owner===o;
+let FARM='',SHIPR='fy';
+const tagKey=t=>String(t||'').replace(/\D/g,'').padStart(10,'0');
+const findCattle=t=>{const k=tagKey(t);return k==='0000000000'?null:S.cattle.find(c=>tagKey(c.earTag)===k)||null};
+async function shipLink(rec){const c=findCattle(rec.earTag);
+  if(!c){toast('保存しました（在庫に同じ個体識別番号の牛はいません）');return}
+  if(c.status==='出荷'&&c.shipDate===rec.date){toast('保存しました');return}
+  if(await save('cattle',c.id,{...strip(c),status:'出荷',shipDate:rec.date}))toast('保存しました。在庫の牛を「出荷済み」にしました')}
+const _rateCache={};
+function rateAt(farm,date){const setD=num(cfg().dailyCost);if(setD!=null)return {v:null,f:null,t:setD};
+  const m=ym(date);const key=m+'|'+S.invoices.length+'|'+S.cattle.length;let bc=_rateCache[key];
+  if(!bc){bc=_rateCache[key]=barnCost(fyStartM(m)+'-01',monthEnd(m))}
+  const x=bc[farm];return x?{v:x.vPer,f:x.fPer,t:x.mgmt}:{v:null,f:null,t:null}}
+function salesOf(c){const k=tagKey(c.earTag);const car=S.carcass.filter(r=>tagKey(r.earTag)===k);
+  if(car.length)return sum(car.map(r=>num(r.received)!=null?num(r.received):(num(r.weight)||0)*(num(r.price)||0)));
+  return num(c.shipPrice)||0}
+function shippedRows(m,range,o,farm){
+  const fs=fyStartM(m)+'-01',me=monthEnd(m),ms=m+'-01';
+  return S.cattle.filter(c=>c.status==='出荷'&&c.shipDate&&ownOK(c,o)&&(!farm||c.farm===farm)&&(range==='all'||(range==='mo'?c.shipDate>=ms&&c.shipDate<=me:c.shipDate>=fs&&c.shipDate<=me)))
+    .map(c=>{const d=c.introDate?dayDiff(c.introDate,c.shipDate)+1:0;const r=rateAt(c.farm,c.shipDate);const p=num(c.introPrice)||0;const cost=(r.t||0)*d;const sales=salesOf(c);
+      return {c,d,r,p,cost,sales,profit:sales-p-cost}}).sort((a,b)=>a.c.shipDate<b.c.shipDate?1:-1)}
+function cattleCsv(){const H=['個体識別番号','耳標番号','牛舎','所有者','区分','性別','出生日','導入日','導入価格','状態','出荷日','死亡日','備考'];
+  const q=v=>{v=v==null?'':String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
+  const rows=S.cattle.slice().sort((a,b)=>String(a.farm||'').localeCompare(String(b.farm||''),'ja')||String(a.tagNo||a.earTag).localeCompare(String(b.tagNo||b.earTag),'ja'))
+    .map(c=>[c.earTag,c.tagNo,c.farm,c.owner,c.kind,c.sex,c.birthDate,c.introDate,c.introPrice,c.status||'飼養中',c.shipDate,c.deathDate,c.note]);
+  return [H].concat(rows).map(r=>r.map(q).join(',')).join('\r\n')+'\r\n'}
 const CLASSES=['直接変動費','間接変動費','固定費','その他'];
 const catList=()=>(cfg().categories&&cfg().categories.length?cfg().categories:DEF.categories);
 const normCat=c=>((cfg().catAlias||DEF.catAlias)[c])||c;
@@ -795,17 +828,28 @@ V.asset=()=>{
     catRows.push(plRow(cl,sum(ks.map(k=>A.plMo.cats[k]||0)),sum(ks.map(k=>A.plFy.cats[k]||0)),1));ks.forEach(k=>catRows.push(plRow('　'+k,A.plMo.cats[k]||0,A.plFy.cats[k]||0)))});
   return `
   <div class="row"><h1 class="pg">牛の在庫・会計</h1>
-    <div class="fld" style="margin-left:auto"><label for="ownSel">所有者で絞り込む</label><select id="ownSel"><option value="">全体</option>${c.owners.map(o=>`<option${o===OWN?' selected':''}>${esc(o)}</option>`).join('')}</select></div></div>
-  <section class="sec"><div class="sec-h"><h2>${jpM(M)}末の在庫</h2><span class="sub">導入・出荷・死亡の記録から自動で増減します</span><button class="btn" id="fnImport">ファームノートから取り込む</button><button class="btn pri" data-add="cattle">＋ 牛を登録</button></div>
+    <div class="fld" style="margin-left:auto"><label for="ownSel">所有者で絞り込む</label><select id="ownSel"><option value="">全体</option>${c.owners.map(o=>`<option${o===OWN?' selected':''}>${esc(o)}</option>`).join('')}</select></div>
+    <div class="fld"><label for="farmSel">牛舎で絞り込む</label><select id="farmSel"><option value="">すべての牛舎</option>${c.farms.map(b=>`<option${b===FARM?' selected':''}>${esc(b)}</option>`).join('')}</select></div></div>
+  <section class="sec"><div class="sec-h"><h2>${jpM(M)}末の在庫</h2><span class="sub">導入・出荷・死亡の記録から自動で増減します</span><button class="btn" id="fnImport">CSV・Excelから取り込む</button><button class="btn" id="cattleCsv">在庫牛をCSVで出す</button><button class="btn pri" data-add="cattle">＋ 牛を登録</button></div>
     <div class="grid">${stat('月末の頭数',tot.end,'頭',`育成・肥育 ${A.stock.length}頭／繁殖 ${A.breed.length}頭`)}${stat('牛の在庫評価額',yen(A.stockVal),'','取得価額＋1日コスト×飼養日数')}${stat('繁殖牛の簿価',yen(A.bookVal),'',`耐用年数${c.usefulLife}年・定額法`)}${stat('飼育管理費（全体平均）',A.dFy==null?'—':f0(A.dFy),'円/頭日',A.setD!=null?'設定値を使用中':'年度累計・牛舎ごとの値で評価')}</div>
     ${table(['区分',{t:'月初',n:1},{t:'導入',n:1},{t:'出荷',n:1},{t:'死亡',n:1},{t:'月末',n:1}],A.rows.map(r=>[r.k,r.start,r.inn?'+'+r.inn:0,r.ship?'−'+r.ship:0,r.dead?'−'+r.dead:0,`<b>${r.end}</b>`]).concat([['<b>合計</b>',tot.start,tot.inn?'+'+tot.inn:0,tot.ship?'−'+tot.ship:0,tot.dead?'−'+tot.dead:0,`<b>${tot.end}</b>`]]))}
-    ${OWN?'':table(['所有者',{t:'頭数',n:1},{t:'在庫評価額',n:1},{t:'繁殖牛の簿価',n:1}],A.byOwner.map(x=>[esc(x.ow),x.n+'頭',yen(x.val),yen(x.book)]))}</section>
+    ${OWN?'':table(['所有者',{t:'頭数',n:1},{t:'在庫評価額',n:1},{t:'繁殖牛の簿価',n:1}],A.byOwner.map(x=>[esc(x.ow),x.n+'頭',yen(x.val),yen(x.book)]))}
+    ${table(['牛舎',{t:'頭数',n:1},{t:'うち育成・肥育',n:1},{t:'うち繁殖',n:1},{t:'在庫評価額',n:1},{t:'1日の変動費',n:1},{t:'1日の固定費',n:1}],c.farms.map(b=>{const st=A.stock.filter(x=>x.c.farm===b),br=A.breed.filter(x=>x.c.farm===b),f=A.fy.bc[b];
+      return (st.length||br.length||(f&&f.hd))?[esc(b),(st.length+br.length)+'頭',st.length+'頭',br.length+'頭',yen(sum(st.map(x=>x.val))),f&&f.vPer!=null?f0(f.vPer)+'円':'—',f&&f.fPer!=null?f0(f.fPer)+'円':'—']:null}).filter(Boolean),'牛舎ごとの在庫はまだありません')}
+    <p class="sub" style="margin:0">1日の変動費・固定費は、請求書画面に入れた経費を牛舎ごとに集計し、その牛舎の「頭数×日数」で割った値です（年度累計）。「在庫牛をCSVで出す」で出したファイルをExcelで編集し、「CSV・Excelから取り込む」で戻せます。</p></section>
   <section class="sec"><div class="sec-h"><h2>牛舎別 1頭1日あたりのコスト</h2><span class="sub">請求書 ÷（使用頭数×対象日数）</span></div>
     ${barnTable(A.mo.bc,'今月')}
     ${barnTable(A.fy.bc,'年度累計（資産価値に使用）')}
     <p class="sub" style="margin:0">直接変動費＝飼料費／間接変動費＝獣医費・診療費・薬剤費・水道費・光熱費・消耗品費・燃料費／固定費＝それ以外。変動費＝直接＋間接、飼育管理費＝変動費＋固定費。牛舎を決めにくい請求書は宛名で牛舎を決め（「目標・設定」で設定）、決まっていない宛名は頭数×日数の割合で各牛舎に分けます。${A.setD!=null?`<b>いまは「目標・設定」で決めた ${f0(A.setD)}円 を資産価値に使っています。</b>`:''}</p></section>
   <section class="sec"><div class="sec-h"><h2>1頭ごとの資産価値（育成・肥育）</h2><span class="sub">${jpD(monthEnd(M))}時点</span></div>
-    ${table(['個体番号','区分','所有者','牛舎','導入日',{t:'飼養日数',n:1},{t:'1日コスト',n:1},{t:'取得価額',n:1},{t:'かかったコスト',n:1},{t:'資産価値',n:1},''],A.stock.map(x=>[esc(x.c.earTag),esc(x.c.kind||'育成'),esc(x.c.owner||'—'),esc(x.c.farm||'—'),jpD(x.c.introDate),x.d+'日',f0(x.pd)+'円',yen(x.p),yen(x.cost),`<b>${yen(x.val)}</b>`,`<button class="btn sm" data-edit="cattle" data-id="${x.c.id}">直す</button>`]),'この時点で飼っている育成・肥育牛はいません')}</section>
+    ${(()=>{const L=A.stock.filter(x=>!FARM||x.c.farm===FARM);const fb=b=>A.fy.bc[b]||{};
+      return table(['個体番号','耳標','区分','所有者','牛舎','導入日',{t:'飼養日数',n:1},{t:'変動費/日',n:1},{t:'固定費/日',n:1},{t:'取得価額',n:1},{t:'かかったコスト',n:1},{t:'資産価値',n:1},''],L.map(x=>[esc(x.c.earTag),esc(x.c.tagNo||''),esc(x.c.kind||'育成'),esc(x.c.owner||'—'),esc(x.c.farm||'—'),jpD(x.c.introDate),x.d+'日',A.setD!=null?'—':fb(x.c.farm).vPer!=null?f0(fb(x.c.farm).vPer)+'円':'—',A.setD!=null?'—':fb(x.c.farm).fPer!=null?f0(fb(x.c.farm).fPer)+'円':'—',yen(x.p),yen(x.cost),`<b>${yen(x.val)}</b>`,`<button class="btn sm" data-edit="cattle" data-id="${x.c.id}">直す</button>`]),FARM?`${esc(FARM)}で飼っている育成・肥育牛はいません`:'この時点で飼っている育成・肥育牛はいません')})()}</section>
+  <section class="sec"><div class="sec-h"><h2>出荷済みの牛（1頭ごとの最終損益）</h2>
+    <div class="fld" style="margin-left:auto"><label for="shipR">期間</label><select id="shipR">${[['mo','今月'],['fy','今年度'],['all','すべて']].map(([k,l])=>`<option value="${k}"${k===SHIPR?' selected':''}>${l}</option>`).join('')}</select></div></div>
+    ${(()=>{const R=shippedRows(M,SHIPR,OWN,FARM);const T=k=>sum(R.map(x=>x[k]));
+      return (R.length?`<div class="grid">${stat('出荷頭数',R.length,'頭')}${stat('売上合計',yen(T('sales')))}${stat('取得価額＋飼育コスト',yen(T('p')+T('cost')))}${stat('最終損益の合計',yen(T('profit')))}</div>`:'')+
+      table(['個体番号','耳標','所有者','牛舎','導入日','出荷日',{t:'飼養日数',n:1},{t:'1日コスト',n:1},{t:'取得価額',n:1},{t:'飼育コスト',n:1},{t:'売上（枝肉入金）',n:1},{t:'最終損益',n:1},''],R.map(x=>[esc(x.c.earTag),esc(x.c.tagNo||''),esc(x.c.owner||'—'),esc(x.c.farm||'—'),jpD(x.c.introDate),jpD(x.c.shipDate),x.d+'日',x.r.t!=null?f0(x.r.t)+'円':'—',yen(x.p),yen(x.cost),x.sales?yen(x.sales):'<span class="muted">未入力</span>',`<b>${yen(x.profit)}</b>`,`<button class="btn sm" data-edit="cattle" data-id="${x.c.id}">直す</button>`]),'この期間に出荷した牛はいません')})()}
+    <p class="sub" style="margin:0">「枝肉・収入」で枝肉成績を保存すると、同じ個体識別番号の牛が自動で出荷済みになり、と畜日が出荷日になります。飼育コストは、出荷した月までの年度累計の牛舎の1日コスト×飼養日数です。売上は枝肉の「実際の入金額」（なければ重量×単価）を使います。</p></section>
   <section class="sec"><div class="sec-h"><h2>繁殖牛（減価償却資産）</h2></div>
     ${table(['個体番号','所有者','取得日',{t:'取得価額',n:1},{t:'償却累計',n:1},{t:'簿価',n:1},''],A.breed.map(x=>[esc(x.c.earTag),esc(x.c.owner||'—'),esc(x.c.introDate||'—'),yen(num(x.c.introPrice)),yen(x.acc),`<b>${yen(x.book)}</b>`,`<button class="btn sm" data-edit="cattle" data-id="${x.c.id}">直す</button>`]),'繁殖牛が登録されていません（牛の登録で区分を「繁殖」にします）')}</section>
   <section class="sec"><div class="sec-h"><h2>損益計算書（試算）</h2><span class="sub">${esc(OWN||'全体')}</span></div>
@@ -818,6 +862,11 @@ V.asset=()=>{
 V.asset.bind=()=>{
   $('#ownSel').onchange=e=>{OWN=e.target.value;render()};
   $('#fnImport').onclick=fnImport;
+  $('#farmSel').onchange=e=>{FARM=e.target.value;render()};
+  $('#shipR').onchange=e=>{SHIPR=e.target.value;render()};
+  $('#cattleCsv').onclick=async()=>{const data=cattleCsv();const fn=`在庫牛_${TODAY}.csv`;
+    if(downloads){try{await downloads.save({filename:fn,data});toast('保存しました')}catch(e){if(e.code!=='declined')toast('保存できませんでした')}return}
+    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+data],{type:'text/csv;charset=utf-8'}));a.download=fn;document.body.appendChild(a);a.click();a.remove()};
   const A=assetCalc(M,OWN);
   $('#finCopy').onclick=()=>copy(finText(A,M,OWN));
   const fc=$('#finCsv');if(fc)fc.onclick=async()=>{const rows=[['区分','科目','今月','年度累計']];
@@ -890,11 +939,11 @@ async function readTable(file){
 const FN_BREED=['経産牛','未経産牛','乾乳牛','出産前','分娩後','授精待ち','妊娠牛'];
 const fnOwner=tag=>{const t=String(tag||'');for(const k of Object.keys(FN_OWN))if(t.includes(k))return k;
   const ps=(t.match(/[（(]([^)）]*)[)）]/g)||[]).map(x=>x.replace(/[（()）\s]/g,'')).filter(x=>x&&!/^\d+$/.test(x));return ps[0]||''};
-const FN_OWN={'法人':'法人','芳輝':'よしき','嘉彦':'よしひこ','よしき':'よしき','よしひこ':'よしひこ'};
+const FN_OWN={'法人':'法人','芳輝':'芳輝','嘉彦':'嘉彦','よしき':'芳輝','よしひこ':'嘉彦'};
 const fnDate=v=>{v=String(v||'').trim().replace(/\//g,'-');const m=v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);return m?`${m[1]}-${pad(+m[2])}-${pad(+m[3])}`:''};
 function fnImport(){
-  openModal(`<h2>ファームノートから取り込む</h2>
-    <p class="sub" style="margin:0">ファームノートの「牛の一覧」を出力したCSV（またはExcel）を選んでください。個体識別番号が同じ牛は内容を更新し、新しい牛は追加します。</p>
+  openModal(`<h2>CSV・Excelから取り込む</h2>
+    <p class="sub" style="margin:0">ファームノートの「牛の一覧」を出力したファイル、または「在庫牛をCSVで出す」で出してExcelで編集したファイルを選んでください。個体識別番号が同じ牛は内容を更新し、新しい牛は追加します。</p>
     <div class="fld"><label for="fnF">ファイルを選ぶ</label><input type="file" id="fnF" accept=".csv,.xlsx,.xls,text/csv"></div>
     <div id="fnOut"></div>
     <div class="sheet-f"><button class="btn" id="fnX">やめる</button><button class="btn pri" id="fnGo" disabled>取り込む</button></div>`);
@@ -902,40 +951,45 @@ function fnImport(){
   $('#fnF').onchange=async e=>{const f=e.target.files[0];if(!f)return;const out=$('#fnOut');out.innerHTML='<p class="muted">読み込んでいます…</p>';
     let rows;try{rows=await readTable(f)}catch(err){out.innerHTML='<p class="banner">ファイルを読めませんでした。CSVかExcelか確認してください。</p>';return}
     const h=rows[0]||[],col=n=>h.findIndex(x=>x.replace(/\s/g,'').startsWith(n));
-    const C={id:col('個体識別番号'),tag:col('耳標番号'),birth:col('出生日'),sex:col('性別'),grp:col('牛群'),st:col('一般ステータス'),intro:col('導入日'),price:col('導入価格')};
+    const C={id:col('個体識別番号'),tag:col('耳標番号'),birth:col('出生日'),sex:col('性別'),grp:col('牛群'),st:col('一般ステータス'),intro:col('導入日'),price:col('導入価格'),
+      farm:col('牛舎'),own:col('所有者'),kind:col('区分'),status:col('状態'),ship:col('出荷日'),death:col('死亡日'),note:col('備考')};
     if(C.id<0){out.innerHTML='<p class="banner">「個体識別番号」の列が見つかりません。ファームノートの牛の一覧を出力したファイルか確認してください。</p>';return}
     const g=(r,k)=>C[k]>=0?String(r[C[k]]||'').trim():'';
-    const data=rows.slice(1).filter(r=>g(r,'id')).map(r=>{const tag=g(r,'tag');const ow=fnOwner(tag);
-      const grp=g(r,'grp');const farm=cfg().farms.find(b=>grp.includes(b))||'';
-      return {earTag:g(r,'id').replace(/\D/g,'').padStart(10,'0'),tagNo:tag,birthDate:fnDate(g(r,'birth')),sex:g(r,'sex'),grp,farm,st:g(r,'st'),introDate:fnDate(g(r,'intro')),introPrice:num(g(r,'price').replace(/[,円]/g,'')),ownRaw:ow}});
+    const data=rows.slice(1).filter(r=>g(r,'id')).map(r=>{const tag=g(r,'tag');const ow=C.own>=0&&g(r,'own')?normOwn(g(r,'own')):fnOwner(tag);
+      const grp=C.farm>=0&&g(r,'farm')?g(r,'farm'):g(r,'grp');const farm=cfg().farms.find(b=>grp===b)||cfg().farms.find(b=>grp.includes(b))||'';
+      const st0=C.kind>=0&&g(r,'kind')?g(r,'kind'):g(r,'st');const status=['飼養中','出荷','死亡'].includes(g(r,'status'))?g(r,'status'):'';
+      return {earTag:g(r,'id').replace(/\D/g,'').padStart(10,'0'),tagNo:tag,birthDate:fnDate(g(r,'birth')),sex:g(r,'sex'),grp,farm,st:st0,status,shipDate:fnDate(g(r,'ship')),deathDate:fnDate(g(r,'death')),note:C.note>=0?g(r,'note'):null,introDate:fnDate(g(r,'intro')),introPrice:num(g(r,'price').replace(/[,円]/g,'')),ownRaw:ow}});
     const owns=[...new Set(data.map(d=>d.ownRaw))],grps=[...new Set(data.filter(d=>!d.farm).map(d=>d.grp))];
     const byTag=new Map(S.cattle.map(c=>[String(c.earTag).replace(/\D/g,'').padStart(10,'0'),c]));
     const upd=data.filter(d=>byTag.has(d.earTag)).length,neu=data.length-upd;
     const inCsv=new Set(data.map(d=>d.earTag));const missing=S.cattle.filter(c=>(c.status||'飼養中')==='飼養中'&&!inCsv.has(String(c.earTag).replace(/\D/g,'').padStart(10,'0'))).length;
-    const ownOpt=raw=>{const d=FN_OWN[raw]||'';return `<select data-own="${esc(raw)}"><option value="">（選んでください）</option>${cfg().owners.map(o=>`<option${o===d?' selected':''}>${esc(o)}</option>`).join('')}</select>`};
+    const ownOpt=raw=>{const d=cfg().owners.includes(raw)?raw:(FN_OWN[raw]||'');return `<select data-own="${esc(raw)}"><option value="">（選んでください）</option>${cfg().owners.map(o=>`<option${o===d?' selected':''}>${esc(o)}</option>`).join('')}</select>`};
     const sts=[...new Set(data.map(d=>d.st))];const fatGrp=data.some(d=>d.grp.includes('肥育'));
-    const kindOpt=st=>{const d=FN_BREED.includes(st)?'繁殖':fatGrp?'肥育':'育成';return `<select data-kind="${esc(st)}">${['育成','肥育','繁殖'].map(k=>`<option${k===d?' selected':''}>${k}</option>`).join('')}</select>`};
+    const kindOpt=st=>{const d=['育成','肥育','繁殖'].includes(st)?st:FN_BREED.includes(st)?'繁殖':fatGrp?'肥育':'育成';return `<select data-kind="${esc(st)}">${['育成','肥育','繁殖'].map(k=>`<option${k===d?' selected':''}>${k}</option>`).join('')}</select>`};
     const age=st=>{const a=data.filter(d=>d.st===st).map(d=>d.birthDate?dayDiff(d.birthDate,TODAY)/30.4:null).filter(v=>v!=null);return a.length?`${Math.min(...a).toFixed(0)}〜${Math.max(...a).toFixed(0)}か月`:'—'};
     out.innerHTML=`<div class="grid">${stat('ファイルの牛',data.length,'頭')}${stat('新しく追加',neu,'頭')}${stat('内容を更新',upd,'頭')}</div>
-      <p class="sub" style="margin:8px 0 4px"><b>所有者</b>（耳標番号のカッコ内の名前ごとに選んでください）</p>
-      ${table(['耳標のカッコ内','頭数','アプリの所有者'],owns.map(o=>[esc(o||'（なし）'),data.filter(d=>d.ownRaw===o).length,ownOpt(o)]))}
-      ${grps.length?`<p class="sub" style="margin:8px 0 4px"><b>牛舎</b>（アプリの牛舎名と一致しない牛群）</p>${table(['牛群','頭数','アプリの牛舎'],grps.map(gp=>[esc(gp||'（なし）'),data.filter(d=>d.grp===gp).length,`<select data-grp="${esc(gp)}"><option value="">（選んでください）</option>${cfg().farms.map(b=>`<option>${esc(b)}</option>`).join('')}</select>`]))}`:''}
-      <p class="sub" style="margin:8px 0 4px"><b>区分</b>（ファームノートのステータスごとに、アプリの区分を選んでください）</p>
-      ${table(['ステータス','頭数','月齢','アプリの区分'],sts.map(st=>[esc(st||'（なし）'),data.filter(d=>d.st===st).length,age(st),kindOpt(st)]))}
+      <p class="sub" style="margin:8px 0 4px"><b>所有者</b>（ファイルの所有者、または耳標番号のカッコ内の名前ごとに選んでください）</p>
+      ${table(['ファイルの名前','頭数','アプリの所有者'],owns.map(o=>[esc(o||'（なし）'),data.filter(d=>d.ownRaw===o).length,ownOpt(o)]))}
+      ${grps.length?`<p class="sub" style="margin:8px 0 4px"><b>牛舎</b>（アプリの牛舎名と一致しないもの）</p>${table(['ファイルの牛舎・牛群','頭数','アプリの牛舎'],grps.map(gp=>[esc(gp||'（なし）'),data.filter(d=>d.grp===gp).length,`<select data-grp="${esc(gp)}"><option value="">（選んでください）</option>${cfg().farms.map(b=>`<option>${esc(b)}</option>`).join('')}</select>`]))}`:''}
+      <p class="sub" style="margin:8px 0 4px"><b>区分</b>（ファイルの区分・ステータスごとに、アプリの区分を選んでください）</p>
+      ${table(['ファイルの区分・ステータス','頭数','月齢','アプリの区分'],sts.map(st=>[esc(st||'（なし）'),data.filter(d=>d.st===st).length,age(st),kindOpt(st)]))}
       <p class="sub" style="margin:0">導入日が空の牛は出生日を導入日にします（${data.filter(d=>!d.introDate).length}頭）。導入価格が空の牛は空のまま取り込みます（${data.filter(d=>d.introPrice==null).length}頭）。</p>
+      ${(()=>{const k=data.filter(d=>d.status==='飼養中'&&byTag.has(d.earTag)&&['出荷','死亡'].includes(byTag.get(d.earTag).status)).length;return k?`<p class="sub" style="margin:4px 0 0">アプリで出荷済み・死亡になっている${k}頭は、ファイルで「飼養中」になっていても今の状態のままにします。</p>`:''})()}
       ${missing?`<p class="banner" style="margin-top:8px">アプリでは「飼養中」なのに、このファイルにない牛が${missing}頭います（出荷・死亡したかもしれません）。この取り込みでは変更しません。</p>`:''}`;
-    plan={data,byTag};$('#fnGo').disabled=false};
+    plan={data,byTag,src:C.farm>=0||C.own>=0?'CSV取り込み':'ファームノート'};$('#fnGo').disabled=false};
   $('#fnGo').onclick=async()=>{if(!plan)return;
     const om={},gm={},km={};let bad=false;
     document.querySelectorAll('[data-kind]').forEach(x=>km[x.dataset.kind]=x.value);
     document.querySelectorAll('[data-own]').forEach(x=>{om[x.dataset.own]=x.value;if(!x.value)bad=true});
     document.querySelectorAll('[data-grp]').forEach(x=>{gm[x.dataset.grp]=x.value;if(!x.value)bad=true});
     if(bad){toast('所有者と牛舎をすべて選んでください');return}
-    const b=$('#fnGo');b.disabled=true;let n=0;
+    const b=$('#fnGo');b.disabled=true;let n=0;const C_SRC=plan.src;
     for(const d of plan.data){const cur=plan.byTag.get(d.earTag);
       const rec={...(cur?strip(cur):{status:'飼養中'}),earTag:d.earTag,tagNo:d.tagNo,sex:d.sex,kind:km[d.st]||'肥育',owner:om[d.ownRaw],farm:d.farm||gm[d.grp],
-        birthDate:d.birthDate||(cur&&cur.birthDate)||'',introDate:d.introDate||(cur&&cur.introDate)||d.birthDate||TODAY,source:'ファームノート'};
+        birthDate:d.birthDate||(cur&&cur.birthDate)||'',introDate:d.introDate||(cur&&cur.introDate)||d.birthDate||TODAY,source:C_SRC};
       if(d.introPrice!=null)rec.introPrice=d.introPrice;
+      if(d.status&&!(d.status==='飼養中'&&cur&&(cur.status==='出荷'||cur.status==='死亡'))){rec.status=d.status;if(d.shipDate)rec.shipDate=d.shipDate;if(d.deathDate)rec.deathDate=d.deathDate}
+      if(d.note!=null)rec.note=d.note;
       if(await save('cattle',cur?cur.id:null,rec))n++;b.textContent=`取り込み中… ${n}/${plan.data.length}`}
     closeModal();toast(`${n}頭を取り込みました`)};
 }
@@ -971,7 +1025,7 @@ render();
   db=await claude.use('db').catch(()=>null);
   if(!db){dbState='none';render();return}
   let pending=COLS.length+1;const done=()=>{if(--pending===0){loaded=true}schedule()};
-  COLS.forEach(c=>{let first=true;db.collection(c).onSnapshot(snap=>{S[c]=snap.docs.map(d=>({id:d.id,...d.data()}));if(first){first=false;done()}else schedule()},
+  COLS.forEach(c=>{let first=true;db.collection(c).onSnapshot(snap=>{S[c]=snap.docs.map(d=>normRec({id:d.id,...d.data()}));if(first){first=false;done()}else schedule()},
     err=>{if(first){first=false;done()}})});
   let f1st=true;db.doc('settings/main').onSnapshot(s=>{S.settings=s.exists?s.data():null;if(f1st){f1st=false;done()}else schedule()},()=>{if(f1st){f1st=false;done()}});
 })();
