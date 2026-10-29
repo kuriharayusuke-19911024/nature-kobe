@@ -810,7 +810,9 @@ async function readTable(file){
   const buf=await file.arrayBuffer();let t;
   try{t=new TextDecoder('utf-8',{fatal:true}).decode(buf)}catch(e){t=new TextDecoder('shift_jis').decode(buf)}
   return parseCSV(t.replace(/^﻿/,''))}
-const FN_KIND={'子牛':'育成','育成牛':'育成','肥育牛':'肥育','休薬期間':'肥育','経産牛':'繁殖','未経産牛':'繁殖','乾乳牛':'繁殖','出産前':'繁殖'};
+const FN_BREED=['経産牛','未経産牛','乾乳牛','出産前','分娩後','授精待ち','妊娠牛'];
+const fnOwner=tag=>{const t=String(tag||'');for(const k of Object.keys(FN_OWN))if(t.includes(k))return k;
+  const ps=(t.match(/[（(]([^)）]*)[)）]/g)||[]).map(x=>x.replace(/[（()）\s]/g,'')).filter(x=>x&&!/^\d+$/.test(x));return ps[0]||''};
 const FN_OWN={'法人':'法人','芳輝':'よしき','嘉彦':'よしひこ','よしき':'よしき','よしひこ':'よしひこ'};
 const fnDate=v=>{v=String(v||'').trim().replace(/\//g,'-');const m=v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);return m?`${m[1]}-${pad(+m[2])}-${pad(+m[3])}`:''};
 function fnImport(){
@@ -826,31 +828,35 @@ function fnImport(){
     const C={id:col('個体識別番号'),tag:col('耳標番号'),birth:col('出生日'),sex:col('性別'),grp:col('牛群'),st:col('一般ステータス'),intro:col('導入日'),price:col('導入価格')};
     if(C.id<0){out.innerHTML='<p class="banner">「個体識別番号」の列が見つかりません。ファームノートの牛の一覧を出力したファイルか確認してください。</p>';return}
     const g=(r,k)=>C[k]>=0?String(r[C[k]]||'').trim():'';
-    const data=rows.slice(1).filter(r=>g(r,'id')).map(r=>{const tag=g(r,'tag');const ow=((tag.match(/[（(]([^)）]*)[)）]/g)||[]).pop()||'').replace(/[（()）\s]/g,'');
+    const data=rows.slice(1).filter(r=>g(r,'id')).map(r=>{const tag=g(r,'tag');const ow=fnOwner(tag);
       const grp=g(r,'grp');const farm=cfg().farms.find(b=>grp.includes(b))||'';
-      return {earTag:g(r,'id').replace(/\D/g,'').padStart(10,'0'),tagNo:tag,birthDate:fnDate(g(r,'birth')),sex:g(r,'sex'),grp,farm,st:g(r,'st'),kind:FN_KIND[g(r,'st')]||'育成',introDate:fnDate(g(r,'intro')),introPrice:num(g(r,'price').replace(/[,円]/g,'')),ownRaw:ow}});
+      return {earTag:g(r,'id').replace(/\D/g,'').padStart(10,'0'),tagNo:tag,birthDate:fnDate(g(r,'birth')),sex:g(r,'sex'),grp,farm,st:g(r,'st'),introDate:fnDate(g(r,'intro')),introPrice:num(g(r,'price').replace(/[,円]/g,'')),ownRaw:ow}});
     const owns=[...new Set(data.map(d=>d.ownRaw))],grps=[...new Set(data.filter(d=>!d.farm).map(d=>d.grp))];
     const byTag=new Map(S.cattle.map(c=>[String(c.earTag).replace(/\D/g,'').padStart(10,'0'),c]));
     const upd=data.filter(d=>byTag.has(d.earTag)).length,neu=data.length-upd;
     const inCsv=new Set(data.map(d=>d.earTag));const missing=S.cattle.filter(c=>(c.status||'飼養中')==='飼養中'&&!inCsv.has(String(c.earTag).replace(/\D/g,'').padStart(10,'0'))).length;
     const ownOpt=raw=>{const d=FN_OWN[raw]||'';return `<select data-own="${esc(raw)}"><option value="">（選んでください）</option>${cfg().owners.map(o=>`<option${o===d?' selected':''}>${esc(o)}</option>`).join('')}</select>`};
-    const kinds={};data.forEach(d=>{const k=`${d.st||'（なし）'}→${d.kind}`;kinds[k]=(kinds[k]||0)+1});
+    const sts=[...new Set(data.map(d=>d.st))];const fatGrp=data.some(d=>d.grp.includes('肥育'));
+    const kindOpt=st=>{const d=FN_BREED.includes(st)?'繁殖':fatGrp?'肥育':'育成';return `<select data-kind="${esc(st)}">${['育成','肥育','繁殖'].map(k=>`<option${k===d?' selected':''}>${k}</option>`).join('')}</select>`};
+    const age=st=>{const a=data.filter(d=>d.st===st).map(d=>d.birthDate?dayDiff(d.birthDate,TODAY)/30.4:null).filter(v=>v!=null);return a.length?`${Math.min(...a).toFixed(0)}〜${Math.max(...a).toFixed(0)}か月`:'—'};
     out.innerHTML=`<div class="grid">${stat('ファイルの牛',data.length,'頭')}${stat('新しく追加',neu,'頭')}${stat('内容を更新',upd,'頭')}</div>
       <p class="sub" style="margin:8px 0 4px"><b>所有者</b>（耳標番号のカッコ内の名前ごとに選んでください）</p>
       ${table(['耳標のカッコ内','頭数','アプリの所有者'],owns.map(o=>[esc(o||'（なし）'),data.filter(d=>d.ownRaw===o).length,ownOpt(o)]))}
       ${grps.length?`<p class="sub" style="margin:8px 0 4px"><b>牛舎</b>（アプリの牛舎名と一致しない牛群）</p>${table(['牛群','頭数','アプリの牛舎'],grps.map(gp=>[esc(gp||'（なし）'),data.filter(d=>d.grp===gp).length,`<select data-grp="${esc(gp)}"><option value="">（選んでください）</option>${cfg().farms.map(b=>`<option>${esc(b)}</option>`).join('')}</select>`]))}`:''}
-      <p class="sub" style="margin:8px 0 4px"><b>区分</b>（ステータスから自動で決めます）：${Object.entries(kinds).map(([k,v])=>`${esc(k)} ${v}頭`).join('・')}</p>
+      <p class="sub" style="margin:8px 0 4px"><b>区分</b>（ファームノートのステータスごとに、アプリの区分を選んでください）</p>
+      ${table(['ステータス','頭数','月齢','アプリの区分'],sts.map(st=>[esc(st||'（なし）'),data.filter(d=>d.st===st).length,age(st),kindOpt(st)]))}
       <p class="sub" style="margin:0">導入日が空の牛は出生日を導入日にします（${data.filter(d=>!d.introDate).length}頭）。導入価格が空の牛は空のまま取り込みます（${data.filter(d=>d.introPrice==null).length}頭）。</p>
       ${missing?`<p class="banner" style="margin-top:8px">アプリでは「飼養中」なのに、このファイルにない牛が${missing}頭います（出荷・死亡したかもしれません）。この取り込みでは変更しません。</p>`:''}`;
     plan={data,byTag};$('#fnGo').disabled=false};
   $('#fnGo').onclick=async()=>{if(!plan)return;
-    const om={},gm={};let bad=false;
+    const om={},gm={},km={};let bad=false;
+    document.querySelectorAll('[data-kind]').forEach(x=>km[x.dataset.kind]=x.value);
     document.querySelectorAll('[data-own]').forEach(x=>{om[x.dataset.own]=x.value;if(!x.value)bad=true});
     document.querySelectorAll('[data-grp]').forEach(x=>{gm[x.dataset.grp]=x.value;if(!x.value)bad=true});
     if(bad){toast('所有者と牛舎をすべて選んでください');return}
     const b=$('#fnGo');b.disabled=true;let n=0;
     for(const d of plan.data){const cur=plan.byTag.get(d.earTag);
-      const rec={...(cur?strip(cur):{status:'飼養中'}),earTag:d.earTag,tagNo:d.tagNo,sex:d.sex,kind:d.kind,owner:om[d.ownRaw],farm:d.farm||gm[d.grp],
+      const rec={...(cur?strip(cur):{status:'飼養中'}),earTag:d.earTag,tagNo:d.tagNo,sex:d.sex,kind:km[d.st]||'肥育',owner:om[d.ownRaw],farm:d.farm||gm[d.grp],
         birthDate:d.birthDate||(cur&&cur.birthDate)||'',introDate:d.introDate||(cur&&cur.introDate)||d.birthDate||TODAY,source:'ファームノート'};
       if(d.introPrice!=null)rec.introPrice=d.introPrice;
       if(await save('cattle',cur?cur.id:null,rec))n++;b.textContent=`取り込み中… ${n}/${plan.data.length}`}
