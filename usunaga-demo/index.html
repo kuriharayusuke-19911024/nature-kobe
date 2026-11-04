@@ -538,7 +538,8 @@ V.carcass=()=>{
   const recs=S.carcass.filter(r=>ym(r.date)===M).sort((a,b)=>a.date<b.date?1:-1);
   return `
   <h1 class="pg">枝肉・収入</h1>
-  <section class="sec"><div class="sec-h"><h2>${jpM(M)}の成績</h2><button class="btn pri" data-add="carcass">＋ 成績を入れる</button></div>
+  <section class="sec"><div class="sec-h"><h2>${jpM(M)}の成績</h2>${sample?'<button class="btn ai" id="carPhoto">肉牛精算書を写真で読む</button>':''}<button class="btn pri" data-add="carcass">＋ 成績を入れる</button></div>
+    ${sample?'':'<p class="sub" style="margin:0">肉牛精算書の写真読み取りは、管理者がAIのキーを入れると使えるようになります。</p>'}
     <div class="grid">${stat('出荷',ca.mo.n,'頭')}${stat('平均枝肉重量',f1(ca.mo.w),'kg',`目標 ${T.carcassWeight}kg`)}${stat('4・5等級の割合',f1(ca.mo.hi),'%')}${stat('枝肉売上',yen(ca.mo.sales),'',`平均単価 ${f0(ca.mo.price)}円/kg`)}${stat('実際の入金額',ca.mo.recN?yen(ca.mo.received):'—','',ca.mo.recN?`預託など差引 ${yen(ca.mo.deduct)}（${ca.mo.recN}/${ca.mo.n}頭入力済み）`:'まだ入力されていません')}</div>
     ${table(['牛舎',{t:'今月 頭数',n:1},{t:'今月 平均重量',n:1},'',{t:'年度 頭数',n:1},{t:'年度 平均重量',n:1},{t:'年度 4・5等級',n:1}],ca.barns.map(x=>[esc(x.barn),x.mo.n,x.mo.n?f1(x.mo.w)+'kg':'—',x.mo.n?pill(judge(x.mo.w,T.carcassWeight,'up')):'',x.fy.n,x.fy.n?f1(x.fy.w)+'kg':'—',x.fy.n?f1(x.fy.hi)+'%':'—']))}</section>
   <section class="sec"><div class="sec-h"><h2>明細</h2></div>
@@ -927,6 +928,51 @@ function fnImport(){
       if(d.note!=null)rec.note=d.note;
       if(await save('cattle',cur?cur.id:null,rec))n++;b.textContent=`取り込み中… ${n}/${plan.data.length}`}
     closeModal();toast(`${n}頭を取り込みました`)};
+}
+
+
+/* ---------- 肉牛精算書の写真読み取り ---------- */
+V.carcass.bind=()=>{const cp=$('#carPhoto');if(cp)cp.onclick=carcassPhoto};
+async function carcassPhoto(){
+  openModal(`<h2>肉牛精算書を写真で読む</h2>
+    <p class="sub" style="margin:0">精算書を真上から明るい場所で撮った写真を選んでください（複数ページなら最大5枚）。1頭ずつ読み取り、確認してから保存します。保存すると在庫の牛が出荷済みになります。</p>
+    <div class="fld"><label for="cph">写真を選ぶ</label><input type="file" id="cph" accept="image/*" multiple></div>
+    <div class="ai-out" id="cphOut"><span class="muted">写真を選ぶと読み取りを始めます。</span></div>
+    <div class="sheet-f"><button class="btn" id="cphX">やめる</button></div>`);
+  let ctl=null;$('#cphX').onclick=()=>{ctl&&ctl.abort();closeModal()};
+  $('#cph').onchange=async e=>{const files=[...e.target.files].slice(0,5);if(!files.length)return;
+    const out=$('#cphOut');out.textContent='読み取っています…（30秒〜1分ほどかかります）';ctl=new AbortController();
+    const prompt=`この画像は肉牛の精算書（枝肉の販売精算書）です。牛1頭ごとに1つのオブジェクトにして、JSON配列だけを返してください。
+[{"date":"YYYY-MM-DD（と畜日。なければ精算日）","earTag":"個体識別番号（10桁の数字）","weight":枝肉重量kg（数値）,"grade":"格付（A5・A4・B3など）","bms":BMSの番号（数値、なければnull）,"price":枝肉単価 円/kg（数値）,"amount":販売金額（税込または書かれている金額、数値）,"received":その牛の差引手取り・入金額（手数料・預託料などを引いた後、数値。1頭ごとに書かれていなければnull）,"memo":"控除の内訳など（なければ空文字）"}]
+年が書かれていない日付は${M.slice(0,4)}年とします。金額は数字だけ（円やカンマは付けない）。読めない項目はnullにしてください。`;
+    try{
+      const data=await sample.json(prompt,{images:files,signal:ctl.signal,onText:()=>{out.textContent='読み取っています…'}});
+      const rows=(Array.isArray(data)?data:(data&&Array.isArray(data.rows)?data.rows:[])).filter(r=>r&&(r.earTag||r.weight));
+      if(!rows.length){out.textContent='牛の明細が読み取れませんでした。写真を撮り直すか、手で入力してください。';return}
+      out.innerHTML=`<p class="sub" style="margin:0 0 6px">${rows.length}頭分を読み取りました。写真と見比べて直してから保存してください。「在庫」の列は、同じ個体識別番号の牛が在庫にいるかどうかです。</p>
+        <div class="tbl"><table><thead><tr><th></th><th>と畜日</th><th>個体識別番号</th><th>在庫</th><th>枝肉重量</th><th>格付</th><th>BMS</th><th>単価</th><th>入金額</th></tr></thead><tbody>${rows.map((r,i)=>{const c=findCattle(r.earTag);return `<tr>
+          <td><input type="checkbox" id="c${i}_on" checked></td>
+          <td><input id="c${i}_date" type="date" value="${esc(fnDate(r.date)||TODAY)}"></td>
+          <td><input id="c${i}_earTag" value="${esc(String(r.earTag||'').replace(/\D/g,''))}" size="11"></td>
+          <td id="c${i}_hit">${c?`${esc(c.farm||'')}・${esc(c.owner||'')}`:'<span class="pill p-warn">なし</span>'}</td>
+          <td><input id="c${i}_weight" type="number" step="0.1" value="${esc(r.weight??'')}" style="width:5.5em"></td>
+          <td><input id="c${i}_grade" value="${esc(r.grade||'')}" size="3"></td>
+          <td><input id="c${i}_bms" type="number" value="${esc(r.bms??'')}" style="width:3.5em"></td>
+          <td><input id="c${i}_price" type="number" value="${esc(r.price??'')}" style="width:6em"></td>
+          <td><input id="c${i}_received" type="number" value="${esc(r.received??'')}" style="width:7em"></td></tr>`}).join('')}</tbody></table></div>`;
+      rows.forEach((r,i)=>{const t=document.getElementById(`c${i}_earTag`);t.onchange=()=>{const c=findCattle(t.value);document.getElementById(`c${i}_hit`).innerHTML=c?`${esc(c.farm||'')}・${esc(c.owner||'')}`:'<span class="pill p-warn">なし</span>'}});
+      const f=$('#sheet .sheet-f');const sb=document.createElement('button');sb.className='btn pri';sb.textContent=`${rows.length}頭分を保存`;f.append(sb);
+      sb.onclick=async()=>{sb.disabled=true;let n=0,shipped=0;
+        for(let i=0;i<rows.length;i++){const g=k=>document.getElementById(`c${i}_${k}`).value.trim();if(!document.getElementById(`c${i}_on`).checked)continue;
+          if(!g('earTag')||!g('weight')){continue}
+          const c=findCattle(g('earTag'));
+          const rec={date:g('date')||TODAY,earTag:tagKey(g('earTag')),owner:c?c.owner||'':'',barn:c?c.farm||'':'',weight:num(g('weight')),grade:g('grade'),bms:num(g('bms')),price:num(g('price')),received:num(g('received')),memo:rows[i].memo||'',source:'精算書から読取'};
+          if(await save('carcass',null,rec)){n++;if(c&&!(c.status==='出荷'&&c.shipDate===rec.date)){if(await save('cattle',c.id,{...strip(c),status:'出荷',shipDate:rec.date}))shipped++}}
+          sb.textContent=`保存中… ${n}`}
+        closeModal();toast(`${n}頭分を保存し、${shipped}頭を出荷済みにしました`)};
+    }catch(err){const c=err&&err.code;if(c==='cancelled'||c==='aborted')return;
+      out.textContent=c==='invalid_json'?'うまく読み取れませんでした。明るい場所で真上から撮った写真でもう一度試してください。':'読み取れませんでした。もう一度試してください。'}
+  };
 }
 
 /* ---------- render ---------- */
