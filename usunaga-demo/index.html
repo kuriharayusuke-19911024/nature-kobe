@@ -622,10 +622,11 @@ async function photoRead(kind){
       if(kind==='invoices'){
         if(!data||typeof data!=='object'||Array.isArray(data))throw {code:'invalid_json'};
         const lines=Array.isArray(data.lines)?data.lines:[];
-        const own=cfg().owners.find(o=>data.addressee&&String(data.addressee).includes(o))||'';
+        const ad=String(data.addressee||'');const own=cfg().owners.find(o=>ad.includes(o))||(ad.includes('よしき')?'芳輝':ad.includes('よしひこ')?'嘉彦':/株式会社|有限会社|合同会社|\(株\)|（株）|㈱|牧場/.test(ad)&&cfg().owners.includes('法人')?'法人':'');
         const rec={date:data.date||TODAY,vendor:data.vendor||'',addressee:own,taxRate:data.taxRate||'10%',total:num(data.total),tax:num(data.tax),category:data.category||'その他',checked:'no',
           memo:lines.map(l=>`${l.name??''} ${l.qty??''} ${l.amount!=null?'¥'+l.amount:''}`.trim()).join(' / '),lines,source:'AI読取'};
-        closeModal();openForm('invoices',null,{head:`<p class="banner" style="margin:0"><b>AIが読み取りました。</b>写真と見比べて、違うところを直してから保存してください。</p>`,merge:{lines,source:'AI読取'}});
+        const dup=S.invoices.filter(r=>num(r.total)!=null&&num(r.total)===rec.total&&r.date===rec.date);
+        closeModal();openForm('invoices',null,{head:`<p class="banner" style="margin:0"><b>AIが読み取りました。</b>写真と見比べて、違うところを直してから保存してください。</p>${dup.length?`<p class="banner" style="margin:6px 0 0"><b>同じ日付・同じ金額の請求書がもう入っています</b>（${esc(dup.map(r=>r.vendor||'').join('、'))}）。二重に入れていないか確認してください。</p>`:''}`,merge:{lines,source:'AI読取'}});
         for(const [k,v] of Object.entries(rec)){const el=document.getElementById('f_'+k);if(el&&v!=null)el.value=v}
         {const a=$('#f_addressee');if(a&&a.value&&a.onchange)a.onchange()}
       }else{
@@ -643,7 +644,7 @@ async function photoRead(kind){
       }
     }catch(err){
       const c=err&&err.code;if(c==='cancelled')return;
-      out.textContent=c==='not_granted'?'AIの利用が許可されませんでした。':c==='image_rejected'?'この写真は読めませんでした。別の写真を選んでください。':c==='rate_limited'?'少し時間をおいてからもう一度試してください。':c==='invalid_json'?'うまく読み取れませんでした。明るい場所で真上から撮った写真でもう一度試してください。':'読み取れませんでした。もう一度試してください。'}
+      out.textContent=c==='not_granted'?'AIの利用が許可されませんでした。':c==='image_rejected'?'この写真は読めませんでした。別の写真を選んでください。':c==='rate_limited'?'少し時間をおいてからもう一度試してください。':c==='invalid_json'?'うまく読み取れませんでした。明るい場所で真上から撮った写真でもう一度試してください。':c==='bad_image'?'この写真の形式は読めませんでした。スマホで撮った写真（JPEG）を選んでください。':'読み取れませんでした。通信状態を確認して、もう一度試してください。'}
   };
 }
 
@@ -949,12 +950,12 @@ async function carcassPhoto(){
       const data=await sample.json(prompt,{images:files,signal:ctl.signal,onText:()=>{out.textContent='読み取っています…'}});
       const rows=(Array.isArray(data)?data:(data&&Array.isArray(data.rows)?data.rows:[])).filter(r=>r&&(r.earTag||r.weight));
       if(!rows.length){out.textContent='牛の明細が読み取れませんでした。写真を撮り直すか、手で入力してください。';return}
-      out.innerHTML=`<p class="sub" style="margin:0 0 6px">${rows.length}頭分を読み取りました。写真と見比べて直してから保存してください。「在庫」の列は、同じ個体識別番号の牛が在庫にいるかどうかです。</p>
+      out.innerHTML=`<p class="sub" style="margin:0 0 6px">${rows.length}頭分を読み取りました。写真と見比べて直してから保存してください。「在庫」の列は、同じ個体識別番号の牛が在庫にいるかどうかです。枝肉がもう登録されている牛は、二重にならないようチェックを外しています。</p>
         <div class="tbl"><table><thead><tr><th></th><th>と畜日</th><th>個体識別番号</th><th>在庫</th><th>枝肉重量</th><th>格付</th><th>BMS</th><th>単価</th><th>入金額</th></tr></thead><tbody>${rows.map((r,i)=>{const c=findCattle(r.earTag);return `<tr>
-          <td><input type="checkbox" id="c${i}_on" checked></td>
+          <td><input type="checkbox" id="c${i}_on" ${S.carcass.some(x=>tagKey(x.earTag)===tagKey(r.earTag))?'':'checked'}></td>
           <td><input id="c${i}_date" type="date" value="${esc(fnDate(r.date)||TODAY)}"></td>
           <td><input id="c${i}_earTag" value="${esc(String(r.earTag||'').replace(/\D/g,''))}" size="11"></td>
-          <td id="c${i}_hit">${c?`${esc(c.farm||'')}・${esc(c.owner||'')}`:'<span class="pill p-warn">なし</span>'}</td>
+          <td id="c${i}_hit">${c?`${esc(c.farm||'')}・${esc(c.owner||'')}`:'<span class="pill p-warn">なし</span>'}${S.carcass.some(x=>tagKey(x.earTag)===tagKey(r.earTag))?' <span class="pill p-bad">枝肉は登録済み</span>':''}</td>
           <td><input id="c${i}_weight" type="number" step="0.1" value="${esc(r.weight??'')}" style="width:5.5em"></td>
           <td><input id="c${i}_grade" value="${esc(r.grade||'')}" size="3"></td>
           <td><input id="c${i}_bms" type="number" value="${esc(r.bms??'')}" style="width:3.5em"></td>
@@ -971,7 +972,7 @@ async function carcassPhoto(){
           sb.textContent=`保存中… ${n}`}
         closeModal();toast(`${n}頭分を保存し、${shipped}頭を出荷済みにしました`)};
     }catch(err){const c=err&&err.code;if(c==='cancelled'||c==='aborted')return;
-      out.textContent=c==='invalid_json'?'うまく読み取れませんでした。明るい場所で真上から撮った写真でもう一度試してください。':'読み取れませんでした。もう一度試してください。'}
+      out.textContent=c==='invalid_json'?'うまく読み取れませんでした。明るい場所で真上から撮った写真でもう一度試してください。':c==='bad_image'?'この写真の形式は読めませんでした。スマホで撮った写真（JPEG）を選んでください。':'読み取れませんでした。通信状態を確認して、もう一度試してください。'}
   };
 }
 
