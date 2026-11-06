@@ -158,12 +158,13 @@ const SSTATUS = {in:'在庫', reserved:'引当中', out:'出荷済'};
 
 /* ===================== 計算 ===================== */
 function lotTotalKg(lotId){ return S.stock.filter(s => s.lotId === lotId).reduce((a,s)=>a + (+s.kg||0), 0); }
+function stockCostKg(s){ return s && s.costKg != null && s.costKg !== '' ? +s.costKg : lotCostPerKg(s?.lotId); }
 function lotCostPerKg(lotId){ const l = byId('lots', lotId); const t = lotTotalKg(lotId); return l && t > 0 ? (+l.cost||0) / t : 0; }
 function lineCalc(line){
   const items = (line.stockIds||[]).map(id => byId('stock', id)).filter(Boolean);
   const kg = items.reduce((a,s)=>a + (+s.kg||0), 0);
   const amount = Math.round(kg * (+line.price||0));
-  const cost = items.reduce((a,s)=>a + (+s.kg||0) * lotCostPerKg(s.lotId), 0);
+  const cost = items.reduce((a,s)=>a + (+s.kg||0) * stockCostKg(s), 0);
   return {items, kg, amount, cost};
 }
 function orderCalc(o){
@@ -187,6 +188,7 @@ function nextOrderNo(date){
 function nextLotNo(){ return S.lots.reduce((a,l)=>Math.max(a, +l.no||0), 0) + 1; }
 
 /* ===================== 保存（端末内＋Googleスプレッドシート） ===================== */
+const SS_URL = 'https://script.google.com/macros/s/AKfycbyI1zRrzoJLlQqpqQwqFp95Sp5PQti_DhGvx6-k8s7MuhbPc1GSaEBC5Vcshn3m7qnYyQ/exec';
 const LS_DATA = 'usunaga-oroshi-data-v1', LS_CFG = 'usunaga-oroshi-cfg', LS_Q = 'usunaga-oroshi-queue';
 const ALL = [...COLS, 'config'];
 const Store = { data: {}, cfg: {url:'', pass:''}, queue: [], online: null, lastPull: 0 };
@@ -200,7 +202,7 @@ function rebuild(){
 function saveLocal(){ lsSet(LS_DATA, Store.data); lsSet(LS_Q, Store.queue); }
 function syncLabel(){
   const el = $('#conn'); if(!el) return;
-  if(!Store.cfg.url) el.textContent = 'この端末だけに保存中（共有するには設定で保存先を登録）';
+  if(!Store.cfg.url || !Store.cfg.pass) el.innerHTML = 'この端末だけに保存中（<a href="javascript:void 0" onclick="go(\'settings\')">設定で合言葉を入れると全員で共有できます</a>）';
   else if(Store.queue.length) el.textContent = `未送信 ${Store.queue.length}件（通信が戻ると自動で送ります）`;
   else if(Store.online === false) el.textContent = '保存先につながりません';
   else el.textContent = '';
@@ -210,7 +212,7 @@ async function gas(body){
   const j = await r.json(); if(!j.ok) throw new Error(j.error || 'error'); return j;
 }
 async function flush(){
-  if(!Store.cfg.url || !Store.queue.length || flush.busy) return;
+  if(!Store.cfg.url || !Store.cfg.pass || !Store.queue.length || flush.busy) return;
   flush.busy = true;
   try{
     while(Store.queue.length){
@@ -223,7 +225,7 @@ async function flush(){
   flush.busy = false; syncLabel();
 }
 async function pull(){
-  if(!Store.cfg.url) return;
+  if(!Store.cfg.url || !Store.cfg.pass) return;
   try{
     const j = await gas({op:'get'});
     let changed = false;
@@ -250,6 +252,131 @@ function writeDoc(c, doc){
 async function put(c, obj){ writeDoc(c, structuredClone(obj)); }
 async function patch(c, id, obj){ const cur = Store.data[c][id] || {id}; writeDoc(c, {...structuredClone(cur), ...structuredClone(obj)}); }
 async function del(c, id){ writeDoc(c, {id, _d: 1}); }
+
+/* 在庫管理表（梅本さんのスプレッドシート）を、枝番×部位の在庫に変換する */
+function ssNum(v){ v = String(v ?? '').replace(/[¥,円\s]/g, '').replace(/kg$/i, ''); if(v === '' || v === '-' ) return null; const n = Number(v); return isFinite(n) ? n : null; }
+function ssClean(v){ return String(v ?? '').replace(/\s+/g, ' ').trim(); }
+function ssIsPart(name){ name = ssClean(name); return !!name && name !== '部位' && !/^[\d.,¥%#\-]+$/.test(name) && !/^【/.test(name); }
+/* 1頭分を縦に並べた形（【チルド】但馬・神戸） */
+function ssParseBlocks(sheet, R){
+  const out = []; let cur = null, group = '';
+  const LABELS = ['格付', '認定', '血統', '枝重量', '枝単価', '枝価格', '正肉重量', '歩留', 'セット単価', '単品'];
+  for(let i = 0; i < R.length; i++){
+    const r = R[i].map(x => String(x ?? ''));
+    const c0 = ssClean(r[0]), part = ssClean(r[2]);
+    if(/^【/.test(c0)){ group = c0; cur = null; continue; }
+    if(c0 && ssIsPart(part) && !/^枝番|^在庫管理表/.test(c0)){
+      const ed = c0.split(/[\n ]/)[0].replace(/[（(].*$/, '').trim() || c0;
+      cur = { sheet, kind: 'チルド', group, edaban: ed, edabanRaw: c0, info: {}, rows: [], exp: '', month: '' };
+      out.push(cur);
+      const m = ssClean(r[12]).match(/(\d{1,2})\/(\d{1,2})/); cur.exp = m ? m[0] : ssClean(r[12]).replace(/^期限：?/, '');
+      cur.month = ssClean(r[13]);
+    }
+    if(!cur) continue;
+    if(!part){ cur = null; continue; }            // 合計の行・空行でその頭は終わり
+    if(!ssIsPart(part)) continue;
+    // 左の列のラベルと値（「枝重量」の次の行が値）
+    const lab = ssClean(r[1]); const nxt = ssClean((R[i + 1] || [])[1]);
+    if(LABELS.includes(lab) && nxt && !LABELS.includes(nxt)) cur.info[lab] = nxt;
+    const L = ssNum(r[3]), Rr = ssNum(r[4]), tot = ssNum(r[5]), stock = ssNum(r[6]), cost = ssNum(r[7]);
+    cur.rows.push({ part, left: L, right: Rr, total: tot, kg: stock != null ? stock : (tot != null ? tot : (L || 0) + (Rr || 0)), costKg: cost, note: ssClean(r[14]) });
+  }
+  return out.map(b => ({ ...b, grade: b.info['格付'] && b.info['格付'] !== '単品' ? b.info['格付'] : '', cert: b.info['認定'] || '', blood: b.info['血統'] || '', carcassKg: ssNum(b.info['枝重量']), unitPrice: ssNum(b.info['枝単価']) }));
+}
+/* 1行1品の形（【冷凍】） — 表が横に2つ並ぶこともある */
+function ssHeadIdx(R){ for(let i = 0; i < Math.min(8, R.length); i++){ if((R[i] || []).some(x => ssClean(x) === '部位')) return i; } return 0; }
+function ssParseRows(sheet, R){
+  const out = []; const hi = ssHeadIdx(R); const head = (R[hi] || []).map(ssClean);
+  const offs = []; head.forEach((h, j) => { if(h === '部位' && j >= 2) offs.push(j - 2); });
+  if(!offs.length) offs.push(0);
+  offs.forEach(o => {
+    const noteCol = head.findIndex((h, j) => j > o + 4 && h === '備考' && (offs.find(x => x > o) ?? 1e9) > j);
+    let ed = '', group = ssClean(head[o]).replace(/^枝番\s*/, '');
+    const byEd = {};
+    for(let i = hi + 1; i < R.length; i++){
+      const r = R[i].map(x => String(x ?? ''));
+      const c0 = ssClean(r[o]), part = ssClean(r[o + 2]);
+      if(/^【/.test(c0)){ group = c0; ed = ''; continue; }
+      if(c0 === '枝番'){ ed = ''; continue; }
+      if(!ssIsPart(part)) continue;
+      if(c0) ed = c0;
+      const L = ssNum(r[o + 3]), Rr = ssNum(r[o + 4]), cost = ssNum(r[o + 5]);
+      const kg = (L || 0) + (Rr || 0); if(!(kg > 0)) continue;
+      const key = (ed || '（枝番なし）') + '|' + group;
+      const b = byEd[key] ||= { sheet, kind: '冷凍', edaban: ed || '（枝番なし）', edabanRaw: ed, group, breed: ssClean(r[o + 1]), info: {}, rows: [], exp: '', month: '' };
+      if(!byEd[key]._pushed){ out.push(b); b._pushed = true; }
+      b.rows.push({ part, left: L, right: Rr, total: kg, kg, costKg: cost, note: noteCol > 0 && ssNum(r[noteCol]) == null ? ssClean(r[noteCol]) : '' });
+    }
+  });
+  return out.map(({ _pushed, ...b }) => b);
+}
+function ssParseAll(sheets){
+  const lots = [];
+  Object.entries(sheets || {}).forEach(([name, R]) => {
+    if(!R || !R.length) return;
+    const head = (R[ssHeadIdx(R)] || []).map(ssClean).join('|');
+    const blocks = /格付/.test(head) && /血統/.test(head) ? ssParseBlocks(name, R) : ssParseRows(name, R);
+    blocks.forEach(b => lots.push(b));
+  });
+  return lots;
+}
+
+function ssHash(t){ let h = 2166136261; for(let i = 0; i < t.length; i++){ h ^= t.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(36); }
+const r2 = n => n == null ? null : Math.round(n * 100) / 100;
+const ssInfo = () => (Store.data.config.sheetsync && !Store.data.config.sheetsync._d) ? Store.data.config.sheetsync : null;
+async function ssSync(quiet){
+  if(ssSync.busy) return; if(readOnly) return;
+  if(!Store.cfg.pass){ if(!quiet) toast('先に設定で合言葉を入れてください'); return; }
+  ssSync.busy = true; const btn = document.getElementById('ssBtn'); if(btn){ btn.disabled = true; btn.textContent = '読み込み中…'; }
+  try{
+    const r = await fetch(SS_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({op:'srcsheet', pass: Store.cfg.pass})});
+    const j = await r.json(); if(!j.ok) throw new Error(j.error || 'error');
+    const res = ssApply(ssParseAll(j.sheets));
+    await put('config', {id:'sheetsync', at: Date.now(), name: j.name || '', ...res});
+    if(!quiet || res.add || res.upd || res.del) toast(`在庫表を読み込みました（追加 ${res.add}・更新 ${res.upd}・削除 ${res.del}）`);
+  }catch(e){ if(!quiet) toast(String(e.message).includes('pass') ? '合言葉が違います' : '在庫表を読み込めませんでした。通信を確認してください'); }
+  ssSync.busy = false; render();
+}
+function ssApply(blocks){
+  let add = 0, upd = 0, del_ = 0, k = S.parts.reduce((a,p)=>Math.max(a,p.sort??0),0);
+  const partId = name => { let p = S.parts.find(x => x.name === name); if(!p){ p = {id: uid(), name, sort: ++k}; writeDoc('parts', structuredClone(p)); } return p.id; };
+  const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  const seenLot = new Set(), seenStock = new Set();
+  blocks.forEach(b => {
+    const key = b.sheet + '|' + (b.group || '') + '|' + b.edaban;
+    const lotId = 'ss_' + ssHash(key); seenLot.add(lotId);
+    const cur = byId('lots', lotId);
+    const cnt = {}; let costSum = 0, kgSum = 0;
+    b.rows.forEach(row => {
+      const n = cnt[row.part] = (cnt[row.part] || 0) + 1;
+      const sk = key + '|' + row.part + '#' + n; seenStock.add(sk);
+      const kg = r2(row.kg) || 0, costKg = row.costKg;
+      const mine = S.stock.filter(x => x.ssKey === sk);
+      // 引当中の分は、まだ在庫表から減っていないので差し引く（出荷済みは在庫表で減らしてもらう前提）
+      const resKg = mine.filter(x => x.status === 'reserved').reduce((a, x) => a + (+x.kg || 0), 0);
+      const avail = r2(kg - resKg);
+      mine.filter(x => x.status !== 'in' && x.costKg !== costKg).forEach(x => { writeDoc('stock', {...structuredClone(x), costKg}); });
+      const ins = mine.filter(x => x.status === 'in');
+      ins.slice(1).forEach(x => { writeDoc('stock', {id: x.id, _d: 1}); del_++; });
+      const ex = ins[0];
+      if(ex){
+        if(!(avail > 0)){ writeDoc('stock', {id: ex.id, _d: 1}); del_++; }
+        else { const nx = {...ex, kg: avail, costKg, expiry: b.exp}; if(!same(nx, ex)){ writeDoc('stock', structuredClone(nx)); upd++; } }
+      }else if(avail > 0){
+        writeDoc('stock', {id: 'ss_' + ssHash(sk + '|' + uid()), lotId, partId: partId(row.part), kg: avail, costKg, branch: b.edaban, status: 'in', src: 'sheet', ssKey: sk, expiry: b.exp, note: row.note || ''}); add++;
+      }
+      if(kg > 0 && costKg != null){ costSum += kg * costKg; kgSum += kg; }
+    });
+    const lot = {...(cur || {id: lotId, no: nextLotNo(), date: today()}), src: 'sheet', sheetKey: key, sheet: b.sheet, group: b.group || '', kind: b.kind,
+      edaban: b.edaban, edabanRaw: b.edabanRaw || b.edaban, grade: b.grade || cur?.grade || '', breed: b.blood || b.breed || cur?.breed || '', origin: b.cert || cur?.origin || '',
+      carcassKg: b.carcassKg ?? cur?.carcassKg ?? null, expiry: b.exp || '', month: b.month || ''};
+    if(!same(lot, cur || null)){ writeDoc('lots', structuredClone(lot)); if(cur) upd++; }
+  });
+  // 在庫表から消えたもの（まだ引当てていない分だけ消す）
+  S.stock.filter(x => x.src === 'sheet' && !seenStock.has(x.ssKey) && x.status === 'in').forEach(x => { writeDoc('stock', {id: x.id, _d: 1}); del_++; });
+  S.lots.filter(l => l.src === 'sheet' && !seenLot.has(l.id) && !S.stock.some(x => x.lotId === l.id)).forEach(l => writeDoc('lots', {id: l.id, _d: 1}));
+  return {add, upd, del: del_, lots: blocks.length};
+}
 
 /* ===================== 画面 ===================== */
 document.getElementById('tabs').addEventListener('click', e => {
@@ -432,7 +559,13 @@ function vStock(){
   inStock.forEach(s => { (byPart[s.partId] ||= {kg:0,n:0}); byPart[s.partId].kg += +s.kg||0; byPart[s.partId].n++; });
   const maxKg = Math.max(1, ...Object.values(byPart).map(x=>x.kg));
   const lots = S.lots.slice().sort((a,b)=>(+b.no||0)-(+a.no||0));
+  const si = ssInfo();
+  if(Store.cfg.pass && !readOnly && (!si || Date.now() - si.at > 10*60*1000)) setTimeout(() => ssSync(true), 50);
   return `<div class="spread"><h2>在庫</h2><button class="btn pri" onclick="openLot()" ${wr()}>＋ 入荷（個体）を登録</button></div>
+  <div class="panel"><h3>在庫表（スプレッドシート）との連携</h3>
+    <p class="muted" style="margin:0">梅本さんの在庫表（チルド但馬・神戸、冷凍神戸、冷凍和牛）の在庫重量と部位ごとの原価を読み込みます。在庫表には書き込みません。重量や原価を直すときは在庫表の方を直してください。アプリで引当中の分は、在庫表の重量から差し引いて表示します。出荷したら在庫表の在庫重量も減らしてください。</p>
+    <div class="row"><button class="btn" id="ssBtn" onclick="ssSync()" ${wr()}>在庫表から読み込む</button>
+    <span class="muted">${Store.cfg.pass ? (si ? `最後に読み込んだ時刻 ${new Date(si.at).toLocaleString('ja-JP',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})}（${si.lots}件）` : 'まだ読み込んでいません') : '設定で合言葉を入れると使えます'}</span></div></div>
   <div class="panel"><h3>部位ごとの在庫（引当前）</h3>
   ${Object.keys(byPart).length ? `<div class="tablewrap"><table><tr><th>部位</th><th class="r">個数</th><th class="r">重量 kg</th><th style="width:40%"></th></tr>
     ${Object.entries(byPart).sort((a,b)=>b[1].kg-a[1].kg).map(([p,x])=>`<tr><td>${esc(partName(p))}</td><td class="r num">${x.n}</td><td class="r num">${kgf(x.kg)}</td><td><div class="bar" style="width:${x.kg/maxKg*100}%"></div></td></tr>`).join('')}</table></div>`
@@ -440,15 +573,16 @@ function vStock(){
   ${lots.length ? lots.map(l => {
     const items = S.stock.filter(s=>s.lotId===l.id).sort((a,b)=>String(a.branch).localeCompare(String(b.branch),'ja',{numeric:true}));
     const tot = items.reduce((a,s)=>a+(+s.kg||0),0);
-    return `<div class="lot"><div class="lothead"><b>No.${esc(l.no)}</b><span class="m">個体識別番号 <span class="num">${esc(l.kojin||'—')}</span></span>
+    const fromSheet = l.src === 'sheet';
+    return `<div class="lot"><div class="lothead"><b>No.${esc(l.no)}</b>${fromSheet?`<span class="pill">在庫表 ${esc(l.kind||'')}</span><span class="m">枝番 <span class="num">${esc(l.edabanRaw||l.edaban||'')}</span></span>${l.expiry?`<span class="m">期限 ${esc(l.expiry)}</span>`:''}`:''}<span class="m">個体識別番号 <span class="num">${esc(l.kojin||'—')}</span></span>
       <span class="m">${esc([l.breed,l.grade,l.origin].filter(Boolean).join('・'))}</span><span class="m">入荷 ${jdate(l.date)}</span>
       <span class="m">枝肉 ${l.carcassKg?kgf(l.carcassKg)+'kg':'—'}・部位計 ${kgf(tot)}kg・歩留まり ${l.carcassKg?pct(tot/l.carcassKg):'—'}</span>
-      <span class="m">仕入 ${l.cost?yen(l.cost):'—'}・原価 ${lotCostPerKg(l.id)?yen(lotCostPerKg(l.id))+'/kg':'—'}</span>
+      ${fromSheet?`<span class="m">原価は部位ごと（在庫表）・在庫原価 ${yen(items.filter(s=>s.status==='in').reduce((a,s)=>a+(+s.kg||0)*stockCostKg(s),0))}</span>`:`<span class="m">仕入 ${l.cost?yen(l.cost):'—'}・原価 ${lotCostPerKg(l.id)?yen(lotCostPerKg(l.id))+'/kg':'—'}</span>`}
       <span style="margin-left:auto" class="row"><button class="btn sm" onclick="openLot('${l.id}')" ${wr()}>編集</button></span></div>
-      <div class="tablewrap"><table><tr><th>枝番</th><th>部位</th><th class="r">重量 kg</th><th>状態</th><th>引当先</th><th></th></tr>
-      ${items.map(s=>{const o=s.orderId?byId('orders',s.orderId):null;return `<tr><td class="num">${esc(s.branch)}</td><td>${esc(partName(s.partId))}</td><td class="r num">${kgf(s.kg)}</td>
+      <div class="tablewrap"><table><tr><th>枝番</th><th>部位</th><th class="r">重量 kg</th><th class="r">原価/kg</th><th>状態</th><th>引当先</th><th></th></tr>
+      ${items.map(s=>{const o=s.orderId?byId('orders',s.orderId):null;return `<tr><td class="num">${esc(s.branch)}</td><td>${esc(partName(s.partId))}</td><td class="r num">${kgf(s.kg)}</td><td class="r num">${stockCostKg(s)?yen(stockCostKg(s)):'—'}</td>
         <td><span class="pill st-${s.status}">${SSTATUS[s.status]}</span></td><td>${o?`<a href="javascript:void 0" onclick="openOrder('${o.id}')">${esc(custName(o.customerId))}</a>`:''}</td>
-        <td class="r">${s.status==='in'?`<button class="btn sm ghost" onclick="openSplit('${s.id}')" ${wr()}>分ける</button>`:''}</td></tr>`}).join('') || `<tr><td colspan="6" class="muted">部位がまだ登録されていません</td></tr>`}</table></div></div>`;
+        <td class="r">${s.status==='in'&&s.src!=='sheet'?`<button class="btn sm ghost" onclick="openSplit('${s.id}')" ${wr()}>分ける</button>`:''}</td></tr>`}).join('') || `<tr><td colspan="7" class="muted">部位がまだ登録されていません</td></tr>`}</table></div></div>`;
   }).join('') : `<div class="empty">入荷した個体はまだありません。「＋ 入荷（個体）を登録」から、個体識別番号と部位ごとの重量を入れます。</div>`}`;
 }
 function lotRow(r={}){
@@ -485,7 +619,7 @@ async function saveLot(id){
   const lot = {id: id || uid(), no, kojin: $('#l_kojin').value.trim(), date: $('#l_date').value, breed: $('#l_breed').value.trim(), grade: $('#l_grade').value.trim(),
     origin: $('#l_origin').value.trim(), carcassKg: +$('#l_ckg').value || 0, cost: +$('#l_cost').value || 0};
   const rows = [...document.querySelectorAll('#l_rows .lrow')].map(r=>({sid:r.dataset.sid, partId:r.querySelector('.r_part').value, kg:+r.querySelector('.r_kg').value||0, branch:r.querySelector('.r_br').value.trim()})).filter(r=>r.kg>0);
-  await put('lots', lot);
+  await put('lots', {...(id ? (byId('lots', id) || {}) : {}), ...lot});
   const used = new Set(S.stock.filter(s=>s.lotId===lot.id).map(s=>String(s.branch)));
   let n = 1;
   for(const r of rows){
@@ -809,7 +943,7 @@ function importAll(input){
   input.value = '';
 }
 (function boot(){
-  Store.cfg = lsGet(LS_CFG, {url:'', pass:''});
+  Store.cfg = lsGet(LS_CFG, {url:'', pass:''}); if(!Store.cfg.url) Store.cfg.url = SS_URL;
   const saved = lsGet(LS_DATA, null); if(saved) ALL.forEach(c => Store.data[c] = saved[c] || {});
   Store.queue = lsGet(LS_Q, []);
   rebuild(); V.loaded = true; syncLabel(); render();
