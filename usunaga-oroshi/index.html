@@ -56,6 +56,7 @@ h3{font:700 15px/1.4 var(--f-body);margin:0}
 .st-alloc{background:var(--info-soft);color:var(--info)}
 .st-shipped{background:var(--ok-soft);color:var(--ok)}
 .st-cancel{background:var(--sunk);color:var(--sub)}
+.st-exp{background:var(--accent-soft);color:var(--accent)}
 .st-in{background:var(--ok-soft);color:var(--ok)}
 .st-reserved{background:var(--info-soft);color:var(--info)}
 .st-out{background:var(--sunk);color:var(--sub)}
@@ -158,6 +159,10 @@ const SSTATUS = {in:'在庫', reserved:'引当中', out:'出荷済'};
 
 /* ===================== 計算 ===================== */
 function lotTotalKg(lotId){ return S.stock.filter(s => s.lotId === lotId).reduce((a,s)=>a + (+s.kg||0), 0); }
+function expDate(t){ const m = String(t||'').match(/(\d{1,2})\/(\d{1,2})/); if(!m) return null;
+  const now = new Date(); let d = new Date(now.getFullYear(), +m[1]-1, +m[2]); if(d - now < -90*864e5) d = new Date(now.getFullYear()+1, +m[1]-1, +m[2]); return d; }
+function daysLeft(t){ const d = expDate(t); if(!d) return null; const n = new Date(); n.setHours(0,0,0,0); return Math.round((d - n) / 864e5); }
+function expPill(t){ const k = daysLeft(t); if(k == null) return ''; return k < 0 ? `<span class="pill st-exp">期限切れ ${esc(t)}</span>` : k <= 7 ? `<span class="pill st-new">期限 ${esc(t)}（あと${k}日）</span>` : `<span class="muted">期限 ${esc(t)}</span>`; }
 function stockCostKg(s){ return s && s.costKg != null && s.costKg !== '' ? +s.costKg : lotCostPerKg(s?.lotId); }
 function lotCostPerKg(lotId){ const l = byId('lots', lotId); const t = lotTotalKg(lotId); return l && t > 0 ? (+l.cost||0) / t : 0; }
 function lineCalc(line){
@@ -472,19 +477,19 @@ function openOrder(id){
   const cu = byId('customers', o.customerId);
   const linesHtml = (o.lines||[]).map((l,i) => {
     const lc = lineCalc(l);
-    const avail = S.stock.filter(s => s.partId === l.partId && s.status === 'in');
+    const avail = S.stock.filter(s => s.partId === l.partId && s.status === 'in').sort((a,b)=>(daysLeft(a.expiry)??9999)-(daysLeft(b.expiry)??9999));
     return `<div class="line">
       <div class="spread"><h3>${esc(partName(l.partId))} <span class="muted">${l.qty?l.qty+'個':''} ${esc(l.note||'')}</span></h3>
         <label class="f" style="flex-direction:row;align-items:center;gap:6px">単価 円/kg<input class="num" style="width:110px" type="number" min="0" value="${l.price||''}" onchange="setPrice('${o.id}',${i},this.value)" ${locked||readOnly?'disabled':''}></label></div>
       ${lc.items.length ? `<div class="tablewrap"><table><tr><th>通し番号-枝番</th><th>個体識別番号</th><th class="r">重量 kg</th><th class="r">原価/kg</th><th></th></tr>
         ${lc.items.map(s=>{const lot=byId('lots',s.lotId);return `<tr><td class="num">${esc(s.branch)}</td><td class="num">${esc(lot?.kojin||'—')}</td>
           <td class="r"><input class="num" style="width:100px" type="number" step="0.01" min="0" value="${s.kg}" onchange="setKg('${s.id}',this.value,'${o.id}')" ${locked||readOnly?'disabled':''}></td>
-          <td class="r num">${lotCostPerKg(s.lotId)?yen(lotCostPerKg(s.lotId)):'—'}</td>
+          <td class="r num">${stockCostKg(s)?yen(stockCostKg(s)):'—'}</td>
           <td class="r">${locked?'':`<button class="btn sm ghost" onclick="unalloc('${o.id}',${i},'${s.id}')" ${wr()}>外す</button>`}</td></tr>`}).join('')}
         <tr><td colspan="2"><b>小計</b></td><td class="r num"><b>${kgf(lc.kg)}</b></td><td></td><td class="r num"><b>${yen(lc.amount)}</b></td></tr></table></div>`
         : `<p class="muted" style="margin:0">まだ在庫を引き当てていません。</p>`}
       ${locked ? '' : avail.length ? `<details><summary class="muted" style="cursor:pointer">在庫から引き当てる（${avail.length}件）</summary>
-        <div class="pick" style="margin-top:8px">${avail.map(s=>`<label><input type="checkbox" value="${s.id}" data-line="${i}" class="pickbox"><span class="num">${esc(s.branch)}</span><span class="num muted">${kgf(s.kg)}kg</span></label>`).join('')}</div>
+        <div class="pick" style="margin-top:8px">${avail.map(s=>`<label><input type="checkbox" value="${s.id}" data-line="${i}" class="pickbox"><span class="num">${esc(s.branch)}</span><span class="num muted">${kgf(s.kg)}kg</span>${s.src==='sheet'?`<span class="muted" style="font-size:11px">${s.expiry?'期限'+esc(s.expiry)+'・':''}${stockCostKg(s)?yen(stockCostKg(s)):'原価なし'}</span>`:''}</label>`).join('')}</div>
         <div style="margin-top:8px"><button class="btn sm pri" onclick="allocPicked('${o.id}',${i})" ${wr()}>選んだ在庫を引き当てる</button></div></details>`
         : `<p class="muted" style="margin:0">この部位の在庫がありません。</p>`}
     </div>`;
@@ -558,7 +563,16 @@ function vStock(){
   const byPart = {};
   inStock.forEach(s => { (byPart[s.partId] ||= {kg:0,n:0}); byPart[s.partId].kg += +s.kg||0; byPart[s.partId].n++; });
   const maxKg = Math.max(1, ...Object.values(byPart).map(x=>x.kg));
-  const lots = S.lots.slice().sort((a,b)=>(+b.no||0)-(+a.no||0));
+  const F = V.sf || 'all', Q = (V.sq || '').trim();
+  const lotKind = l => l.src === 'sheet' ? (l.kind || '') : '手入力';
+  const lotHit = l => { if(F !== 'all' && lotKind(l) !== F) return false; if(!Q) return true;
+    const its = S.stock.filter(x => x.lotId === l.id);
+    return [l.edabanRaw, l.edaban, l.kojin, l.breed, l.grade, l.origin, ...its.map(x => partName(x.partId))].some(v => String(v||'').includes(Q)); };
+  const allLots = S.lots.slice().sort((a,b)=>(+b.no||0)-(+a.no||0));
+  const lots = allLots.filter(lotHit);
+  const soon = inStock.filter(x => { const k = daysLeft(x.expiry); return k != null && k <= 7; }).sort((a,b)=>daysLeft(a.expiry)-daysLeft(b.expiry));
+  const noCost = inStock.filter(x => x.src === 'sheet' && !(stockCostKg(x) > 0));
+  const lotOf = x => byId('lots', x.lotId);
   const si = ssInfo();
   if(Store.cfg.pass && !readOnly && (!si || Date.now() - si.at > 10*60*1000)) setTimeout(() => ssSync(true), 50);
   return `<div class="spread"><h2>在庫</h2><button class="btn pri" onclick="openLot()" ${wr()}>＋ 入荷（個体）を登録</button></div>
@@ -566,22 +580,31 @@ function vStock(){
     <p class="muted" style="margin:0">梅本さんの在庫表（チルド但馬・神戸、冷凍神戸、冷凍和牛）の在庫重量と部位ごとの原価を読み込みます。在庫表には書き込みません。重量や原価を直すときは在庫表の方を直してください。アプリで引当中の分は、在庫表の重量から差し引いて表示します。出荷したら在庫表の在庫重量も減らしてください。</p>
     <div class="row"><button class="btn" id="ssBtn" onclick="ssSync()" ${wr()}>在庫表から読み込む</button>
     <span class="muted">${Store.cfg.pass ? (si ? `最後に読み込んだ時刻 ${new Date(si.at).toLocaleString('ja-JP',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})}（${si.lots}件）` : 'まだ読み込んでいません') : '設定で合言葉を入れると使えます'}</span></div></div>
+  ${soon.length || noCost.length ? `<div class="panel"><h3>注意</h3>
+    ${soon.length ? `<p style="margin:0"><b>期限が7日以内・切れている品 ${soon.length}品</b></p><div class="tablewrap"><table><tr><th>枝番</th><th>部位</th><th class="r">重量 kg</th><th>期限</th></tr>
+      ${soon.slice(0,30).map(x=>`<tr><td class="num">${esc(lotOf(x)?.edabanRaw||x.branch)}</td><td>${esc(partName(x.partId))}</td><td class="r num">${kgf(x.kg)}</td><td>${expPill(x.expiry)}</td></tr>`).join('')}</table></div>` : ''}
+    ${noCost.length ? `<p style="margin:0"><b>原価が空欄の品 ${noCost.length}品</b>（粗利は原価0円で計算されます。在庫表に原価を入れると直ります）</p>
+      <p class="muted" style="margin:0">${noCost.slice(0,40).map(x=>`${esc(lotOf(x)?.edaban||x.branch)} ${esc(partName(x.partId))}`).join('・')}</p>` : ''}</div>` : ''}
   <div class="panel"><h3>部位ごとの在庫（引当前）</h3>
   ${Object.keys(byPart).length ? `<div class="tablewrap"><table><tr><th>部位</th><th class="r">個数</th><th class="r">重量 kg</th><th style="width:40%"></th></tr>
     ${Object.entries(byPart).sort((a,b)=>b[1].kg-a[1].kg).map(([p,x])=>`<tr><td>${esc(partName(p))}</td><td class="r num">${x.n}</td><td class="r num">${kgf(x.kg)}</td><td><div class="bar" style="width:${x.kg/maxKg*100}%"></div></td></tr>`).join('')}</table></div>`
     : `<div class="muted">在庫はありません。</div>`}</div>
+  <div class="panel"><div class="row" style="flex-wrap:wrap">
+    <label class="f" style="flex-direction:row;align-items:center;gap:6px"><span style="white-space:nowrap">種類</span><select onchange="V.sf=this.value;render()">${[['all','すべて'],['チルド','チルド'],['冷凍','冷凍'],['手入力','手入力']].map(([v,t])=>`<option value="${v}"${F===v?' selected':''}>${t}</option>`).join('')}</select></label>
+    <label class="f" style="flex-direction:row;align-items:center;gap:6px;flex:1;min-width:200px"><span style="white-space:nowrap">探す</span><input value="${esc(Q)}" placeholder="枝番・部位・血統など（入力してEnter）" onchange="V.sq=this.value;render()"></label>
+    <span class="muted">${lots.length} / ${allLots.length}件</span></div></div>
   ${lots.length ? lots.map(l => {
     const items = S.stock.filter(s=>s.lotId===l.id).sort((a,b)=>String(a.branch).localeCompare(String(b.branch),'ja',{numeric:true}));
     const tot = items.reduce((a,s)=>a+(+s.kg||0),0);
     const fromSheet = l.src === 'sheet';
-    return `<div class="lot"><div class="lothead"><b>No.${esc(l.no)}</b>${fromSheet?`<span class="pill">在庫表 ${esc(l.kind||'')}</span><span class="m">枝番 <span class="num">${esc(l.edabanRaw||l.edaban||'')}</span></span>${l.expiry?`<span class="m">期限 ${esc(l.expiry)}</span>`:''}`:''}<span class="m">個体識別番号 <span class="num">${esc(l.kojin||'—')}</span></span>
+    return `<div class="lot"><div class="lothead"><b>No.${esc(l.no)}</b>${fromSheet?`<span class="pill">在庫表 ${esc(l.kind||'')}</span><span class="m">枝番 <span class="num">${esc(l.edabanRaw||l.edaban||'')}</span></span>${l.expiry?`<span class="m">${expPill(l.expiry)}</span>`:''}`:''}<span class="m">個体識別番号 <span class="num">${esc(l.kojin||'—')}</span></span>
       <span class="m">${esc([l.breed,l.grade,l.origin].filter(Boolean).join('・'))}</span><span class="m">入荷 ${jdate(l.date)}</span>
       <span class="m">枝肉 ${l.carcassKg?kgf(l.carcassKg)+'kg':'—'}・部位計 ${kgf(tot)}kg・歩留まり ${l.carcassKg?pct(tot/l.carcassKg):'—'}</span>
       ${fromSheet?`<span class="m">原価は部位ごと（在庫表）・在庫原価 ${yen(items.filter(s=>s.status==='in').reduce((a,s)=>a+(+s.kg||0)*stockCostKg(s),0))}</span>`:`<span class="m">仕入 ${l.cost?yen(l.cost):'—'}・原価 ${lotCostPerKg(l.id)?yen(lotCostPerKg(l.id))+'/kg':'—'}</span>`}
       <span style="margin-left:auto" class="row"><button class="btn sm" onclick="openLot('${l.id}')" ${wr()}>編集</button></span></div>
       <div class="tablewrap"><table><tr><th>枝番</th><th>部位</th><th class="r">重量 kg</th><th class="r">原価/kg</th><th>状態</th><th>引当先</th><th></th></tr>
-      ${items.map(s=>{const o=s.orderId?byId('orders',s.orderId):null;return `<tr><td class="num">${esc(s.branch)}</td><td>${esc(partName(s.partId))}</td><td class="r num">${kgf(s.kg)}</td><td class="r num">${stockCostKg(s)?yen(stockCostKg(s)):'—'}</td>
-        <td><span class="pill st-${s.status}">${SSTATUS[s.status]}</span></td><td>${o?`<a href="javascript:void 0" onclick="openOrder('${o.id}')">${esc(custName(o.customerId))}</a>`:''}</td>
+      ${items.map(s=>{const o=s.orderId?byId('orders',s.orderId):null;return `<tr><td class="num">${esc(s.branch)}</td><td>${esc(partName(s.partId))}</td><td class="r num">${kgf(s.kg)}</td><td class="r num">${stockCostKg(s)?yen(stockCostKg(s)):'<span class="muted">原価なし</span>'}</td>
+        <td><span class="pill st-${s.status}">${SSTATUS[s.status]}</span> ${s.status==='in'&&daysLeft(s.expiry)!=null&&daysLeft(s.expiry)<=7?expPill(s.expiry):''}</td><td>${o?`<a href="javascript:void 0" onclick="openOrder('${o.id}')">${esc(custName(o.customerId))}</a>`:''}</td>
         <td class="r">${s.status==='in'&&s.src!=='sheet'?`<button class="btn sm ghost" onclick="openSplit('${s.id}')" ${wr()}>分ける</button>`:''}</td></tr>`}).join('') || `<tr><td colspan="7" class="muted">部位がまだ登録されていません</td></tr>`}</table></div></div>`;
   }).join('') : `<div class="empty">入荷した個体はまだありません。「＋ 入荷（個体）を登録」から、個体識別番号と部位ごとの重量を入れます。</div>`}`;
 }
