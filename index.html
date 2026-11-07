@@ -242,6 +242,16 @@ hr.sep{border:0;border-top:1px solid var(--line);margin:14px 0}
 .member img,.member-ph{width:84px;height:84px;border-radius:50%;object-fit:cover;flex:none;background:#eee}
 .member-nm{font-weight:700;font-size:16px}
 .member-role{font-size:12px;color:var(--mut);margin-bottom:4px}
+.flyers{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media (min-width:640px){.flyers{grid-template-columns:repeat(3,1fr)}}
+.flyer{margin:0;cursor:pointer}
+.flyer img{width:100%;border-radius:6px;border:1px solid var(--line);display:block;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.flyer figcaption{font-size:11px;color:var(--mut);margin-top:4px;line-height:1.3}
+.news-item img{cursor:pointer}
+.member-ph{display:flex;align-items:center;justify-content:center;font-size:34px}
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;z-index:100;padding:12px}
+.lightbox.on{display:flex}
+.lightbox img{max-width:100%;max-height:100%;border-radius:6px}
 </style>
 </head>
 <body>
@@ -430,6 +440,7 @@ const I18N = {
   lang: 'ja',
   dict: {
     en: {
+      '資料・チラシ': 'Brochures', 'タップで拡大できます（日本語）': 'Tap to enlarge (Japanese)',
       'NATURE KOBEとは': 'What is NATURE KOBE?', 'なぜNATURE KOBEが必要なのか': 'Why NATURE KOBE?', '私たち3人': 'The three of us', '活動の記録': 'Journal', '準備中': 'Coming soon',
       '但馬牛・神戸ビーフ ご注文': 'Kobe Beef — Order Direct from the Farm', '活動記録': 'Our Story', '📰 活動記録を見る': '📰 Read our story',
       'ご参加の皆さま限定': 'For guests of this event', 'ネットでのご注文': 'Online order', '🛒 ネット販売　※お振込みでのご注文': '🛒 Online shop · payment by bank transfer',
@@ -457,6 +468,7 @@ const I18N = {
       'PH:例）神戸 花子': 'e.g. Emma Smith', 'PH:example@mail.com': 'name@example.com', 'PH:090-1234-5678': '090-1234-5678 or +1 …', 'PH:123-4567': '123-4567', 'PH:都道府県から建物名・部屋番号まで': 'Hotel / street address in Japan, incl. room number', 'PH:例）月曜か火曜に届くと助かります／すき焼き用に': 'e.g. Deliver to hotel front desk by Friday', 'PH:例）株式会社〇〇': 'e.g. Company name',
     },
     'zh-CN': {
+      '資料・チラシ': '资料・宣传单', 'タップで拡大できます（日本語）': '点击放大（日文）',
       'NATURE KOBEとは': '什么是 NATURE KOBE', 'なぜNATURE KOBEが必要なのか': '为什么需要 NATURE KOBE', '私たち3人': '我们三个人', '活動の記録': '活动记录', '準備中': '准备中',
       '但馬牛・神戸ビーフ ご注文': '正宗神户牛 · 牧场直送预订', '活動記録': '牧场故事', '📰 活動記録を見る': '📰 看看我们的牧场故事',
       'ご参加の皆さま限定': '限本次活动来宾', 'ネットでのご注文': '网上订购', '🛒 ネット販売　※お振込みでのご注文': '🛒 网上商店 · 银行转账付款',
@@ -484,6 +496,7 @@ const I18N = {
       'PH:例）神戸 花子': '例：王小明', 'PH:example@mail.com': 'name@example.com', 'PH:090-1234-5678': '090-1234-5678 或 +86 …', 'PH:123-4567': '123-4567', 'PH:都道府県から建物名・部屋番号まで': '日本国内的酒店或住址，含房间号', 'PH:例）月曜か火曜に届くと助かります／すき焼き用に': '例：请周五前送到酒店前台', 'PH:例）株式会社〇〇': '例：公司名称',
     },
     'zh-TW': {
+      '資料・チラシ': '資料・傳單', 'タップで拡大できます（日本語）': '點擊放大（日文）',
       'NATURE KOBEとは': '什麼是 NATURE KOBE', 'なぜNATURE KOBEが必要なのか': '為什麼需要 NATURE KOBE', '私たち3人': '我們三個人', '活動の記録': '活動紀錄', '準備中': '準備中',
       '但馬牛・神戸ビーフ ご注文': '正宗神戶牛 · 牧場直送訂購', '活動記録': '牧場故事', '📰 活動記録を見る': '📰 看看我們的牧場故事',
       'ご参加の皆さま限定': '限本次活動來賓', 'ネットでのご注文': '網路訂購', '🛒 ネット販売　※お振込みでのご注文': '🛒 網路商店 · 銀行轉帳付款',
@@ -511,6 +524,7 @@ const I18N = {
       'PH:例）神戸 花子': '例：王小明', 'PH:example@mail.com': 'name@example.com', 'PH:090-1234-5678': '090-1234-5678 或 +886 …', 'PH:123-4567': '123-4567', 'PH:都道府県から建物名・部屋番号まで': '日本國內的飯店或住址，含房號', 'PH:例）月曜か火曜に届くと助かります／すき焼き用に': '例：請週五前送到飯店櫃台', 'PH:例）株式会社〇〇': '例：公司名稱',
     },
     ko: {
+      '資料・チラシ': '자료・전단', 'タップで拡大できます（日本語）': '탭하면 확대됩니다 (일본어)',
       'NATURE KOBEとは': 'NATURE KOBE란', 'なぜNATURE KOBEが必要なのか': '왜 NATURE KOBE가 필요한가', '私たち3人': '우리 세 사람', '活動の記録': '활동 기록', '準備中': '준비 중',
       '但馬牛・神戸ビーフ ご注文': '고베규 · 농장 직송 주문', '活動記録': '농장 이야기', '📰 活動記録を見る': '📰 농장 이야기 보기',
       'ご参加の皆さま限定': '행사 참가자 전용', 'ネットでのご注文': '온라인 주문', '🛒 ネット販売　※お振込みでのご注文': '🛒 온라인 판매 · 계좌이체 결제',
@@ -538,6 +552,7 @@ const I18N = {
       'PH:例）神戸 花子': '예) 김민준', 'PH:example@mail.com': 'name@example.com', 'PH:090-1234-5678': '090-1234-5678 또는 +82 …', 'PH:123-4567': '123-4567', 'PH:都道府県から建物名・部屋番号まで': '일본 내 호텔 또는 주소 (호수까지)', 'PH:例）月曜か火曜に届くと助かります／すき焼き用に': '예) 금요일까지 호텔 프런트로 배송 부탁드립니다', 'PH:例）株式会社〇〇': '예) 회사명',
     },
     fr: {
+      '資料・チラシ': 'Brochures', 'タップで拡大できます（日本語）': 'Touchez pour agrandir (en japonais)',
       'NATURE KOBEとは': 'Qu’est-ce que NATURE KOBE ?', 'なぜNATURE KOBEが必要なのか': 'Pourquoi NATURE KOBE ?', '私たち3人': 'Nous trois', '活動の記録': 'Journal', '準備中': 'Bientôt',
       '但馬牛・神戸ビーフ ご注文': 'Bœuf de Kobe — en direct de l’éleveur', '活動記録': 'Notre histoire', '📰 活動記録を見る': '📰 Découvrir notre histoire',
       'ご参加の皆さま限定': 'Réservé aux invités de l’événement', 'ネットでのご注文': 'Commande en ligne', '🛒 ネット販売　※お振込みでのご注文': '🛒 Boutique en ligne · paiement par virement',
@@ -749,29 +764,114 @@ function langBar() { return `<div class="langbar" id="langbar">${langButtons()}<
    ABOUT.members … { name, role, photo, bio }
    ACTIVITY_ITEMS … { date:'2026.10.25', title:'見出し', body:'本文', photo:'img/xxx.jpg' }
    =================================================================== */
-const ABOUT = { definition: '', why: '', members: [], i18n: {} };
-const ACTIVITY_ITEMS = [];
+const ABOUT = {
+  tagline: '牛を育て、土を育て、食を育てる。',
+  definition: 'NATURE KOBEは、但馬牛・神戸ビーフを届けるだけで終わらない、「いのちを巡らせる」循環型農業の会社です。\n牛の糞尿を良質な堆肥にし、その堆肥で土を育て、育った土でお米や野菜をつくり、その作物がまた牛の餌になる。この循環の中で生まれた但馬牛・神戸ビーフ、お米（NATURE RICE）、野菜（NATURE LEAF）を、生産者の想いとともに食卓へ届けます。\n神戸うすなが牧場（生産）と丹波農商（堆肥・飼料）、そして販売をつなぐ3人で、2026年10月に神戸で立ち上げました。',
+  why: '良いお肉は、良い牛から。良い牛は、良い餌と良い土から生まれます。\nいま、餌の多くを輸入に頼る畜産は、円安や気候の変化に揺さぶられ続けています。牛の糞尿は「処理するもの」ではなく、土を豊かにする資源です。それを田畑に返し、そこで育った稲わらやお米を牛に戻せば、地域の中で資源が回り、生産者は自給で強くなり、作物は天候の変化に負けにくく育ちます。\n私たちは「A5・サシが多い」だけを良しとせず、ほどよいサシと長い余韻、小豆色の赤身の、また食べたくなる本当においしい肉を追求しています。\nそして、ただ売るのではなく、食の背景まで伝えたい。生産者が誇りを持てる価格と未来を支え、神戸から全国へ、持続可能な和牛のモデルを広げる。そのために、NATURE KOBEが必要だと考えています。',
+  members: [
+    { name: '碓永（神戸うすなが牧場）', role: '生産　但馬牛・神戸ビーフ', photo: '', bio: '神戸のテロワールで但馬牛を育てる生産者。国内自給飼料を中心に、酒粕・おから・大豆粕・米ぬか・稲わらを丁寧に配合し、ストレスの少ない健やかな牛づくりを続けています。' },
+    { name: '牛尾', role: '販売　お客さまとの縁をつなぐ', photo: '', bio: '販売会やワインショップとの連携を通じて、但馬牛と循環型農業の想いを直接お客さまに届けています。一度つながった縁を大切にし、食の背景まで伝える販売を目指しています。' },
+    { name: '栗原（株式会社丹波農商）', role: '堆肥・飼料　土づくりと循環の設計', photo: '', bio: '兵庫県丹波市で祖父の代から続く農家。但馬牛100頭の牛ふんから年間約1,000トンの堆肥をつくり、牧草や丹波栗、お米の畑に還しています。NATURE KOBEでは堆肥と自給飼料の循環を担い、注文サイトなどの仕組みづくりも行っています。' },
+  ],
+  i18n: {
+    en: {
+      tagline: 'Raise the cattle. Build the soil. Grow the food.',
+      definition: 'NATURE KOBE is a circular-agriculture company from Kobe, Japan. We do more than deliver Tajima and Kobe Beef: we keep life moving in a circle.\nCattle manure becomes rich compost; the compost builds the soil; that soil grows rice and vegetables; and the crops and rice straw go back to feed the cattle. The beef, rice (NATURE RICE) and vegetables (NATURE LEAF) born in this cycle reach your table together with the story of the people who made them.\nWe are three partners — Usunaga Farm in Kobe (the cattle), Tamba Noshō (compost and feed) and sales — and we founded the company in Kobe in October 2026.',
+      why: 'Good beef comes from good cattle, and good cattle come from good feed and good soil.\nJapanese livestock farming relies heavily on imported feed and is shaken by every swing in currency and climate. Manure is not waste to be disposed of; it is a resource that makes soil rich. Return it to the fields, feed the resulting rice and straw back to the cattle, and the region becomes self-sufficient and resilient to bad weather.\nWe do not believe that "A5 and heavy marbling" is the only measure of quality. We pursue beef with moderate marbling, a long finish and deep-red lean meat — beef you want to eat again.\nAnd we do not want to simply sell; we want to pass on the story behind the food, support prices and a future that producers can be proud of, and spread a sustainable Wagyu model from Kobe to the rest of Japan. That is why NATURE KOBE exists.',
+      members: {
+        '碓永（神戸うすなが牧場）': { name: 'Usunaga (Usunaga Farm, Kobe)', role: 'Producer · Tajima and Kobe Beef', bio: 'Raises Tajima cattle in the terroir of Kobe. Feeds are mostly domestic — sake lees, okara, soybean meal, rice bran and rice straw — blended with care so the cattle grow healthy with little stress.' },
+        '牛尾': { name: 'Ushio', role: 'Sales · building lasting relationships', bio: 'Brings Tajima Beef and the idea of circular farming straight to customers through tasting events and partnerships with wine shops, with the aim of telling the story behind every cut.' },
+        '栗原（株式会社丹波農商）': { name: 'Kurihara (Tamba Noshō Co.)', role: 'Compost and feed · designing the cycle', bio: 'A farming family in Tamba, Hyogo, since his grandfather\'s generation. Turns the manure of 100 Tajima cattle into about 1,000 tons of compost a year and returns it to pasture, chestnut orchards and rice fields. Also builds NATURE KOBE\'s ordering system.' },
+      },
+    },
+    'zh-CN': {
+      tagline: '养牛，养土，养出好食物。',
+      definition: 'NATURE KOBE 是一家来自日本神户的循环型农业公司。我们不只是销售但马牛・神户牛，而是让生命在循环中流转。\n牛的粪便做成优质堆肥，堆肥培育土壤，土壤种出大米和蔬菜，作物和稻草又回到牛的饲料中。在这个循环里诞生的神户牛、大米（NATURE RICE）和蔬菜（NATURE LEAF），连同生产者的心意，一起送到您的餐桌。\n我们由三位伙伴组成——神户 Usunaga 牧场（养牛）、丹波农商（堆肥・饲料）和销售——于 2026 年 10 月在神户创立。',
+      why: '好牛肉来自好牛，好牛来自好饲料和好土壤。\n日本的畜牧业大量依赖进口饲料，汇率和气候的变化都会带来冲击。牛粪不是需要处理的废物，而是让土壤肥沃的资源。把它还给田地，再把田里的大米和稻草喂给牛，地区内的资源就能循环，生产者靠自给变强，作物也更能抵御天气变化。\n我们不认为“A5・雪花多”就是唯一的好。我们追求的是油花适中、余韵悠长、瘦肉呈红豆色、吃了还想再吃的真正美味。\n我们不只是卖肉，更想传递食物背后的故事，支撑生产者引以为傲的价格和未来，把可持续的和牛模式从神户推广到全日本。这就是 NATURE KOBE 存在的理由。',
+      members: {
+        '碓永（神戸うすなが牧場）': { name: '碓永（神户 Usunaga 牧场）', role: '生产・但马牛・神户牛', bio: '在神户的风土中饲养但马牛。饲料以国产为主——酒粕、豆渣、大豆粕、米糠、稻草——精心配比，让牛在低压力的环境中健康成长。' },
+        '牛尾': { name: '牛尾', role: '销售・珍惜每一段缘分', bio: '通过品尝会和与葡萄酒店的合作，把但马牛和循环农业的理念直接传递给顾客，希望让大家了解每一块肉背后的故事。' },
+        '栗原（株式会社丹波農商）': { name: '栗原（丹波农商株式会社）', role: '堆肥・饲料・循环的设计', bio: '兵库县丹波市自祖父一代延续至今的农家。将 100 头但马牛的牛粪制成每年约 1,000 吨堆肥，还给牧草地、丹波栗园和稻田。同时负责 NATURE KOBE 的订购系统。' },
+      },
+    },
+    'zh-TW': {
+      tagline: '養牛，養土，養出好食物。',
+      definition: 'NATURE KOBE 是一家來自日本神戶的循環型農業公司。我們不只是販售但馬牛・神戶牛，而是讓生命在循環中流轉。\n牛的糞便做成優質堆肥，堆肥培育土壤，土壤種出稻米與蔬菜，作物與稻草再回到牛的飼料中。在這個循環裡誕生的神戶牛、稻米（NATURE RICE）與蔬菜（NATURE LEAF），連同生產者的心意，一起送到您的餐桌。\n我們由三位夥伴組成——神戶 Usunaga 牧場（養牛）、丹波農商（堆肥・飼料）與銷售——於 2026 年 10 月在神戶創立。',
+      why: '好牛肉來自好牛，好牛來自好飼料與好土壤。\n日本的畜牧業大量仰賴進口飼料，匯率與氣候的變化都會帶來衝擊。牛糞不是需要處理的廢棄物，而是讓土壤肥沃的資源。把它還給田地，再把田裡的稻米與稻草餵給牛，地區內的資源就能循環，生產者靠自給變強，作物也更能抵抗天候變化。\n我們不認為「A5・油花多」就是唯一的好。我們追求的是油花適中、餘韻悠長、瘦肉呈紅豆色、吃了還想再吃的真正美味。\n我們不只是賣肉，更想傳遞食物背後的故事，支撐生產者引以為傲的價格與未來，把永續的和牛模式從神戶推廣到全日本。這就是 NATURE KOBE 存在的理由。',
+      members: {
+        '碓永（神戸うすなが牧場）': { name: '碓永（神戶 Usunaga 牧場）', role: '生產・但馬牛・神戶牛', bio: '在神戶的風土中飼養但馬牛。飼料以國產為主——酒粕、豆渣、大豆粕、米糠、稻草——細心配比，讓牛在低壓力的環境中健康成長。' },
+        '牛尾': { name: '牛尾', role: '銷售・珍惜每一段緣分', bio: '透過品嚐會與葡萄酒店的合作，把但馬牛與循環農業的理念直接傳遞給顧客，希望讓大家了解每一塊肉背後的故事。' },
+        '栗原（株式会社丹波農商）': { name: '栗原（丹波農商株式會社）', role: '堆肥・飼料・循環的設計', bio: '兵庫縣丹波市自祖父一代延續至今的農家。將 100 頭但馬牛的牛糞製成每年約 1,000 噸堆肥，還給牧草地、丹波栗園與稻田。同時負責 NATURE KOBE 的訂購系統。' },
+      },
+    },
+    ko: {
+      tagline: '소를 키우고, 흙을 키우고, 먹거리를 키웁니다.',
+      definition: 'NATURE KOBE는 일본 고베의 순환형 농업 회사입니다. 타지마규・고베규를 전하는 데서 끝나지 않고, 생명을 순환시킵니다.\n소의 분뇨를 좋은 퇴비로 만들고, 그 퇴비로 흙을 키우고, 그 흙에서 쌀과 채소를 기르고, 그 작물과 볏짚이 다시 소의 먹이가 됩니다. 이 순환 속에서 태어난 고베규, 쌀(NATURE RICE), 채소(NATURE LEAF)를 생산자의 마음과 함께 식탁으로 전합니다.\n고베 우스나가 목장(생산), 단바노쇼(퇴비・사료), 그리고 판매를 잇는 세 사람이 2026년 10월 고베에서 시작했습니다.',
+      why: '좋은 고기는 좋은 소에서, 좋은 소는 좋은 먹이와 좋은 흙에서 나옵니다.\n일본의 축산은 사료의 대부분을 수입에 의존해 환율과 기후 변화에 흔들리고 있습니다. 소의 분뇨는 처리할 쓰레기가 아니라 흙을 살리는 자원입니다. 이를 논밭에 돌려주고 거기서 난 쌀과 볏짚을 다시 소에게 먹이면, 지역 안에서 자원이 돌고 생산자는 자급으로 강해지며 작물은 날씨 변화에도 잘 견딥니다.\n우리는 "A5・마블링이 많은 것"만을 좋다고 보지 않습니다. 적당한 마블링과 긴 여운, 팥색의 살코기, 또 먹고 싶어지는 진짜 맛있는 고기를 추구합니다.\n그리고 그저 파는 것이 아니라 먹거리의 배경까지 전하고 싶습니다. 생산자가 자부심을 가질 수 있는 가격과 미래를 지키고, 고베에서 일본 전역으로 지속 가능한 와규 모델을 넓혀 가는 것. 그래서 NATURE KOBE가 필요합니다.',
+      members: {
+        '碓永（神戸うすなが牧場）': { name: '우스나가 (고베 우스나가 목장)', role: '생산 · 타지마규・고베규', bio: '고베의 테루아에서 타지마규를 키우는 생산자. 주박, 비지, 대두박, 쌀겨, 볏짚 등 국산 사료를 정성껏 배합해 스트레스가 적은 건강한 소를 기릅니다.' },
+        '牛尾': { name: '우시오', role: '판매 · 인연을 잇는 사람', bio: '시식 판매회와 와인숍과의 협업을 통해 타지마규와 순환형 농업의 뜻을 손님에게 직접 전합니다. 한 번 맺은 인연을 소중히 하며, 먹거리의 배경까지 전하는 판매를 지향합니다.' },
+        '栗原（株式会社丹波農商）': { name: '구리하라 (주식회사 단바노쇼)', role: '퇴비・사료 · 순환의 설계', bio: '효고현 단바시에서 할아버지 대부터 이어온 농가. 타지마규 100마리의 분뇨로 연간 약 1,000톤의 퇴비를 만들어 목초지, 단바 밤 과수원, 논에 돌려줍니다. NATURE KOBE의 주문 시스템도 만들고 있습니다.' },
+      },
+    },
+    fr: {
+      tagline: 'Élever le bétail. Nourrir le sol. Cultiver la nourriture.',
+      definition: 'NATURE KOBE est une entreprise d’agriculture circulaire de Kobe, au Japon. Nous ne nous contentons pas de livrer du bœuf de Tajima et de Kobe : nous faisons tourner le cycle du vivant.\nLe fumier des bovins devient un compost riche ; le compost nourrit le sol ; ce sol donne du riz et des légumes ; et les récoltes, avec la paille de riz, retournent nourrir les bêtes. Le bœuf, le riz (NATURE RICE) et les légumes (NATURE LEAF) nés de ce cycle arrivent sur votre table avec l’histoire de ceux qui les ont produits.\nNous sommes trois associés — la ferme Usunaga à Kobe (l’élevage), Tamba Noshō (compost et fourrage) et la vente — et nous avons fondé la société à Kobe en octobre 2026.',
+      why: 'Un bon bœuf vient d’un bon animal, et un bon animal vient d’une bonne alimentation et d’un bon sol.\nL’élevage japonais dépend largement d’aliments importés et subit chaque variation des changes et du climat. Le fumier n’est pas un déchet à éliminer : c’est une ressource qui enrichit la terre. Rendu aux champs, puis revenu au bétail sous forme de riz et de paille, il fait tourner les ressources dans le territoire, rend les producteurs autonomes et les cultures plus résistantes aux aléas.\nNous ne pensons pas que « A5 et très persillé » soit la seule mesure de la qualité. Nous recherchons un bœuf au persillage mesuré, à la longue finale, à la chair d’un rouge profond — une viande dont on a envie de reprendre.\nEt nous ne voulons pas seulement vendre : nous voulons transmettre l’histoire derrière chaque morceau, soutenir des prix et un avenir dont les éleveurs soient fiers, et diffuser depuis Kobe un modèle de wagyu durable. C’est pour cela que NATURE KOBE existe.',
+      members: {
+        '碓永（神戸うすなが牧場）': { name: 'Usunaga (ferme Usunaga, Kobe)', role: 'Éleveur · bœuf de Tajima et de Kobe', bio: 'Élève des bovins Tajima dans le terroir de Kobe. Une alimentation surtout locale — lie de saké, okara, tourteau de soja, son de riz, paille — composée avec soin pour des animaux sains et sans stress.' },
+        '牛尾': { name: 'Ushio', role: 'Vente · tisser des liens durables', bio: 'Porte le bœuf de Tajima et l’idée de l’agriculture circulaire directement aux clients, lors de dégustations et avec des cavistes partenaires, pour raconter l’histoire derrière chaque pièce.' },
+        '栗原（株式会社丹波農商）': { name: 'Kurihara (Tamba Noshō)', role: 'Compost et fourrage · concevoir le cycle', bio: 'Famille d’agriculteurs à Tamba (Hyōgo) depuis son grand-père. Transforme le fumier de 100 bovins Tajima en environ 1 000 tonnes de compost par an, rendues aux prairies, aux châtaigneraies et aux rizières. Conçoit aussi le système de commande de NATURE KOBE.' },
+      },
+    },
+  },
+};
+/* 資料・チラシ（タップで拡大） */
+const FLYERS = [
+  { id: 'intro', title: 'NATURE KOBEのご紹介' }, { id: 'cycle', title: 'いのちがつながる7つの循環' }, { id: 'tajima', title: '但馬牛とは？' }, { id: 'usunaga-beef', title: 'うすながビーフが美味しい理由' },
+  { id: 'collab-1025', title: '10/25 農と発酵zen × NATURE KOBE 奈良販売会' }, { id: 'edamame-1025', title: '丹波黒大豆枝豆（10/25販売）' }, { id: 'edamame-500g', title: '丹波黒大枝豆 特別販売' }, { id: 'rice-flyer', title: 'めぐり米（NATURE RICE）' }, { id: 'rice-bag', title: 'めぐり米 パッケージ' }, { id: 'wine-beef', title: 'Wine & Beef' },
+];
+const FLYER_TITLES = {
+  en: { 'NATURE KOBEのご紹介': 'About NATURE KOBE', 'いのちがつながる7つの循環': 'The seven-step cycle of life', '但馬牛とは？': 'What is Tajima Beef?', 'うすながビーフが美味しい理由': 'Why Usunaga Beef tastes special', '10/25 農と発酵zen × NATURE KOBE 奈良販売会': 'Oct 25 tasting & sale in Nara with Zen', '丹波黒大豆枝豆（10/25販売）': 'Tamba black-soybean edamame (Oct 25)', '丹波黒大枝豆 特別販売': 'Tamba black edamame, special sale', 'めぐり米（NATURE RICE）': 'Meguri Rice (NATURE RICE)', 'めぐり米 パッケージ': 'Meguri Rice packaging', 'Wine & Beef': 'Wine & Beef' },
+  'zh-CN': { 'NATURE KOBEのご紹介': 'NATURE KOBE 介绍', 'いのちがつながる7つの循環': '生命相连的七个循环', '但馬牛とは？': '什么是但马牛？', 'うすながビーフが美味しい理由': 'Usunaga 牛肉美味的理由', '10/25 農と発酵zen × NATURE KOBE 奈良販売会': '10/25 奈良品尝销售会（与 Zen 合办）', '丹波黒大豆枝豆（10/25販売）': '丹波黑大豆毛豆（10/25 销售）', '丹波黒大枝豆 特別販売': '丹波黑大豆毛豆 特别销售', 'めぐり米（NATURE RICE）': '循环米（NATURE RICE）', 'めぐり米 パッケージ': '循环米 包装', 'Wine & Beef': 'Wine & Beef' },
+  'zh-TW': { 'NATURE KOBEのご紹介': 'NATURE KOBE 介紹', 'いのちがつながる7つの循環': '生命相連的七個循環', '但馬牛とは？': '什麼是但馬牛？', 'うすながビーフが美味しい理由': 'Usunaga 牛肉美味的理由', '10/25 農と発酵zen × NATURE KOBE 奈良販売会': '10/25 奈良品嚐銷售會（與 Zen 合辦）', '丹波黒大豆枝豆（10/25販売）': '丹波黑大豆毛豆（10/25 販售）', '丹波黒大枝豆 特別販売': '丹波黑大豆毛豆 特別販售', 'めぐり米（NATURE RICE）': '循環米（NATURE RICE）', 'めぐり米 パッケージ': '循環米 包裝', 'Wine & Beef': 'Wine & Beef' },
+  ko: { 'NATURE KOBEのご紹介': 'NATURE KOBE 소개', 'いのちがつながる7つの循環': '생명이 이어지는 7가지 순환', '但馬牛とは？': '타지마규란?', 'うすながビーフが美味しい理由': '우스나가 비프가 맛있는 이유', '10/25 農と発酵zen × NATURE KOBE 奈良販売会': '10/25 나라 시식 판매회 (Zen과 공동)', '丹波黒大豆枝豆（10/25販売）': '단바 검은콩 에다마메 (10/25 판매)', '丹波黒大枝豆 特別販売': '단바 검은콩 에다마메 특별 판매', 'めぐり米（NATURE RICE）': '메구리 쌀 (NATURE RICE)', 'めぐり米 パッケージ': '메구리 쌀 패키지', 'Wine & Beef': 'Wine & Beef' },
+  fr: { 'NATURE KOBEのご紹介': 'Présentation de NATURE KOBE', 'いのちがつながる7つの循環': 'Le cycle du vivant en sept étapes', '但馬牛とは？': 'Qu’est-ce que le bœuf de Tajima ?', 'うすながビーフが美味しい理由': 'Pourquoi le bœuf Usunaga est si bon', '10/25 農と発酵zen × NATURE KOBE 奈良販売会': 'Dégustation-vente du 25 oct. à Nara avec Zen', '丹波黒大豆枝豆（10/25販売）': 'Edamame de soja noir de Tamba (25 oct.)', '丹波黒大枝豆 特別販売': 'Edamame noir de Tamba, vente spéciale', 'めぐり米（NATURE RICE）': 'Riz Meguri (NATURE RICE)', 'めぐり米 パッケージ': 'Emballage du riz Meguri', 'Wine & Beef': 'Wine & Beef' },
+};
+/* 活動の記録（新しい順） */
+const ACTIVITY_ITEMS = [
+  { date: '2026.10.25', title: '農と発酵zen × NATURE KOBE スペシャルコラボDAY（奈良）', body: '「極上但馬牛とピノノワールの会」を3部制で開催。普段は一般には販売していない但馬牛を、この日だけ来場者限定でご購入いただきました。ご購入金額に応じたワインの特典と、但馬牛の堆肥で育てた丹波黒大豆枝豆もお渡ししました。', photo: 'img/story/collab-1025.jpg', flyer: 'collab-1025' },
+  { date: '2026.10.23', title: '合同会社 NATURE KOBE 設立', body: '神戸うすなが牧場・丹波農商・販売の3人で、循環型農業の販売会社として神戸に設立しました。', photo: 'img/story/intro.jpg', flyer: 'intro' },
+  { date: '2026.10', title: '丹波黒大豆枝豆の販売', body: '但馬牛の堆肥で育てた兵庫県朝来市産の丹波黒大豆枝豆を、販売会と注文サイトで販売しました。大粒で深いコクと甘みが特徴です。', photo: 'img/story/edamame-1025.jpg', flyer: 'edamame-1025' },
+  { date: '2026.10', title: 'めぐり米（NATURE RICE）', body: '牛の堆肥を田んぼに還し、その土で育てたお米を「めぐり米」としてお届けしています。ご注文に合わせて精米したてでお送りします。', photo: 'img/story/rice-flyer.jpg', flyer: 'rice-flyer' },
+  { date: '2026.09.27', title: '第1回 但馬牛販売会', body: 'NATURE KOBEとして最初の但馬牛・神戸ビーフの販売会を開催しました。QRコードからの注文で、ご自宅までお届けする仕組みを初めて使いました。', photo: '', flyer: '' },
+];
 const Activity = {
   txt(key) { const o = (ABOUT.i18n[I18N.lang] || {})[key]; return o || ABOUT[key] || ''; },
+  ftitle(t) { return (FLYER_TITLES[I18N.lang] || {})[t] || t; },
   init() {
     const eid = new URLSearchParams(location.search).get('e') || '';
     const para = t => t ? `<div class="news-body">${h(t).replace(/\n/g, '<br>')}</div>` : '<p class="news-wait">準備中</p>';
     const members = ABOUT.members.length
-      ? `<div class="members">${ABOUT.members.map(m => { const tr = ((ABOUT.i18n[I18N.lang] || {}).members || {})[m.name] || {}; return `<div class="member">${m.photo ? `<img src="${h(m.photo)}" alt="${h(m.name)}">` : '<div class="member-ph"></div>'}<div><div class="member-nm">${h(tr.name || m.name)}</div><div class="member-role">${h(tr.role || m.role || '')}</div><div class="news-body">${h(tr.bio || m.bio || '').replace(/\n/g, '<br>')}</div></div></div>`; }).join('')}</div>`
+      ? `<div class="members">${ABOUT.members.map(m => { const tr = ((ABOUT.i18n[I18N.lang] || {}).members || {})[m.name] || {}; return `<div class="member">${m.photo ? `<img src="${h(m.photo)}" alt="${h(m.name)}">` : '<div class="member-ph">🐂</div>'}<div><div class="member-nm">${h(tr.name || m.name)}</div><div class="member-role">${h(tr.role || m.role || '')}</div><div class="news-body">${h(tr.bio || m.bio || '').replace(/\n/g, '<br>')}</div></div></div>`; }).join('')}</div>`
       : '<p class="news-wait">準備中</p>';
     const items = ACTIVITY_ITEMS.length
-      ? `<div class="news-grid">${ACTIVITY_ITEMS.map(a => `<article class="news-item">${a.photo ? `<img src="${h(a.photo)}" alt="${h(a.title)}" loading="lazy">` : ''}<div class="news-date">${h(a.date || '')}</div><h2 class="news-h">${h(a.title)}</h2><div class="news-body">${h(a.body).replace(/\n/g, '<br>')}</div></article>`).join('')}</div>`
+      ? `<div class="news-grid">${ACTIVITY_ITEMS.map(a => `<article class="news-item">${a.photo ? `<img src="${h(a.photo.replace(/\.jpg$/, '-t.jpg'))}" alt="${h(a.title)}" loading="lazy" ${a.flyer ? `onclick="Activity.open('${a.flyer}')"` : ''}>` : ''}<div class="news-date">${h(a.date || '')}</div><h2 class="news-h">${h(a.title)}</h2><div class="news-body">${h(a.body).replace(/\n/g, '<br>')}</div></article>`).join('')}</div>`
       : '<p class="news-wait">準備中</p>';
+    const flyers = `<div class="flyers">${FLYERS.map(f => `<figure class="flyer" onclick="Activity.open('${f.id}')"><img src="img/story/${f.id}-t.jpg" alt="${h(f.title)}" loading="lazy"><figcaption>${h(this.ftitle(f.title))}</figcaption></figure>`).join('')}</div>`;
     $('#app').innerHTML = `<div class="brand"><div class="logo">NATURE <span>KOBE</span></div><div class="sub">活動記録</div></div>
       <div class="wrap">${langBar()}
-      <div class="news-mast"><div class="news-title">NATURE KOBE 活動記録</div><div class="news-sub">但馬牛・神戸ビーフ　生産者の現場から</div></div>
+      <div class="news-mast"><div class="news-title">NATURE KOBE 活動記録</div><div class="news-sub">${h(this.txt('tagline'))}</div></div>
       <section class="news-sec"><h2 class="news-sech">NATURE KOBEとは</h2>${para(this.txt('definition'))}</section>
       <section class="news-sec"><h2 class="news-sech">なぜNATURE KOBEが必要なのか</h2>${para(this.txt('why'))}</section>
       <section class="news-sec"><h2 class="news-sech">私たち3人</h2>${members}</section>
       <section class="news-sec"><h2 class="news-sech">活動の記録</h2>${items}</section>
-      ${eid ? `<p style="text-align:center;margin:22px 0"><a class="btn pri" href="?e=${encodeURIComponent(eid)}">商品・注文はこちら</a></p>` : ''}</div>`;
+      <section class="news-sec"><h2 class="news-sech">資料・チラシ</h2><p class="xs mut" style="margin:0 0 8px">タップで拡大できます（日本語）</p>${flyers}</section>
+      ${eid ? `<p style="text-align:center;margin:22px 0"><a class="btn pri" href="?e=${encodeURIComponent(eid)}">商品・注文はこちら</a></p>` : ''}</div>
+      <div class="lightbox" id="lightbox" onclick="this.classList.remove('on')"><img id="lightbox-img" alt=""></div>`;
     I18N.apply();
   },
+  open(id) { const lb = $('#lightbox'); $('#lightbox-img').src = `img/story/${id}.jpg`; lb.classList.add('on'); },
 };
 
 /* ===== ルーティング ===== */
