@@ -218,6 +218,30 @@ hr.sep{border:0;border-top:1px solid var(--line);margin:14px 0}
   .hide-sm{display:none}
   .it-table .w-p{width:76px}
 }
+
+.langbar{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;margin:10px 0 0}
+.langbar button{font:inherit;font-size:12px;padding:4px 9px;border:1px solid var(--line);background:#fff;border-radius:999px;color:var(--mut);cursor:pointer}
+.langbar button.on{background:var(--g);border-color:var(--g);color:#fff;font-weight:700}
+.news-link{text-align:right;margin:6px 0 0;font-size:13px}
+.news-link a{color:var(--g)}
+.news-mast{text-align:center;border-top:3px double var(--ink,#222);border-bottom:1px solid var(--line);padding:12px 0;margin:14px 0}
+.news-title{font-family:Georgia,"Hiragino Mincho ProN",serif;font-size:26px;font-weight:700;letter-spacing:.04em}
+.news-sub{font-size:12px;color:var(--mut);margin-top:4px}
+.news-grid{display:grid;grid-template-columns:1fr;gap:18px}
+@media (min-width:640px){.news-grid{grid-template-columns:1fr 1fr}}
+.news-item{border-top:1px solid var(--line);padding-top:10px}
+.news-item img{width:100%;border-radius:6px;display:block;margin-bottom:8px}
+.news-date{font-size:12px;color:var(--mut)}
+.news-h{font-size:17px;margin:4px 0 6px;line-height:1.4}
+.news-body{font-size:14px;line-height:1.8}
+.news-wait{text-align:center;color:var(--mut);padding:18px 0}
+.news-sec{margin:18px 0}
+.news-sech{font-size:18px;border-left:4px solid var(--g);padding-left:10px;margin:0 0 8px}
+.members{display:grid;gap:14px}
+.member{display:flex;gap:12px;align-items:flex-start}
+.member img,.member-ph{width:84px;height:84px;border-radius:50%;object-fit:cover;flex:none;background:#eee}
+.member-nm{font-weight:700;font-size:16px}
+.member-role{font-size:12px;color:var(--mut);margin-bottom:4px}
 </style>
 </head>
 <body>
@@ -244,7 +268,7 @@ const _mem = {};
 const ls = { get(k) { try { const v = localStorage.getItem(k); if (v != null) return v; } catch (e) {} return k in _mem ? _mem[k] : null; }, set(k, v) { _mem[k] = v; try { localStorage.setItem(k, v); } catch (e) {} }, del(k) { delete _mem[k]; try { localStorage.removeItem(k); } catch (e) {} } };
 const baseUrl = () => location.origin + location.pathname;
 let toastT;
-function toast(msg, err) { const t = $('#toast'); t.textContent = msg; t.className = 'show' + (err ? ' err' : ''); clearTimeout(toastT); toastT = setTimeout(() => t.className = '', err ? 4200 : 2200); }
+function toast(msg, err) { const t = $('#toast'); t.textContent = (typeof I18N !== 'undefined' && I18N.t(msg)) || msg; t.className = 'show' + (err ? ' err' : ''); clearTimeout(toastT); toastT = setTimeout(() => t.className = '', err ? 4200 : 2200); }
 async function copy(text, label) {
   try { await navigator.clipboard.writeText(text); toast((label || '') + 'コピーしました'); }
   catch (e) { const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); toast((label || '') + 'コピーしました'); } catch (e2) { toast('コピーできませんでした', true); } ta.remove(); }
@@ -393,9 +417,368 @@ async function mailFlowSend() {
 }
 function mailFlowCancel() { const opt = window._mailOpt; closeSheet(); if (opt && opt.onCancel) opt.onCancel(); }
 
+/* ===================================================================
+   多言語（お客さんの画面の言語切替）
+   ・画面の固定の文言を切り替えます。商品名・部位名も翻訳します。金額・日付は書式だけ変えます。
+   ・翻訳は「その国で自然に読める言い方」を優先し、直訳はしていません。
+   ・dict … 文言そのまま一致で置き換え（商品名・部位名・ボタンなど）
+   ・rx   … 数字や金額が入る文言を正規表現で置き換え
+   ・html … data-i18n を付けた要素の中身を丸ごと置き換え（{0}{1} に元の太字などの値が入る）
+   =================================================================== */
+const LANGS = [['ja', '日本語'], ['en', 'English'], ['zh-CN', '简体中文'], ['zh-TW', '繁體中文'], ['ko', '한국어'], ['fr', 'Français']];
+const I18N = {
+  lang: 'ja',
+  dict: {
+    en: {
+      'NATURE KOBEとは': 'What is NATURE KOBE?', 'なぜNATURE KOBEが必要なのか': 'Why NATURE KOBE?', '私たち3人': 'The three of us', '活動の記録': 'Journal', '準備中': 'Coming soon',
+      '但馬牛・神戸ビーフ ご注文': 'Kobe Beef — Order Direct from the Farm', '活動記録': 'Our Story', '📰 活動記録を見る': '📰 Read our story',
+      'ご参加の皆さま限定': 'For guests of this event', 'ネットでのご注文': 'Online order', '🛒 ネット販売　※お振込みでのご注文': '🛒 Online shop · payment by bank transfer',
+      '商品を選ぶ': 'Choose your cuts', 'お客様情報': 'Your details', '確認': 'Review',
+      '＋ 追加': '+ Add', '＋ 別の量でも追加': '+ Add another size', '次へ': 'Next', '戻る': 'Back', '確認へ': 'Review order', '注文する': 'Place order', '送信中…': 'Sending…', '削除': 'Remove',
+      '商品を変更': 'Edit items', 'お客様情報を変更': 'Edit details', '住所を自動入力': 'Look up address', '商品を選んでください': 'Add items to begin', '税込': 'incl. tax', '（税込）': '(incl. tax)',
+      '必須': 'Required', '任意': 'Optional', 'ご注文者さま': 'Your information', 'お名前': 'Full name', 'メールアドレス': 'Email', '電話番号': 'Phone', '郵便番号': 'Postal code', 'ご住所': 'Address (in Japan)',
+      'ご注文確認・発送のご連絡をお送りします': 'We will email your confirmation and tracking number',
+      'お届け先': 'Ship to', 'ご注文者さまと別の住所に送る（ギフトなど）': 'Ship to a different address (gift, hotel, etc.)', '上のご住所にお届けします': 'We will ship to the address above',
+      'お届け先のお名前': 'Recipient name', 'お届け先の電話番号': 'Recipient phone', 'お届け先の郵便番号': 'Recipient postal code', 'お届け先のご住所': 'Recipient address',
+      'ご希望の保存状態': 'How should we ship it?', '冷凍': 'Frozen', '冷蔵': 'Chilled', 'お支払い方法': 'Payment', '現金': 'Cash', '銀行振込': 'Bank transfer', 'クレジットカード': 'Credit card',
+      '現金はこの場でスタッフにお支払いください。お支払いを確認後、領収書をメールでお送りします。': 'Cash: please pay our staff here today. We will email your receipt once payment is confirmed.',
+      '銀行振込を選んだ場合は、ご注文後に振込先をメールでご案内します。ご注文から7日以内にお振込みください。期限を過ぎた場合はキャンセル扱いとさせていただきます。': 'Bank transfer: we will email you the account details after you order. Please transfer within 7 days; orders not paid by then are cancelled.',
+      '領収書': 'Receipt', '領収書が必要': 'I need a receipt', '宛名': 'Name on receipt', '空欄ならお名前で発行します': 'Leave blank to use your name', '備考': 'Notes',
+      'ご注文内容': 'Your order', '小計（税抜）': 'Subtotal (excl. tax)', '送料': 'Shipping', '合計（税込）': 'Total (incl. tax)', '保存状態': 'Shipping', 'お支払い': 'Payment', 'メール': 'Email', '電話': 'Phone', '不要': 'Not needed', 'ご住所と同じ': 'Same as above',
+      '価格変動': 'Market price', '※価格変動の商品は、確定額が変わる場合があります。確定しましたらメールでご連絡します。': '* Market-price items may change slightly. We will confirm the final amount by email.',
+      'ご注文ありがとうございます': 'Thank you for your order', '注文番号': 'Order number', '続けて別の注文をする': 'Place another order',
+      'ご注文画面に戻る': 'Back to order page', '商品・注文はこちら': 'Order Kobe Beef', '活動記録は準備中です。内容が決まりしだい掲載します。': 'Our story is coming soon.',
+      'NATURE KOBE 活動記録': 'The NATURE KOBE Journal', '但馬牛・神戸ビーフ　生産者の現場から': 'Notes from the farmers behind Kobe Beef',
+      'スライス': 'Thin-sliced', '焼き肉': 'Yakiniku (BBQ)', 'ステーキ': 'Steak', 'その他': 'Other cuts',
+      '赤身': 'Lean', '霜降り': 'Marbled', '赤身（特上）': 'Lean · Premium', '赤身（上）': 'Lean · Select', '赤身（並）': 'Lean · Standard', '霜降り（特上）': 'Marbled · Premium', '霜降り（上）': 'Marbled · Select', '霜降り（並）': 'Marbled · Standard',
+      '切り落とし': 'Trimmings', 'スジ肉': 'Tendon (for stew)', 'テール': 'Oxtail',
+      '【赤身】ランプ': 'Rump (lean)', '【赤身】イチボ': 'Top sirloin cap (lean)', '【赤身】ウチヒラ': 'Top round (lean)', '【霜降り】ヒウチ': 'Tri-tip (marbled)', '【霜降り】カイノミ': 'Flap (marbled)', '【赤身】ソトヒラ': 'Bottom round (lean)', '【赤身】カメノコ': 'Knuckle (lean)',
+      'お肉は100g単位（300g以上）で選んでください': 'Please choose in 100 g steps (300 g minimum)', '住所を入力しました。番地・建物名を続けて入力してください': 'Address filled in. Please add the street number and building.', 'コピーしました': 'Copied',
+      'PH:例）神戸 花子': 'e.g. Emma Smith', 'PH:example@mail.com': 'name@example.com', 'PH:090-1234-5678': '090-1234-5678 or +1 …', 'PH:123-4567': '123-4567', 'PH:都道府県から建物名・部屋番号まで': 'Hotel / street address in Japan, incl. room number', 'PH:例）月曜か火曜に届くと助かります／すき焼き用に': 'e.g. Deliver to hotel front desk by Friday', 'PH:例）株式会社〇〇': 'e.g. Company name',
+    },
+    'zh-CN': {
+      'NATURE KOBEとは': '什么是 NATURE KOBE', 'なぜNATURE KOBEが必要なのか': '为什么需要 NATURE KOBE', '私たち3人': '我们三个人', '活動の記録': '活动记录', '準備中': '准备中',
+      '但馬牛・神戸ビーフ ご注文': '正宗神户牛 · 牧场直送预订', '活動記録': '牧场故事', '📰 活動記録を見る': '📰 看看我们的牧场故事',
+      'ご参加の皆さま限定': '限本次活动来宾', 'ネットでのご注文': '网上订购', '🛒 ネット販売　※お振込みでのご注文': '🛒 网上商店 · 银行转账付款',
+      '商品を選ぶ': '选择部位', 'お客様情報': '填写信息', '確認': '确认订单',
+      '＋ 追加': '＋ 加入', '＋ 別の量でも追加': '＋ 再加一份不同分量', '次へ': '下一步', '戻る': '上一步', '確認へ': '去确认', '注文する': '提交订单', '送信中…': '提交中…', '削除': '删除',
+      '商品を変更': '修改商品', 'お客様情報を変更': '修改信息', '住所を自動入力': '自动填写地址', '商品を選んでください': '请先选择商品', '税込': '含税', '（税込）': '（含税）',
+      '必須': '必填', '任意': '选填', 'ご注文者さま': '订购人', 'お名前': '姓名', 'メールアドレス': '电子邮箱', '電話番号': '手机号码', '郵便番号': '邮政编码', 'ご住所': '日本国内收货地址',
+      'ご注文確認・発送のご連絡をお送りします': '订单确认和发货通知将发送到此邮箱',
+      'お届け先': '收货地址', 'ご注文者さまと別の住所に送る（ギフトなど）': '寄到其他地址（送礼、酒店等）', '上のご住所にお届けします': '将寄到上方地址',
+      'お届け先のお名前': '收件人姓名', 'お届け先の電話番号': '收件人电话', 'お届け先の郵便番号': '收件人邮编', 'お届け先のご住所': '收件人地址',
+      'ご希望の保存状態': '配送方式', '冷凍': '冷冻', '冷蔵': '冷藏', 'お支払い方法': '付款方式', '現金': '现金', '銀行振込': '银行转账', 'クレジットカード': '信用卡',
+      '現金はこの場でスタッフにお支払いください。お支払いを確認後、領収書をメールでお送りします。': '选择现金，请当场交给工作人员。确认收款后，收据将以邮件发送。',
+      '銀行振込を選んだ場合は、ご注文後に振込先をメールでご案内します。ご注文から7日以内にお振込みください。期限を過ぎた場合はキャンセル扱いとさせていただきます。': '选择银行转账，下单后我们会邮件告知账户信息。请在7天内完成转账，逾期订单将自动取消。',
+      '領収書': '收据', '領収書が必要': '需要收据', '宛名': '收据抬头', '空欄ならお名前で発行します': '留空则使用您的姓名', '備考': '备注',
+      'ご注文内容': '订单内容', '小計（税抜）': '小计（不含税）', '送料': '运费', '合計（税込）': '合计（含税）', '保存状態': '配送方式', 'お支払い': '付款', 'メール': '邮箱', '電話': '电话', '不要': '不需要', 'ご住所と同じ': '与上方地址相同',
+      '価格変動': '时价', '※価格変動の商品は、確定額が変わる場合があります。確定しましたらメールでご連絡します。': '※ 时价商品的最终金额可能略有变动，确定后将以邮件通知。',
+      'ご注文ありがとうございます': '感谢您的订购', '注文番号': '订单编号', '続けて別の注文をする': '再下一单',
+      'ご注文画面に戻る': '返回订购页面', '商品・注文はこちら': '预订神户牛', '活動記録は準備中です。内容が決まりしだい掲載します。': '牧场故事正在准备中，敬请期待。',
+      'NATURE KOBE 活動記録': 'NATURE KOBE 牧场纪事', '但馬牛・神戸ビーフ　生産者の現場から': '来自神户牛生产者的第一现场',
+      'スライス': '薄切片（火锅・寿喜烧）', '焼き肉': '烤肉片', 'ステーキ': '牛排', 'その他': '其他部位',
+      '赤身': '瘦肉', '霜降り': '雪花', '赤身（特上）': '瘦肉（特上）', '赤身（上）': '瘦肉（上）', '赤身（並）': '瘦肉（标准）', '霜降り（特上）': '雪花（特上）', '霜降り（上）': '雪花（上）', '霜降り（並）': '雪花（标准）',
+      '切り落とし': '碎切肉', 'スジ肉': '牛筋肉（炖煮用）', 'テール': '牛尾',
+      '【赤身】ランプ': '臀肉（瘦）', '【赤身】イチボ': '臀腰肉盖（瘦）', '【赤身】ウチヒラ': '内腿肉（瘦）', '【霜降り】ヒウチ': '三角肉（雪花）', '【霜降り】カイノミ': '腹肉心（雪花）', '【赤身】ソトヒラ': '外腿肉（瘦）', '【赤身】カメノコ': '和尚头（瘦）',
+      'お肉は100g単位（300g以上）で選んでください': '请以100g为单位选择（300g起）', '住所を入力しました。番地・建物名を続けて入力してください': '地址已填写，请补充门牌号和楼名', 'コピーしました': '已复制',
+      'PH:例）神戸 花子': '例：王小明', 'PH:example@mail.com': 'name@example.com', 'PH:090-1234-5678': '090-1234-5678 或 +86 …', 'PH:123-4567': '123-4567', 'PH:都道府県から建物名・部屋番号まで': '日本国内的酒店或住址，含房间号', 'PH:例）月曜か火曜に届くと助かります／すき焼き用に': '例：请周五前送到酒店前台', 'PH:例）株式会社〇〇': '例：公司名称',
+    },
+    'zh-TW': {
+      'NATURE KOBEとは': '什麼是 NATURE KOBE', 'なぜNATURE KOBEが必要なのか': '為什麼需要 NATURE KOBE', '私たち3人': '我們三個人', '活動の記録': '活動紀錄', '準備中': '準備中',
+      '但馬牛・神戸ビーフ ご注文': '正宗神戶牛 · 牧場直送訂購', '活動記録': '牧場故事', '📰 活動記録を見る': '📰 看看我們的牧場故事',
+      'ご参加の皆さま限定': '限本次活動來賓', 'ネットでのご注文': '網路訂購', '🛒 ネット販売　※お振込みでのご注文': '🛒 網路商店 · 銀行轉帳付款',
+      '商品を選ぶ': '選擇部位', 'お客様情報': '填寫資料', '確認': '確認訂單',
+      '＋ 追加': '＋ 加入', '＋ 別の量でも追加': '＋ 再加一份不同份量', '次へ': '下一步', '戻る': '上一步', '確認へ': '前往確認', '注文する': '送出訂單', '送信中…': '送出中…', '削除': '刪除',
+      '商品を変更': '修改商品', 'お客様情報を変更': '修改資料', '住所を自動入力': '自動填入地址', '商品を選んでください': '請先選擇商品', '税込': '含稅', '（税込）': '（含稅）',
+      '必須': '必填', '任意': '選填', 'ご注文者さま': '訂購人', 'お名前': '姓名', 'メールアドレス': '電子郵件', '電話番号': '手機號碼', '郵便番号': '郵遞區號', 'ご住所': '日本國內收件地址',
+      'ご注文確認・発送のご連絡をお送りします': '訂單確認與出貨通知會寄到這個信箱',
+      'お届け先': '收件地址', 'ご注文者さまと別の住所に送る（ギフトなど）': '寄到其他地址（送禮、飯店等）', '上のご住所にお届けします': '將寄到上方地址',
+      'お届け先のお名前': '收件人姓名', 'お届け先の電話番号': '收件人電話', 'お届け先の郵便番号': '收件人郵遞區號', 'お届け先のご住所': '收件人地址',
+      'ご希望の保存状態': '配送方式', '冷凍': '冷凍', '冷蔵': '冷藏', 'お支払い方法': '付款方式', '現金': '現金', '銀行振込': '銀行轉帳', 'クレジットカード': '信用卡',
+      '現金はこの場でスタッフにお支払いください。お支払いを確認後、領収書をメールでお送りします。': '選擇現金，請當場交給工作人員。確認收款後，收據會以 e-mail 寄出。',
+      '銀行振込を選んだ場合は、ご注文後に振込先をメールでご案内します。ご注文から7日以内にお振込みください。期限を過ぎた場合はキャンセル扱いとさせていただきます。': '選擇銀行轉帳，下單後我們會以 e-mail 通知帳戶資訊。請於 7 天內完成轉帳，逾期訂單將自動取消。',
+      '領収書': '收據', '領収書が必要': '需要收據', '宛名': '收據抬頭', '空欄ならお名前で発行します': '留空則使用您的姓名', '備考': '備註',
+      'ご注文内容': '訂單內容', '小計（税抜）': '小計（未稅）', '送料': '運費', '合計（税込）': '合計（含稅）', '保存状態': '配送方式', 'お支払い': '付款', 'メール': '信箱', '電話': '電話', '不要': '不需要', 'ご住所と同じ': '與上方地址相同',
+      '価格変動': '時價', '※価格変動の商品は、確定額が変わる場合があります。確定しましたらメールでご連絡します。': '※ 時價商品的最終金額可能略有變動，確定後會以 e-mail 通知。',
+      'ご注文ありがとうございます': '感謝您的訂購', '注文番号': '訂單編號', '続けて別の注文をする': '再訂一單',
+      'ご注文画面に戻る': '返回訂購頁面', '商品・注文はこちら': '訂購神戶牛', '活動記録は準備中です。内容が決まりしだい掲載します。': '牧場故事正在準備中，敬請期待。',
+      'NATURE KOBE 活動記録': 'NATURE KOBE 牧場紀事', '但馬牛・神戸ビーフ　生産者の現場から': '來自神戶牛生產者的第一現場',
+      'スライス': '薄切片（火鍋・壽喜燒）', '焼き肉': '燒肉片', 'ステーキ': '牛排', 'その他': '其他部位',
+      '赤身': '瘦肉', '霜降り': '霜降', '赤身（特上）': '瘦肉（特上）', '赤身（上）': '瘦肉（上）', '赤身（並）': '瘦肉（標準）', '霜降り（特上）': '霜降（特上）', '霜降り（上）': '霜降（上）', '霜降り（並）': '霜降（標準）',
+      '切り落とし': '碎切肉', 'スジ肉': '牛筋肉（燉煮用）', 'テール': '牛尾',
+      '【赤身】ランプ': '臀肉（瘦）', '【赤身】イチボ': '臀腰肉蓋（瘦）', '【赤身】ウチヒラ': '內腿肉（瘦）', '【霜降り】ヒウチ': '三角肉（霜降）', '【霜降り】カイノミ': '腹肉心（霜降）', '【赤身】ソトヒラ': '外腿肉（瘦）', '【赤身】カメノコ': '和尚頭（瘦）',
+      'お肉は100g単位（300g以上）で選んでください': '請以 100g 為單位選擇（300g 起）', '住所を入力しました。番地・建物名を続けて入力してください': '地址已填入，請補上門牌號與樓名', 'コピーしました': '已複製',
+      'PH:例）神戸 花子': '例：王小明', 'PH:example@mail.com': 'name@example.com', 'PH:090-1234-5678': '090-1234-5678 或 +886 …', 'PH:123-4567': '123-4567', 'PH:都道府県から建物名・部屋番号まで': '日本國內的飯店或住址，含房號', 'PH:例）月曜か火曜に届くと助かります／すき焼き用に': '例：請週五前送到飯店櫃台', 'PH:例）株式会社〇〇': '例：公司名稱',
+    },
+    ko: {
+      'NATURE KOBEとは': 'NATURE KOBE란', 'なぜNATURE KOBEが必要なのか': '왜 NATURE KOBE가 필요한가', '私たち3人': '우리 세 사람', '活動の記録': '활동 기록', '準備中': '준비 중',
+      '但馬牛・神戸ビーフ ご注文': '고베규 · 농장 직송 주문', '活動記録': '농장 이야기', '📰 活動記録を見る': '📰 농장 이야기 보기',
+      'ご参加の皆さま限定': '행사 참가자 전용', 'ネットでのご注文': '온라인 주문', '🛒 ネット販売　※お振込みでのご注文': '🛒 온라인 판매 · 계좌이체 결제',
+      '商品を選ぶ': '부위 선택', 'お客様情報': '주문자 정보', '確認': '주문 확인',
+      '＋ 追加': '＋ 담기', '＋ 別の量でも追加': '＋ 다른 양으로 추가', '次へ': '다음', '戻る': '이전', '確認へ': '확인하기', '注文する': '주문하기', '送信中…': '전송 중…', '削除': '삭제',
+      '商品を変更': '상품 변경', 'お客様情報を変更': '정보 변경', '住所を自動入力': '주소 자동 입력', '商品を選んでください': '상품을 담아 주세요', '税込': '세금 포함', '（税込）': '(세금 포함)',
+      '必須': '필수', '任意': '선택', 'ご注文者さま': '주문자', 'お名前': '성함', 'メールアドレス': '이메일', '電話番号': '전화번호', '郵便番号': '우편번호', 'ご住所': '일본 내 받는 주소',
+      'ご注文確認・発送のご連絡をお送りします': '주문 확인과 배송 안내를 이메일로 보내 드립니다',
+      'お届け先': '배송지', 'ご注文者さまと別の住所に送る（ギフトなど）': '다른 주소로 보내기 (선물, 호텔 등)', '上のご住所にお届けします': '위 주소로 배송합니다',
+      'お届け先のお名前': '받는 분 성함', 'お届け先の電話番号': '받는 분 전화번호', 'お届け先の郵便番号': '받는 분 우편번호', 'お届け先のご住所': '받는 분 주소',
+      'ご希望の保存状態': '배송 상태', '冷凍': '냉동', '冷蔵': '냉장', 'お支払い方法': '결제 방법', '現金': '현금', '銀行振込': '계좌이체', 'クレジットカード': '신용카드',
+      '現金はこの場でスタッフにお支払いください。お支払いを確認後、領収書をメールでお送りします。': '현금은 이 자리에서 직원에게 결제해 주세요. 확인 후 영수증을 이메일로 보내 드립니다.',
+      '銀行振込を選んだ場合は、ご注文後に振込先をメールでご案内します。ご注文から7日以内にお振込みください。期限を過ぎた場合はキャンセル扱いとさせていただきます。': '계좌이체를 선택하시면 주문 후 계좌 정보를 이메일로 안내합니다. 7일 이내에 입금해 주세요. 기한이 지나면 주문이 취소됩니다.',
+      '領収書': '영수증', '領収書が必要': '영수증이 필요합니다', '宛名': '영수증 수신인', '空欄ならお名前で発行します': '비워 두면 성함으로 발행합니다', '備考': '요청 사항',
+      'ご注文内容': '주문 내역', '小計（税抜）': '소계 (세전)', '送料': '배송비', '合計（税込）': '합계 (세금 포함)', '保存状態': '배송 상태', 'お支払い': '결제', 'メール': '이메일', '電話': '전화', '不要': '필요 없음', 'ご住所と同じ': '위 주소와 동일',
+      '価格変動': '시세', '※価格変動の商品は、確定額が変わる場合があります。確定しましたらメールでご連絡します。': '※ 시세 상품은 최종 금액이 조금 달라질 수 있으며, 확정 후 이메일로 안내합니다.',
+      'ご注文ありがとうございます': '주문해 주셔서 감사합니다', '注文番号': '주문 번호', '続けて別の注文をする': '다른 주문 하기',
+      'ご注文画面に戻る': '주문 화면으로', '商品・注文はこちら': '고베규 주문하기', '活動記録は準備中です。内容が決まりしだい掲載します。': '농장 이야기를 준비하고 있습니다.',
+      'NATURE KOBE 活動記録': 'NATURE KOBE 농장 일지', '但馬牛・神戸ビーフ　生産者の現場から': '고베규를 키우는 생산자의 현장에서',
+      'スライス': '슬라이스 (샤부샤부・스키야키)', '焼き肉': '야키니쿠 (구이용)', 'ステーキ': '스테이크', 'その他': '기타 부위',
+      '赤身': '살코기', '霜降り': '마블링', '赤身（特上）': '살코기 (특상)', '赤身（上）': '살코기 (상)', '赤身（並）': '살코기 (일반)', '霜降り（特上）': '마블링 (특상)', '霜降り（上）': '마블링 (상)', '霜降り（並）': '마블링 (일반)',
+      '切り落とし': '자투리 (불고기용)', 'スジ肉': '스지 (국・찜용)', 'テール': '소꼬리',
+      '【赤身】ランプ': '우둔살 (살코기)', '【赤身】イチボ': '보섭살 (살코기)', '【赤身】ウチヒラ': '설도 안쪽 (살코기)', '【霜降り】ヒウチ': '삼각살 (마블링)', '【霜降り】カイノミ': '업진안살 (마블링)', '【赤身】ソトヒラ': '설도 바깥쪽 (살코기)', '【赤身】カメノコ': '도가니살 (살코기)',
+      'お肉は100g単位（300g以上）で選んでください': '100g 단위로 선택해 주세요 (300g 이상)', '住所を入力しました。番地・建物名を続けて入力してください': '주소를 입력했습니다. 번지와 건물명을 이어서 입력해 주세요', 'コピーしました': '복사했습니다',
+      'PH:例）神戸 花子': '예) 김민준', 'PH:example@mail.com': 'name@example.com', 'PH:090-1234-5678': '090-1234-5678 또는 +82 …', 'PH:123-4567': '123-4567', 'PH:都道府県から建物名・部屋番号まで': '일본 내 호텔 또는 주소 (호수까지)', 'PH:例）月曜か火曜に届くと助かります／すき焼き用に': '예) 금요일까지 호텔 프런트로 배송 부탁드립니다', 'PH:例）株式会社〇〇': '예) 회사명',
+    },
+    fr: {
+      'NATURE KOBEとは': 'Qu’est-ce que NATURE KOBE ?', 'なぜNATURE KOBEが必要なのか': 'Pourquoi NATURE KOBE ?', '私たち3人': 'Nous trois', '活動の記録': 'Journal', '準備中': 'Bientôt',
+      '但馬牛・神戸ビーフ ご注文': 'Bœuf de Kobe — en direct de l’éleveur', '活動記録': 'Notre histoire', '📰 活動記録を見る': '📰 Découvrir notre histoire',
+      'ご参加の皆さま限定': 'Réservé aux invités de l’événement', 'ネットでのご注文': 'Commande en ligne', '🛒 ネット販売　※お振込みでのご注文': '🛒 Boutique en ligne · paiement par virement',
+      '商品を選ぶ': 'Vos morceaux', 'お客様情報': 'Vos coordonnées', '確認': 'Récapitulatif',
+      '＋ 追加': '+ Ajouter', '＋ 別の量でも追加': '+ Ajouter une autre quantité', '次へ': 'Continuer', '戻る': 'Retour', '確認へ': 'Vérifier la commande', '注文する': 'Commander', '送信中…': 'Envoi…', '削除': 'Retirer',
+      '商品を変更': 'Modifier les articles', 'お客様情報を変更': 'Modifier les coordonnées', '住所を自動入力': 'Compléter l’adresse', '商品を選んでください': 'Ajoutez un article pour commencer', '税込': 'TTC', '（税込）': '(TTC)',
+      '必須': 'Obligatoire', '任意': 'Facultatif', 'ご注文者さま': 'Vos coordonnées', 'お名前': 'Nom et prénom', 'メールアドレス': 'E-mail', '電話番号': 'Téléphone', '郵便番号': 'Code postal', 'ご住所': 'Adresse (au Japon)',
+      'ご注文確認・発送のご連絡をお送りします': 'Confirmation et suivi d’expédition envoyés par e-mail',
+      'お届け先': 'Livraison', 'ご注文者さまと別の住所に送る（ギフトなど）': 'Livrer à une autre adresse (cadeau, hôtel…)', '上のご住所にお届けします': 'Livraison à l’adresse ci-dessus',
+      'お届け先のお名前': 'Nom du destinataire', 'お届け先の電話番号': 'Téléphone du destinataire', 'お届け先の郵便番号': 'Code postal du destinataire', 'お届け先のご住所': 'Adresse du destinataire',
+      'ご希望の保存状態': 'Mode de livraison', '冷凍': 'Congelé', '冷蔵': 'Frais (réfrigéré)', 'お支払い方法': 'Paiement', '現金': 'Espèces', '銀行振込': 'Virement bancaire', 'クレジットカード': 'Carte bancaire',
+      '現金はこの場でスタッフにお支払いください。お支払いを確認後、領収書をメールでお送りします。': 'En espèces : réglez sur place auprès de notre équipe. Le reçu vous sera envoyé par e-mail après encaissement.',
+      '銀行振込を選んだ場合は、ご注文後に振込先をメールでご案内します。ご注文から7日以内にお振込みください。期限を過ぎた場合はキャンセル扱いとさせていただきます。': 'Par virement : les coordonnées bancaires vous seront envoyées par e-mail après la commande. Merci de régler sous 7 jours ; au-delà, la commande est annulée.',
+      '領収書': 'Reçu', '領収書が必要': 'Je souhaite un reçu', '宛名': 'Nom sur le reçu', '空欄ならお名前で発行します': 'Laissez vide pour utiliser votre nom', '備考': 'Remarques',
+      'ご注文内容': 'Votre commande', '小計（税抜）': 'Sous-total HT', '送料': 'Livraison', '合計（税込）': 'Total TTC', '保存状態': 'Livraison', 'お支払い': 'Paiement', 'メール': 'E-mail', '電話': 'Téléphone', '不要': 'Non', 'ご住所と同じ': 'Même adresse',
+      '価格変動': 'Prix du marché', '※価格変動の商品は、確定額が変わる場合があります。確定しましたらメールでご連絡します。': '* Le prix des articles « prix du marché » peut varier légèrement ; le montant définitif vous sera confirmé par e-mail.',
+      'ご注文ありがとうございます': 'Merci pour votre commande', '注文番号': 'Numéro de commande', '続けて別の注文をする': 'Passer une autre commande',
+      'ご注文画面に戻る': 'Retour à la commande', '商品・注文はこちら': 'Commander du bœuf de Kobe', '活動記録は準備中です。内容が決まりしだい掲載します。': 'Notre histoire arrive bientôt.',
+      'NATURE KOBE 活動記録': 'Le Journal de NATURE KOBE', '但馬牛・神戸ビーフ　生産者の現場から': 'Carnet des éleveurs du bœuf de Kobe',
+      'スライス': 'Tranches fines (fondue, sukiyaki)', '焼き肉': 'Yakiniku (grillades)', 'ステーキ': 'Steak', 'その他': 'Autres morceaux',
+      '赤身': 'Maigre', '霜降り': 'Persillé', '赤身（特上）': 'Maigre · Prestige', '赤身（上）': 'Maigre · Supérieur', '赤身（並）': 'Maigre · Classique', '霜降り（特上）': 'Persillé · Prestige', '霜降り（上）': 'Persillé · Supérieur', '霜降り（並）': 'Persillé · Classique',
+      '切り落とし': 'Chutes (émincé)', 'スジ肉': 'Tendons (à mijoter)', 'テール': 'Queue de bœuf',
+      '【赤身】ランプ': 'Rumsteck (maigre)', '【赤身】イチボ': 'Aiguillette de rumsteck (maigre)', '【赤身】ウチヒラ': 'Tende de tranche (maigre)', '【霜降り】ヒウチ': 'Aiguillette baronne (persillé)', '【霜降り】カイノミ': 'Bavette d’aloyau (persillé)', '【赤身】ソトヒラ': 'Gîte à la noix (maigre)', '【赤身】カメノコ': 'Rond de tranche (maigre)',
+      'お肉は100g単位（300g以上）で選んでください': 'Choisissez par pas de 100 g (300 g minimum)', '住所を入力しました。番地・建物名を続けて入力してください': 'Adresse complétée. Ajoutez le numéro et le bâtiment.', 'コピーしました': 'Copié',
+      'PH:例）神戸 花子': 'ex. Marie Dupont', 'PH:example@mail.com': 'nom@exemple.com', 'PH:090-1234-5678': '090-1234-5678 ou +33 …', 'PH:123-4567': '123-4567', 'PH:都道府県から建物名・部屋番号まで': 'Hôtel ou adresse au Japon, avec n° de chambre', 'PH:例）月曜か火曜に届くと助かります／すき焼き用に': 'ex. Livrer à la réception de l’hôtel avant vendredi', 'PH:例）株式会社〇〇': 'ex. Nom de la société',
+    },
+  },
+  /* 数字・金額が入る文言（正規表現） */
+  rx: {
+    en: [
+      [/^(\d+)年(\d+)月(\d+)日$/, (m, y, mo, d) => `${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][mo - 1]} ${d}, ${y}`],
+      [/^\/ kg（100gあたり (¥[\d,]+)）$/, (m, a) => `/ kg (${a} per 100 g)`],
+      [/^(\d+)点　税抜 (¥[\d,]+)(?:＋送料 (¥[\d,]+))?$/, (m, n, s, sh) => `${n} item${n > 1 ? 's' : ''} · ${s} excl. tax${sh ? ' + shipping ' + sh : ''}`],
+      [/^(¥[\d,]+)以上 → (¥[\d,]+)相当のワイン$/, (m, a, b) => `Spend ${a}+ → complimentary wine worth ${b}`],
+      [/^(🍷 )?あと (¥[\d,]+) で (¥[\d,]+)相当のワイン$/, (m, i, a, b) => `🍷 ${a} more for a complimentary wine worth ${b}`],
+      [/^🍷 (¥[\d,]+)相当のワイン特典の対象です(?:（あと (¥[\d,]+) で (¥[\d,]+)相当のワイン）)?$/, (m, a, b, c) => `🍷 You qualify for wine worth ${a}${b ? ` (${b} more for wine worth ${c})` : ''}`],
+      [/^※送料は1回のご注文につき (¥[\d,]+)（税別）です。$/, (m, a) => `* Shipping within Japan: ${a} per order (excl. tax).`],
+      [/^消費税（お肉 (\d+)%）$/, (m, r) => `Consumption tax (beef ${r}%)`], [/^消費税（送料 (\d+)%）$/, (m, r) => `Consumption tax (shipping ${r}%)`],
+      [/^(.+) 様$/, (m, n) => n], [/^販売者：(.+?)(?:　加工元：(.+))?$/, (m, a, b) => `Sold by ${a}${b ? ' · Processed by ' + b : ''}`],
+      [/^(.+)（この場でお支払い）$/, (m, p) => `${I18N.t(p)} (pay today)`], [/^銀行振込（ご注文後にご案内する口座へお振込み）$/, () => 'Bank transfer (details sent by email)'],
+      [/^必要（宛名：(.+) 様）$/, (m, n) => `Yes (name: ${n})`], [/^次の項目を入力してください：(.+)$/, (m, l) => `Please fill in: ${l.split('、').map(x => I18N.t(x)).join(', ')}`],
+    ],
+    'zh-CN': [
+      [/^(\d+)年(\d+)月(\d+)日$/, (m, y, mo, d) => `${y}年${mo}月${d}日`],
+      [/^\/ kg（100gあたり (¥[\d,]+)）$/, (m, a) => `/ kg（每100g ${a} 日元）`],
+      [/^(\d+)点　税抜 (¥[\d,]+)(?:＋送料 (¥[\d,]+))?$/, (m, n, s, sh) => `${n}件 · 不含税 ${s}${sh ? ' + 运费 ' + sh : ''}（日元）`],
+      [/^(¥[\d,]+)以上 → (¥[\d,]+)相当のワイン$/, (m, a, b) => `消费满 ${a} → 赠价值 ${b} 的葡萄酒`],
+      [/^(🍷 )?あと (¥[\d,]+) で (¥[\d,]+)相当のワイン$/, (m, i, a, b) => `🍷 再买 ${a} 即可获赠价值 ${b} 的葡萄酒`],
+      [/^🍷 (¥[\d,]+)相当のワイン特典の対象です(?:（あと (¥[\d,]+) で (¥[\d,]+)相当のワイン）)?$/, (m, a, b, c) => `🍷 已获赠价值 ${a} 的葡萄酒${b ? `（再买 ${b} 可升级为 ${c}）` : ''}`],
+      [/^※送料は1回のご注文につき (¥[\d,]+)（税別）です。$/, (m, a) => `※ 日本国内运费每单 ${a}（不含税）。价格均为日元。`],
+      [/^消費税（お肉 (\d+)%）$/, (m, r) => `消费税（牛肉 ${r}%）`], [/^消費税（送料 (\d+)%）$/, (m, r) => `消费税（运费 ${r}%）`],
+      [/^(.+) 様$/, (m, n) => `${n} 先生/女士`], [/^販売者：(.+?)(?:　加工元：(.+))?$/, (m, a, b) => `销售方：${a}${b ? '　加工方：' + b : ''}`],
+      [/^(.+)（この場でお支払い）$/, (m, p) => `${I18N.t(p)}（当场支付）`], [/^銀行振込（ご注文後にご案内する口座へお振込み）$/, () => '银行转账（账户信息邮件告知）'],
+      [/^必要（宛名：(.+) 様）$/, (m, n) => `需要（抬头：${n}）`], [/^次の項目を入力してください：(.+)$/, (m, l) => `请填写：${l.split('、').map(x => I18N.t(x)).join('、')}`],
+    ],
+    'zh-TW': [
+      [/^(\d+)年(\d+)月(\d+)日$/, (m, y, mo, d) => `${y}年${mo}月${d}日`],
+      [/^\/ kg（100gあたり (¥[\d,]+)）$/, (m, a) => `/ kg（每100g ${a} 日圓）`],
+      [/^(\d+)点　税抜 (¥[\d,]+)(?:＋送料 (¥[\d,]+))?$/, (m, n, s, sh) => `${n}件 · 未稅 ${s}${sh ? ' + 運費 ' + sh : ''}（日圓）`],
+      [/^(¥[\d,]+)以上 → (¥[\d,]+)相当のワイン$/, (m, a, b) => `消費滿 ${a} → 贈價值 ${b} 的葡萄酒`],
+      [/^(🍷 )?あと (¥[\d,]+) で (¥[\d,]+)相当のワイン$/, (m, i, a, b) => `🍷 再買 ${a} 即可獲贈價值 ${b} 的葡萄酒`],
+      [/^🍷 (¥[\d,]+)相当のワイン特典の対象です(?:（あと (¥[\d,]+) で (¥[\d,]+)相当のワイン）)?$/, (m, a, b, c) => `🍷 已獲贈價值 ${a} 的葡萄酒${b ? `（再買 ${b} 可升級為 ${c}）` : ''}`],
+      [/^※送料は1回のご注文につき (¥[\d,]+)（税別）です。$/, (m, a) => `※ 日本國內運費每單 ${a}（未稅）。價格均為日圓。`],
+      [/^消費税（お肉 (\d+)%）$/, (m, r) => `消費稅（牛肉 ${r}%）`], [/^消費税（送料 (\d+)%）$/, (m, r) => `消費稅（運費 ${r}%）`],
+      [/^(.+) 様$/, (m, n) => `${n} 先生/小姐`], [/^販売者：(.+?)(?:　加工元：(.+))?$/, (m, a, b) => `銷售方：${a}${b ? '　加工方：' + b : ''}`],
+      [/^(.+)（この場でお支払い）$/, (m, p) => `${I18N.t(p)}（當場付款）`], [/^銀行振込（ご注文後にご案内する口座へお振込み）$/, () => '銀行轉帳（帳戶資訊以 e-mail 通知）'],
+      [/^必要（宛名：(.+) 様）$/, (m, n) => `需要（抬頭：${n}）`], [/^次の項目を入力してください：(.+)$/, (m, l) => `請填寫：${l.split('、').map(x => I18N.t(x)).join('、')}`],
+    ],
+    ko: [
+      [/^(\d+)年(\d+)月(\d+)日$/, (m, y, mo, d) => `${y}년 ${mo}월 ${d}일`],
+      [/^\/ kg（100gあたり (¥[\d,]+)）$/, (m, a) => `/ kg (100g당 ${a})`],
+      [/^(\d+)点　税抜 (¥[\d,]+)(?:＋送料 (¥[\d,]+))?$/, (m, n, s, sh) => `${n}개 · 세전 ${s}${sh ? ' + 배송비 ' + sh : ''}`],
+      [/^(¥[\d,]+)以上 → (¥[\d,]+)相当のワイン$/, (m, a, b) => `${a} 이상 구매 → ${b} 상당 와인 증정`],
+      [/^(🍷 )?あと (¥[\d,]+) で (¥[\d,]+)相当のワイン$/, (m, i, a, b) => `🍷 ${a} 더 담으면 ${b} 상당 와인 증정`],
+      [/^🍷 (¥[\d,]+)相当のワイン特典の対象です(?:（あと (¥[\d,]+) で (¥[\d,]+)相当のワイン）)?$/, (m, a, b, c) => `🍷 ${a} 상당 와인 증정 대상입니다${b ? ` (${b} 더 담으면 ${c} 상당)` : ''}`],
+      [/^※送料は1回のご注文につき (¥[\d,]+)（税別）です。$/, (m, a) => `※ 일본 내 배송비는 주문당 ${a}(세전)입니다. 가격은 일본 엔(¥)입니다.`],
+      [/^消費税（お肉 (\d+)%）$/, (m, r) => `소비세 (고기 ${r}%)`], [/^消費税（送料 (\d+)%）$/, (m, r) => `소비세 (배송비 ${r}%)`],
+      [/^(.+) 様$/, (m, n) => `${n} 님`], [/^販売者：(.+?)(?:　加工元：(.+))?$/, (m, a, b) => `판매자: ${a}${b ? ' · 가공: ' + b : ''}`],
+      [/^(.+)（この場でお支払い）$/, (m, p) => `${I18N.t(p)} (현장 결제)`], [/^銀行振込（ご注文後にご案内する口座へお振込み）$/, () => '계좌이체 (주문 후 이메일로 계좌 안내)'],
+      [/^必要（宛名：(.+) 様）$/, (m, n) => `필요 (수신인: ${n})`], [/^次の項目を入力してください：(.+)$/, (m, l) => `다음 항목을 입력해 주세요: ${l.split('、').map(x => I18N.t(x)).join(', ')}`],
+    ],
+    fr: [
+      [/^(\d+)年(\d+)月(\d+)日$/, (m, y, mo, d) => `${d} ${['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'][mo - 1]} ${y}`],
+      [/^\/ kg（100gあたり (¥[\d,]+)）$/, (m, a) => `/ kg (${a} les 100 g)`],
+      [/^(\d+)点　税抜 (¥[\d,]+)(?:＋送料 (¥[\d,]+))?$/, (m, n, s, sh) => `${n} article${n > 1 ? 's' : ''} · ${s} HT${sh ? ' + livraison ' + sh : ''}`],
+      [/^(¥[\d,]+)以上 → (¥[\d,]+)相当のワイン$/, (m, a, b) => `Dès ${a} d’achat → une bouteille de vin offerte (valeur ${b})`],
+      [/^(🍷 )?あと (¥[\d,]+) で (¥[\d,]+)相当のワイン$/, (m, i, a, b) => `🍷 Plus que ${a} pour un vin offert (valeur ${b})`],
+      [/^🍷 (¥[\d,]+)相当のワイン特典の対象です(?:（あと (¥[\d,]+) で (¥[\d,]+)相当のワイン）)?$/, (m, a, b, c) => `🍷 Un vin offert (valeur ${a})${b ? ` — plus que ${b} pour la valeur ${c}` : ''}`],
+      [/^※送料は1回のご注文につき (¥[\d,]+)（税別）です。$/, (m, a) => `* Livraison au Japon : ${a} HT par commande. Prix en yens japonais.`],
+      [/^消費税（お肉 (\d+)%）$/, (m, r) => `TVA (viande ${r} %)`], [/^消費税（送料 (\d+)%）$/, (m, r) => `TVA (livraison ${r} %)`],
+      [/^(.+) 様$/, (m, n) => n], [/^販売者：(.+?)(?:　加工元：(.+))?$/, (m, a, b) => `Vendu par ${a}${b ? ' · Préparé par ' + b : ''}`],
+      [/^(.+)（この場でお支払い）$/, (m, p) => `${I18N.t(p)} (sur place)`], [/^銀行振込（ご注文後にご案内する口座へお振込み）$/, () => 'Virement (coordonnées envoyées par e-mail)'],
+      [/^必要（宛名：(.+) 様）$/, (m, n) => `Oui (au nom de ${n})`], [/^次の項目を入力してください：(.+)$/, (m, l) => `Merci de renseigner : ${l.split('、').map(x => I18N.t(x)).join(', ')}`],
+    ],
+  },
+  /* data-i18n を付けた要素の中身（HTML可。{0}{1}… に元の <b data-v> の中身が入る） */
+  html: {
+    en: {
+      intro: 'Choose a weight and quantity — the price updates automatically. Prices are <b>per kg, excl. tax, in Japanese yen (¥)</b>.<br>Beef is sold in <b>100 g steps from 300 g</b>. Delivery is within Japan only (your hotel works too).',
+      perks: '<b>🍷 Wine gift</b> — complimentary wine when your beef subtotal (excl. tax) reaches:',
+      perksNote: 'Wine is handed over at the shop after your order has shipped.',
+      varNote: 'Items marked <span class="var">Market price</span> may vary with the cut and supply; we confirm the final amount by email.',
+      netPay: '<b>Bank transfer only.</b> Account details follow by email. Please transfer within 7 days of ordering.',
+      doneMail: 'A confirmation email is on its way to <b>{0}</b>.<br>We will email you the tracking number when your beef ships.',
+      payNet: 'Please transfer the total to the account below <b>within 7 days</b> (by {0}).<br>We prepare your shipment as soon as payment arrives.',
+      payBank: 'Please transfer <b>within 3 days</b>; payments within 7 days are still accepted, after which the order is cancelled.<br>Your receipt is emailed once payment is confirmed.',
+      payCash: 'Please show this screen to our staff and pay by <b>{0}</b>.<br>Your receipt is emailed once payment is confirmed.',
+      closed: '<p class="b">Ordering for this event has closed.</p><p class="mut sm">Please ask a member of our staff if you have any questions.</p>',
+    },
+    'zh-CN': {
+      intro: '选择分量和份数，金额会自动计算。价格为<b>每公斤・不含税・日元（¥）</b>。<br>牛肉以 <b>100g 为单位，300g 起</b>订购。仅限日本国内配送（可寄到酒店）。',
+      perks: '<b>🍷 购物好礼</b> — 牛肉小计（不含税）达到以下金额，赠葡萄酒：',
+      perksNote: '葡萄酒在订单发货后，于店内领取。',
+      varNote: '标有<span class="var">时价</span>的商品，价格可能因部位和进货情况变动，最终金额以邮件确认。',
+      netPay: '<b>仅限银行转账。</b>账户信息将以邮件告知，请在下单后 7 天内转账。',
+      doneMail: '订单确认邮件将发送至 <b>{0}</b>。<br>发货时会以邮件通知快递单号。',
+      payNet: '请在<b>下单后 7 天内</b>（{0} 之前）转账到以下账户。<br>确认到账后即安排发货。',
+      payBank: '请在<b>3 天内</b>转账；7 天内到账仍可受理，逾期订单将取消。<br>确认到账后，收据以邮件发送。',
+      payCash: '请向工作人员出示此页面，并以<b>{0}</b>付款。<br>确认收款后，收据以邮件发送。',
+      closed: '<p class="b">本次活动的订购已结束。</p><p class="mut sm">如有疑问，请询问现场工作人员。</p>',
+    },
+    'zh-TW': {
+      intro: '選擇份量與數量，金額會自動計算。價格為<b>每公斤・未稅・日圓（¥）</b>。<br>牛肉以 <b>100g 為單位，300g 起</b>訂購。僅限日本國內配送（可寄到飯店）。',
+      perks: '<b>🍷 購物好禮</b> — 牛肉小計（未稅）達以下金額，贈葡萄酒：',
+      perksNote: '葡萄酒於訂單出貨後，在店內領取。',
+      varNote: '標有<span class="var">時價</span>的商品，價格可能因部位與進貨狀況變動，最終金額以 e-mail 確認。',
+      netPay: '<b>僅限銀行轉帳。</b>帳戶資訊將以 e-mail 通知，請於下單後 7 天內轉帳。',
+      doneMail: '訂單確認信將寄至 <b>{0}</b>。<br>出貨時會以 e-mail 通知貨運單號。',
+      payNet: '請於<b>下單後 7 天內</b>（{0} 前）轉帳至以下帳戶。<br>確認入帳後即安排出貨。',
+      payBank: '請於<b>3 天內</b>轉帳；7 天內入帳仍可受理，逾期訂單將取消。<br>確認入帳後，收據以 e-mail 寄出。',
+      payCash: '請向工作人員出示此畫面，並以<b>{0}</b>付款。<br>確認收款後，收據以 e-mail 寄出。',
+      closed: '<p class="b">本次活動的訂購已結束。</p><p class="mut sm">如有疑問，請洽現場工作人員。</p>',
+    },
+    ko: {
+      intro: '양과 개수를 선택하면 금액이 자동으로 계산됩니다. 가격은 <b>1kg당 · 세전 · 일본 엔(¥)</b>입니다.<br>고기는 <b>300g부터 100g 단위</b>로 선택할 수 있습니다. 배송은 일본 국내만 가능합니다 (호텔 배송 가능).',
+      perks: '<b>🍷 와인 증정</b> — 고기 소계(세전)가 아래 금액에 도달하면 와인을 드립니다:',
+      perksNote: '와인은 발송 완료 후 매장에서 전달합니다.',
+      varNote: '<span class="var">시세</span> 표시 상품은 부위・입고 상황에 따라 가격이 달라질 수 있으며, 확정 금액은 이메일로 안내합니다.',
+      netPay: '<b>계좌이체만 가능합니다.</b> 계좌 정보는 이메일로 안내하며, 주문 후 7일 이내에 입금해 주세요.',
+      doneMail: '주문 확인 메일을 <b>{0}</b> 으로 보내 드립니다.<br>발송 시 운송장 번호를 이메일로 안내합니다.',
+      payNet: '아래 계좌로 <b>주문 후 7일 이내</b>({0}까지) 입금해 주세요.<br>입금 확인 후 바로 발송을 준비합니다.',
+      payBank: '<b>3일 이내</b> 입금을 부탁드립니다. 7일 이내 입금도 접수되며, 이후에는 주문이 취소됩니다.<br>입금 확인 후 영수증을 이메일로 보내 드립니다.',
+      payCash: '이 화면을 직원에게 보여 주시고 <b>{0}</b>으로 결제해 주세요.<br>결제 확인 후 영수증을 이메일로 보내 드립니다.',
+      closed: '<p class="b">이 행사의 주문 접수가 마감되었습니다.</p><p class="mut sm">궁금한 점은 직원에게 문의해 주세요.</p>',
+    },
+    fr: {
+      intro: 'Choisissez le poids et la quantité : le prix se calcule automatiquement. Prix <b>au kilo, HT, en yens japonais (¥)</b>.<br>La viande se commande <b>par pas de 100 g, à partir de 300 g</b>. Livraison au Japon uniquement (votre hôtel convient).',
+      perks: '<b>🍷 Vin offert</b> — une bouteille vous est offerte dès que votre sous-total viande (HT) atteint :',
+      perksNote: 'Le vin vous est remis à la boutique après l’expédition de la commande.',
+      varNote: 'Les articles <span class="var">Prix du marché</span> peuvent varier selon le morceau et l’arrivage ; le montant définitif est confirmé par e-mail.',
+      netPay: '<b>Paiement par virement uniquement.</b> Les coordonnées bancaires suivent par e-mail ; merci de régler sous 7 jours.',
+      doneMail: 'Un e-mail de confirmation part vers <b>{0}</b>.<br>Le numéro de suivi vous sera envoyé à l’expédition.',
+      payNet: 'Merci de virer le montant sur le compte ci-dessous <b>sous 7 jours</b> (avant le {0}).<br>Nous préparons l’envoi dès réception du paiement.',
+      payBank: 'Merci de régler <b>sous 3 jours</b> ; un virement sous 7 jours reste accepté, au-delà la commande est annulée.<br>Le reçu vous est envoyé par e-mail après réception.',
+      payCash: 'Présentez cet écran à notre équipe et réglez en <b>{0}</b>.<br>Le reçu vous est envoyé par e-mail après encaissement.',
+      closed: '<p class="b">Les commandes pour cet événement sont closes.</p><p class="mut sm">N’hésitez pas à interroger notre équipe.</p>',
+    },
+  },
+  init() { this.lang = this.get(); document.documentElement.lang = this.lang; },
+  get() { const l = ls.get('nk-lang'); return LANGS.some(x => x[0] === l) ? l : 'ja'; },
+  set(l) { this.lang = l; ls.set('nk-lang', l); document.documentElement.lang = l; this.apply(); render_lang_bar(); },
+  /* 1行の文言を翻訳。訳がなければ null */
+  t(src) {
+    if (this.lang === 'ja') return null;
+    const d = this.dict[this.lang] || {}, rx = this.rx[this.lang] || [];
+    const s = String(src).trim(); if (!s) return null;
+    if (s in d) return d[s];
+    for (const [re, fn] of rx) { const m = s.match(re); if (m) return fn(...m); }
+    // 「1. 商品を選ぶ」「スライス 赤身」のように、部分ごとに訳があるときは全部そろえば訳す
+    const parts = s.split(/(\s+)/); if (parts.length > 1) { const out = parts.map(p => /^\s+$/.test(p) || /^\d+\.$/.test(p) ? p : (d[p] ?? null)); if (!out.includes(null)) return out.join(''); }
+    return null;
+  },
+  apply() {
+    const root = document.getElementById('app'); if (!root) return;
+    this._orig = this._orig || new WeakMap();
+    // data-i18n 要素（中身を丸ごと）
+    root.querySelectorAll('[data-i18n]').forEach(el => {
+      if (!this._orig.has(el)) this._orig.set(el, el.innerHTML);
+      const o = this._orig.get(el), tpl = (this.html[this.lang] || {})[el.dataset.i18n];
+      if (!tpl) { if (el.innerHTML !== o) el.innerHTML = o; return; }
+      const tmp = document.createElement('div'); tmp.innerHTML = o; const vs = [...tmp.querySelectorAll('[data-v]')].map(v => { const t = this.t(v.textContent); return t == null ? v.innerHTML : h(t); });
+      el.innerHTML = tpl.replace(/\{(\d+)\}/g, (m, i) => vs[+i] ?? '');
+    });
+    // テキストノード
+    const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT), nodes = [];
+    while (w.nextNode()) { const n = w.currentNode; if (!n.parentElement.closest('[data-i18n]')) nodes.push(n); }
+    nodes.forEach(n => {
+      if (!this._orig.has(n)) this._orig.set(n, n.nodeValue);
+      const src = this._orig.get(n), tr = this.t(src);
+      n.nodeValue = tr == null ? src : src.replace(src.trim(), tr);
+    });
+    // placeholder
+    root.querySelectorAll('[placeholder]').forEach(el => {
+      if (!this._orig.has(el)) this._orig.set(el, el.placeholder);
+      const o = this._orig.get(el), d = this.dict[this.lang] || {};
+      el.placeholder = ('PH:' + o) in d ? d['PH:' + o] : o;
+    });
+  },
+};
+function langButtons() { return LANGS.map(([c, n]) => `<button type="button" class="${I18N.lang === c ? 'on' : ''}" onclick="I18N.set('${c}')">${n}</button>`).join(''); }
+function render_lang_bar() { const el = document.getElementById('langbar'); if (el) el.innerHTML = langButtons(); }
+function langBar() { return `<div class="langbar" id="langbar">${langButtons()}</div>`; }
+
+/* ===================================================================
+   活動記録ページ（名刺代わりのページ）
+   構成：NATURE KOBEとは（定義）／なぜ必要か／3人のプロフィール／活動記録
+   文章と写真は栗原さん・牛尾さんの確認後に入れます。空のところは「準備中」と出ます。
+   ABOUT.definition / ABOUT.why … 本文（改行はそのまま）。各言語は ABOUT.i18n[lang] に同じ形で入れる
+   ABOUT.members … { name, role, photo, bio }
+   ACTIVITY_ITEMS … { date:'2026.10.25', title:'見出し', body:'本文', photo:'img/xxx.jpg' }
+   =================================================================== */
+const ABOUT = { definition: '', why: '', members: [], i18n: {} };
+const ACTIVITY_ITEMS = [];
+const Activity = {
+  txt(key) { const o = (ABOUT.i18n[I18N.lang] || {})[key]; return o || ABOUT[key] || ''; },
+  init() {
+    const eid = new URLSearchParams(location.search).get('e') || '';
+    const para = t => t ? `<div class="news-body">${h(t).replace(/\n/g, '<br>')}</div>` : '<p class="news-wait">準備中</p>';
+    const members = ABOUT.members.length
+      ? `<div class="members">${ABOUT.members.map(m => { const tr = ((ABOUT.i18n[I18N.lang] || {}).members || {})[m.name] || {}; return `<div class="member">${m.photo ? `<img src="${h(m.photo)}" alt="${h(m.name)}">` : '<div class="member-ph"></div>'}<div><div class="member-nm">${h(tr.name || m.name)}</div><div class="member-role">${h(tr.role || m.role || '')}</div><div class="news-body">${h(tr.bio || m.bio || '').replace(/\n/g, '<br>')}</div></div></div>`; }).join('')}</div>`
+      : '<p class="news-wait">準備中</p>';
+    const items = ACTIVITY_ITEMS.length
+      ? `<div class="news-grid">${ACTIVITY_ITEMS.map(a => `<article class="news-item">${a.photo ? `<img src="${h(a.photo)}" alt="${h(a.title)}" loading="lazy">` : ''}<div class="news-date">${h(a.date || '')}</div><h2 class="news-h">${h(a.title)}</h2><div class="news-body">${h(a.body).replace(/\n/g, '<br>')}</div></article>`).join('')}</div>`
+      : '<p class="news-wait">準備中</p>';
+    $('#app').innerHTML = `<div class="brand"><div class="logo">NATURE <span>KOBE</span></div><div class="sub">活動記録</div></div>
+      <div class="wrap">${langBar()}
+      <div class="news-mast"><div class="news-title">NATURE KOBE 活動記録</div><div class="news-sub">但馬牛・神戸ビーフ　生産者の現場から</div></div>
+      <section class="news-sec"><h2 class="news-sech">NATURE KOBEとは</h2>${para(this.txt('definition'))}</section>
+      <section class="news-sec"><h2 class="news-sech">なぜNATURE KOBEが必要なのか</h2>${para(this.txt('why'))}</section>
+      <section class="news-sec"><h2 class="news-sech">私たち3人</h2>${members}</section>
+      <section class="news-sec"><h2 class="news-sech">活動の記録</h2>${items}</section>
+      ${eid ? `<p style="text-align:center;margin:22px 0"><a class="btn pri" href="?e=${encodeURIComponent(eid)}">商品・注文はこちら</a></p>` : ''}</div>`;
+    I18N.apply();
+  },
+};
+
 /* ===== ルーティング ===== */
 function route() {
   const q = new URLSearchParams(location.search);
+  I18N.init();
+  if (q.get('page') === 'activity') return Activity.init();
   if (q.get('e')) return Customer.init(q.get('e'));
   const hs = location.hash.slice(1);
   if (hs.startsWith('shop')) return Shop.init();
@@ -441,14 +824,15 @@ const Customer = {
     const taxFood = Math.floor(sub * rate / 100), taxShip = Math.floor(ship * srate / 100), tax = taxFood + taxShip;
     return { sub, ship, rate, srate, taxFood, taxShip, tax, total: sub + ship + tax, count: its.length, variable: its.some(i => i.p.variable) };
   },
-  render() {
+  render() { this._render(); I18N.apply(); },
+  _render() {
     document.body.classList.toggle('net', !!this.C.ev.net);
     const C = this.C;
     const steps = ['商品を選ぶ', 'お客様情報', '確認'];
     let body = '';
     if (C.step === 4) return this.renderDone();
     if (!C.ev.open) {
-      $('#app').innerHTML = this.head() + `<div class="wrap"><div class="card"><p class="b">このイベントのご注文受付は終了しました。</p><p class="mut sm">ご不明な点はスタッフまでお声がけください。</p></div></div>`;
+      $('#app').innerHTML = this.head() + `<div class="wrap"><div class="card" data-i18n="closed"><p class="b">このイベントのご注文受付は終了しました。</p><p class="mut sm">ご不明な点はスタッフまでお声がけください。</p></div></div>`;
       return;
     }
     if (C.step === 1) body = this.renderItems();
@@ -459,14 +843,14 @@ const Customer = {
   head() {
     const ev = this.C.ev;
     return `${DEMO ? '<div class="demo">プレビュー（デモデータ）：ここでの注文は保存されません</div>' : ''}${ev.net ? '<div class="netbar">🛒 ネット販売　※お振込みでのご注文</div>' : ''}<div class="brand"><div class="logo">NATURE <span>KOBE</span></div><div class="sub">但馬牛・神戸ビーフ ご注文</div></div>
-    <div class="wrap"><h1 class="serif">${h(ev.name)}</h1><div class="mut sm">${h(jdate(ev.date))}${ev.venue ? '　' + h(ev.venue) : ''}　${ev.net ? 'ネットでのご注文' : 'ご参加の皆さま限定'}</div></div>`;
+    <div class="wrap">${langBar()}<p class="news-link"><a href="?page=activity&e=${encodeURIComponent(this.C.eid)}">📰 活動記録を見る</a></p><h1 class="serif">${h(ev.name)}</h1><div class="mut sm"><span>${h(jdate(ev.date))}</span>${ev.venue ? '　' + h(ev.venue) : ''}　<span>${ev.net ? 'ネットでのご注文' : 'ご参加の皆さま限定'}</span></div></div>`;
   },
   renderItems() {
     const C = this.C, cats = [];
     C.products.forEach(p => { if (!cats.includes(p.cat)) cats.push(p.cat); });
-    return `<p class="sm mut" style="margin:12px 0 0">量（g）と個数を選ぶと金額が自動で計算されます。表示価格は<b>税抜・1kgあたり</b>です。<br>お肉はすべて<b>300gパック単位</b>です。多めに欲しいときは個数を増やしてください（例：1.5kg×2）。</p>${parsePerks(C.ev.perks).length ? `<div class="card" style="background:var(--goldl);border-color:#e6d3a8;margin-top:10px"><b>🍷 ご購入特典（税抜のお肉代の合計）</b><div class="sm">${parsePerks(C.ev.perks).map(p => `${yen(p.min)}以上 → ${yen(p.val)}相当のワイン`).join('<br>')}</div><div class="xs mut">ワインは発送完了後、店頭でお渡しします。</div></div>` : ''}` +
+    return `<p class="sm mut" style="margin:12px 0 0" data-i18n="intro">量（g）と個数を選ぶと金額が自動で計算されます。表示価格は<b>税抜・1kgあたり</b>です。<br>お肉は<b>300g以上、100g単位</b>でお選びいただけます。</p>${parsePerks(C.ev.perks).length ? `<div class="card" style="background:var(--goldl);border-color:#e6d3a8;margin-top:10px"><div data-i18n="perks"><b>🍷 ご購入特典（税抜のお肉代の合計）</b></div><div class="sm">${parsePerks(C.ev.perks).map(p => `${yen(p.min)}以上 → ${yen(p.val)}相当のワイン`).join('<br>')}</div><div class="xs mut" data-i18n="perksNote">ワインは発送完了後、店頭でお渡しします。</div></div>` : ''}` +
       cats.map(cat => `<div class="cat"><h3>${h(cat)}</h3>${C.products.filter(p => p.cat === cat).map(p => this.prodHtml(p)).join('')}</div>`).join('') +
-      `<p class="xs mut">${Customer.sellerLine()}<br>${+C.S.shippingFee ? '※送料は1回のご注文につき ' + yen(C.S.shippingFee) + '（税別）です。<br>' : ''}※<span class="var">価格変動</span>の商品は、部位・入荷状況により価格が変わる場合があります。確定額はメールでご連絡します。<br>※${h(C.S.deliveryNote || '')}</p>`;
+      `<p class="xs mut">${Customer.sellerLine()}<br>${+C.S.shippingFee ? '※送料は1回のご注文につき ' + yen(C.S.shippingFee) + '（税別）です。<br>' : ''}<span data-i18n="varNote">※<span class="var">価格変動</span>の商品は、部位・入荷状況により価格が変わる場合があります。確定額はメールでご連絡します。</span><br>※${h(C.S.deliveryNote || '')}</p>`;
   },
   prodHtml(p) {
     const lines = this.C.cart[p.id] || [];
@@ -514,6 +898,7 @@ const Customer = {
     if (tt) tt.innerHTML = `${yen(t.total)}<small> 税込</small>`;
     const pk = $('#bar-perk'); if (pk) pk.textContent = t.count ? perkText(parsePerks(this.C.ev.perks), t.sub) : '';
     if (nb) nb.disabled = !t.count;
+    I18N.apply();
   },
   go(step) {
     if (step === 2 && this.items().some(i => !gOk(i.p, i.g))) { toast('お肉は100g単位（300g以上）で選んでください', true); return; }
@@ -544,7 +929,7 @@ const Customer = {
         ${inp('shipAddress', 'お届け先のご住所')}` : '<p class="hint" style="margin:0">上のご住所にお届けします</p>'}
     </div>
     <div class="card"><h3>ご希望の保存状態<span class="req" style="font-size:11px;color:#fff;background:var(--red);padding:0 6px;border-radius:4px;margin-left:6px;vertical-align:2px">必須</span></h3>${radio('storage', [['冷凍', '冷凍'], ['冷蔵', '冷蔵']])}</div>
-    <div class="card"><h3>お支払い方法<span class="req" style="font-size:11px;color:#fff;background:var(--red);padding:0 6px;border-radius:4px;margin-left:6px;vertical-align:2px">必須</span></h3>${this.C.ev.net ? '<p class="hint" style="margin:0"><b>銀行振込のみ</b>です。ご注文後に振込先をご案内します。ご注文から7日以内にお振込みください。</p>' : radio('payment', [['現金', '現金'], ['振込', '銀行振込']]) + '\n      <p class="hint">現金はこの場でスタッフにお支払いください。お支払いを確認後、領収書をメールでお送りします。</p><p class="hint">銀行振込を選んだ場合は、ご注文後に振込先をメールでご案内します。ご注文から7日以内にお振込みください。期限を過ぎた場合はキャンセル扱いとさせていただきます。</p>'}</div>
+    <div class="card"><h3>お支払い方法<span class="req" style="font-size:11px;color:#fff;background:var(--red);padding:0 6px;border-radius:4px;margin-left:6px;vertical-align:2px">必須</span></h3>${this.C.ev.net ? '<p class="hint" style="margin:0" data-i18n="netPay"><b>銀行振込のみ</b>です。ご注文後に振込先をご案内します。ご注文から7日以内にお振込みください。</p>' : radio('payment', [['現金', '現金'], ['振込', '銀行振込']]) + '\n      <p class="hint">現金はこの場でスタッフにお支払いください。お支払いを確認後、領収書をメールでお送りします。</p><p class="hint">銀行振込を選んだ場合は、ご注文後に振込先をメールでご案内します。ご注文から7日以内にお振込みください。期限を過ぎた場合はキャンセル扱いとさせていただきます。</p>'}</div>
     <div class="card"><h3>領収書</h3>
       <label class="tog"><input type="checkbox" ${f.receipt ? 'checked' : ''} onchange="Customer.setRe('receipt',this.checked)">領収書が必要</label>
       ${f.receipt ? `<label class="f">宛名<span class="opt">空欄ならお名前で発行します</span></label><input class="in" placeholder="例）株式会社〇〇" value="${h(f.receiptTo)}" oninput="Customer.set('receiptTo',this.value)">` : ''}
@@ -614,16 +999,16 @@ const Customer = {
     const dueYmd = new Date(new Date(String(o.createdAt || '').slice(0, 10) + 'T00:00:00+09:00').getTime() + 7 * 864e5 + 9 * 36e5).toISOString().slice(0, 10);
     const bankBox = C.S.bankInfo && o.payment === '振込' ? `<p style="margin:10px 0 0;white-space:pre-wrap;background:#f6f6f2;padding:10px 12px;border-radius:8px;font-size:14px">■お振込先\n${h(C.S.bankInfo)}</p>` : '';
     const payCard = C.ev.net
-      ? `<div class="card"><h3>お支払い</h3><p style="margin:0">下記の口座へ、<b>ご注文から7日以内</b>（${h(jdate(dueYmd))}まで）にお振込みください。<br>ご入金を確認次第、発送の準備をいたします。</p>${bankBox}</div>`
+      ? `<div class="card"><h3>お支払い</h3><p style="margin:0" data-i18n="payNet">下記の口座へ、<b>ご注文から7日以内</b>（<b data-v>${h(jdate(dueYmd))}</b>まで）にお振込みください。<br>ご入金を確認次第、発送の準備をいたします。</p>${bankBox}</div>`
       : o.payment === '振込'
-        ? `<div class="card"><h3>お支払い</h3><p style="margin:0">ご注文から<b>3日以内</b>にお振込みください。<br>3日を過ぎても、<b>7日以内</b>にご入金いただければ受付いたします。<br>7日を過ぎた場合は、キャンセル扱いとさせていただきます。<br>ご入金を確認次第、領収書をメールでお送りします。</p>${bankBox}</div>`
-        : `<div class="card"><h3>お支払い</h3><p style="margin:0">この画面をスタッフにお見せいただき、<b>${h(payLabel(o.payment))}</b>でお支払いください。<br>お支払いを確認後、領収書をメールでお送りします。</p></div>`;
+        ? `<div class="card"><h3>お支払い</h3><p style="margin:0" data-i18n="payBank">ご注文から<b>3日以内</b>にお振込みください。<br>3日を過ぎても、<b>7日以内</b>にご入金いただければ受付いたします。<br>7日を過ぎた場合は、キャンセル扱いとさせていただきます。<br>ご入金を確認次第、領収書をメールでお送りします。</p>${bankBox}</div>`
+        : `<div class="card"><h3>お支払い</h3><p style="margin:0" data-i18n="payCash">この画面をスタッフにお見せいただき、<b data-v>${h(payLabel(o.payment))}</b>でお支払いください。<br>お支払いを確認後、領収書をメールでお送りします。</p></div>`;
     $('#app').innerHTML = this.head() + `<div class="wrap"><div class="card" style="text-align:center;padding:26px 16px">
       <div style="font-size:40px;color:var(--g)">✓</div><h2 style="margin:4px 0">ご注文ありがとうございます</h2>
       <p class="mut sm">注文番号</p><p class="b" style="font-size:20px;margin:0">${h(o.id)}</p>
       <p style="font-size:22px;font-weight:700;margin:12px 0 0">${yen(o.total)} <span class="sm mut">（税込）</span></p></div>
       ${payCard}
-      <div class="card"><p style="margin:0">ご注文の確認メールを <b>${h(o.email)}</b> にお送りします。<br>${h(C.S.deliveryNote || '')}発送の際は伝票番号をメールでお知らせします。</p></div>
+      <div class="card"><p style="margin:0" data-i18n="doneMail">ご注文の確認メールを <b data-v>${h(o.email)}</b> にお送りします。<br>${h(C.S.deliveryNote || '')}発送の際は伝票番号をメールでお知らせします。</p></div>
       <p class="xs mut">${this.sellerLine()}</p><p class="center"><button class="btn block" onclick="location.reload()">続けて別の注文をする</button></p></div>`;
   }
 };
