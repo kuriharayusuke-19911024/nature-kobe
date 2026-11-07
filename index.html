@@ -713,7 +713,7 @@ const I18N = {
   },
   init() { this.lang = this.get(); document.documentElement.lang = this.lang; },
   get() { const l = ls.get('nk-lang'); return LANGS.some(x => x[0] === l) ? l : 'ja'; },
-  set(l) { this.lang = l; ls.set('nk-lang', l); document.documentElement.lang = l; this.apply(); render_lang_bar(); },
+  set(l) { this.lang = l; ls.set('nk-lang', l); document.documentElement.lang = l; if (new URLSearchParams(location.search).get('page') === 'activity') { Activity.init(); return; } this.apply(); render_lang_bar(); },
   /* 1行の文言を翻訳。訳がなければ null */
   t(src) {
     if (this.lang === 'ja') return null;
@@ -838,6 +838,43 @@ const FLYER_TITLES = {
   ko: { 'NATURE KOBEのご紹介': 'NATURE KOBE 소개', 'いのちがつながる7つの循環': '생명이 이어지는 7가지 순환', '但馬牛とは？': '타지마규란?', 'うすながビーフが美味しい理由': '우스나가 비프가 맛있는 이유', '10/25 農と発酵zen × NATURE KOBE 奈良販売会': '10/25 나라 시식 판매회 (Zen과 공동)', '丹波黒大豆枝豆（10/25販売）': '단바 검은콩 에다마메 (10/25 판매)', '丹波黒大枝豆 特別販売': '단바 검은콩 에다마메 특별 판매', 'めぐり米（NATURE RICE）': '메구리 쌀 (NATURE RICE)', 'めぐり米 パッケージ': '메구리 쌀 패키지', 'Wine & Beef': 'Wine & Beef' },
   fr: { 'NATURE KOBEのご紹介': 'Présentation de NATURE KOBE', 'いのちがつながる7つの循環': 'Le cycle du vivant en sept étapes', '但馬牛とは？': 'Qu’est-ce que le bœuf de Tajima ?', 'うすながビーフが美味しい理由': 'Pourquoi le bœuf Usunaga est si bon', '10/25 農と発酵zen × NATURE KOBE 奈良販売会': 'Dégustation-vente du 25 oct. à Nara avec Zen', '丹波黒大豆枝豆（10/25販売）': 'Edamame de soja noir de Tamba (25 oct.)', '丹波黒大枝豆 特別販売': 'Edamame noir de Tamba, vente spéciale', 'めぐり米（NATURE RICE）': 'Riz Meguri (NATURE RICE)', 'めぐり米 パッケージ': 'Emballage du riz Meguri', 'Wine & Beef': 'Wine & Beef' },
 };
+const ACTIVITY_I18N = {
+  en: {
+    '農と発酵zen × NATURE KOBE スペシャルコラボDAY（奈良）': ['Special collaboration day with "Nō to Hakkō Zen" (Nara)', 'We held "Premium Tajima Beef meets Pinot Noir" in three sittings. Tajima Beef that is normally not sold to the public was offered to guests for this one day only. Guests received a wine gift according to the amount purchased, plus Tamba black-soybean edamame grown with Tajima cattle compost.'],
+    '合同会社 NATURE KOBE 設立': ['NATURE KOBE LLC founded', 'Usunaga of Usunaga Farm in Kobe, Ushio (sales) and Kurihara of Tamba Noshō founded the company in Kobe as a sales company for circular agriculture.'],
+    '丹波黒大豆枝豆の販売': ['Tamba black-soybean edamame on sale', 'Tamba black-soybean edamame from Asago, Hyogo, grown with Tajima cattle compost, sold at our events and on the order site. Large beans with deep, rich sweetness.'],
+    'めぐり米（NATURE RICE）': ['Meguri Rice (NATURE RICE)', 'Cattle compost goes back to the paddies, and the rice grown in that soil is delivered as "Meguri Rice". We mill it after your order so it arrives freshly polished.'],
+    '第1回 但馬牛販売会': ['Our first Tajima Beef sale', 'The first Tajima and Kobe Beef sale under the NATURE KOBE name. Guests ordered by scanning a QR code at the venue and had the beef delivered to their homes afterwards — the first use of this system.'],
+  },
+  'zh-CN': {
+    '農と発酵zen × NATURE KOBE スペシャルコラボDAY（奈良）': ['与「农与发酵 Zen」的特别合作日（奈良）', '分三场举办了“极上但马牛×黑皮诺之会”。平时不对外销售的但马牛，仅限当天到场的客人购买。按购买金额赠送葡萄酒，并附赠用但马牛堆肥种植的丹波黑大豆毛豆。'],
+    '合同会社 NATURE KOBE 設立': ['NATURE KOBE 合同会社成立', '神户 Usunaga 牧场的碓永、负责销售的牛尾、丹波农商的栗原三人，在神户成立了循环型农业的销售公司。'],
+    '丹波黒大豆枝豆の販売': ['丹波黑大豆毛豆销售', '用但马牛堆肥种植的兵库县朝来市产丹波黑大豆毛豆，在销售会和订购网站销售。颗粒大，味道浓郁香甜。'],
+    'めぐり米（NATURE RICE）': ['循环米（NATURE RICE）', '把牛的堆肥还给稻田，用那片土地种出的大米以“循环米”的名义送到您手中。接到订单后才碾米，新鲜寄出。'],
+    '第1回 但馬牛販売会': ['第一次但马牛销售会', '以 NATURE KOBE 名义举办的第一次但马牛・神户牛销售会。客人在会场扫描二维码下单，之后送货到家——这套系统首次投入使用。'],
+  },
+  'zh-TW': {
+    '農と発酵zen × NATURE KOBE スペシャルコラボDAY（奈良）': ['與「農與發酵 Zen」的特別合作日（奈良）', '分三場舉辦了「極上但馬牛×黑皮諾之會」。平時不對外販售的但馬牛，僅限當天到場的客人購買。依購買金額贈送葡萄酒，並附贈以但馬牛堆肥種植的丹波黑大豆毛豆。'],
+    '合同会社 NATURE KOBE 設立': ['NATURE KOBE 合同會社成立', '神戶 Usunaga 牧場的碓永、負責銷售的牛尾、丹波農商的栗原三人，在神戶成立了循環型農業的銷售公司。'],
+    '丹波黒大豆枝豆の販売': ['丹波黑大豆毛豆販售', '以但馬牛堆肥種植的兵庫縣朝來市產丹波黑大豆毛豆，在銷售會與訂購網站販售。顆粒大，風味濃郁香甜。'],
+    'めぐり米（NATURE RICE）': ['循環米（NATURE RICE）', '把牛的堆肥還給稻田，用那片土地種出的稻米以「循環米」之名送到您手中。接到訂單後才碾米，新鮮寄出。'],
+    '第1回 但馬牛販売会': ['第一次但馬牛販售會', '以 NATURE KOBE 名義舉辦的第一次但馬牛・神戶牛販售會。客人在會場掃描 QR Code 下單，之後宅配到府——這套系統首次啟用。'],
+  },
+  ko: {
+    '農と発酵zen × NATURE KOBE スペシャルコラボDAY（奈良）': ['「농업과 발효 Zen」과의 스페셜 콜라보 데이 (나라)', '"극상 타지마규 × 피노 누아의 모임"을 3부로 열었습니다. 평소 일반 판매하지 않는 타지마규를 이날 방문객에게만 판매했습니다. 구매 금액에 따른 와인 선물과 함께, 타지마규 퇴비로 키운 단바 검은콩 에다마메도 드렸습니다.'],
+    '合同会社 NATURE KOBE 設立': ['합동회사 NATURE KOBE 설립', '고베 우스나가 목장의 우스나가, 판매의 우시오, 단바노쇼의 구리하라 세 사람이 순환형 농업의 판매 회사로 고베에 설립했습니다.'],
+    '丹波黒大豆枝豆の販売': ['단바 검은콩 에다마메 판매', '타지마규 퇴비로 키운 효고현 아사고시산 단바 검은콩 에다마메를 판매회와 주문 사이트에서 판매했습니다. 알이 굵고 깊은 감칠맛과 단맛이 특징입니다.'],
+    'めぐり米（NATURE RICE）': ['메구리 쌀 (NATURE RICE)', '소의 퇴비를 논에 돌려주고 그 흙에서 기른 쌀을 "메구리 쌀"로 전합니다. 주문을 받은 뒤 도정해 갓 찧은 쌀을 보내 드립니다.'],
+    '第1回 但馬牛販売会': ['제1회 타지마규 판매회', 'NATURE KOBE로서 처음 연 타지마규・고베규 판매회. 행사장에서 QR코드로 주문하고 나중에 집으로 배송받는 방식을 처음 사용했습니다.'],
+  },
+  fr: {
+    '農と発酵zen × NATURE KOBE スペシャルコラボDAY（奈良）': ['Journée spéciale avec « Nō to Hakkō Zen » (Nara)', '« Bœuf de Tajima d’exception et pinot noir », en trois services. Du bœuf de Tajima habituellement réservé aux professionnels a été proposé ce jour-là aux seuls invités. Chacun a reçu un vin offert selon le montant de ses achats, ainsi que des edamame de soja noir de Tamba cultivés avec le compost de nos bovins.'],
+    '合同会社 NATURE KOBE 設立': ['Création de NATURE KOBE LLC', 'Usunaga (ferme Usunaga, Kobe), Ushio (vente) et Kurihara (Tamba Noshō) ont fondé à Kobe la société de vente de l’agriculture circulaire.'],
+    '丹波黒大豆枝豆の販売': ['Edamame de soja noir de Tamba', 'Des edamame de soja noir de Tamba (Asago, Hyōgo), cultivés avec le compost de bovins Tajima, vendus lors de nos événements et sur le site de commande. De gros grains, riches et doux.'],
+    'めぐり米（NATURE RICE）': ['Riz Meguri (NATURE RICE)', 'Le compost des bovins retourne aux rizières, et le riz qui y pousse est livré sous le nom de « riz Meguri ». Il est décortiqué après votre commande pour arriver tout juste poli.'],
+    '第1回 但馬牛販売会': ['Première vente de bœuf de Tajima', 'La première vente de bœuf de Tajima et de Kobe sous le nom NATURE KOBE. Les invités ont commandé en scannant un QR code sur place et ont été livrés chez eux ensuite : première utilisation de ce système.'],
+  },
+};
 /* 活動の記録（新しい順） */
 const ACTIVITY_ITEMS = [
   { date: '2026.10.25', title: '農と発酵zen × NATURE KOBE スペシャルコラボDAY（奈良）', body: '「極上但馬牛とピノノワールの会」を3部制で開催しました。普段は一般に販売していない但馬牛を、この日だけ来場された方限定でお求めいただきました。ご購入金額に応じたワインの特典に加え、但馬牛の堆肥で育てた丹波黒大豆枝豆もお渡ししました。', photo: 'img/story/collab-1025.jpg', flyer: 'collab-1025' },
@@ -856,7 +893,7 @@ const Activity = {
       ? `<div class="members">${ABOUT.members.map(m => { const tr = ((ABOUT.i18n[I18N.lang] || {}).members || {})[m.name] || {}; return `<div class="member">${m.photo ? `<img src="${h(m.photo)}" alt="${h(m.name)}">` : '<div class="member-ph">🐂</div>'}<div><div class="member-nm">${h(tr.name || m.name)}</div><div class="member-role">${h(tr.role || m.role || '')}</div><div class="news-body">${h(tr.bio || m.bio || '').replace(/\n/g, '<br>')}</div></div></div>`; }).join('')}</div>`
       : '<p class="news-wait">準備中</p>';
     const items = ACTIVITY_ITEMS.length
-      ? `<div class="news-grid">${ACTIVITY_ITEMS.map(a => `<article class="news-item">${a.photo ? `<img src="${h(a.photo.replace(/\.jpg$/, '-t.jpg'))}" alt="${h(a.title)}" loading="lazy" ${a.flyer ? `onclick="Activity.open('${a.flyer}')"` : ''}>` : ''}<div class="news-date">${h(a.date || '')}</div><h2 class="news-h">${h(a.title)}</h2><div class="news-body">${h(a.body).replace(/\n/g, '<br>')}</div></article>`).join('')}</div>`
+      ? `<div class="news-grid">${ACTIVITY_ITEMS.map(a => { const t = (ACTIVITY_I18N[I18N.lang] || {})[a.title] || [a.title, a.body]; return `<article class="news-item">${a.photo ? `<img src="${h(a.photo.replace(/\.jpg$/, '-t.jpg'))}" alt="${h(t[0])}" loading="lazy" ${a.flyer ? `onclick="Activity.open('${a.flyer}')"` : ''}>` : ''}<div class="news-date">${h(a.date || '')}</div><h2 class="news-h">${h(t[0])}</h2><div class="news-body">${h(t[1]).replace(/\n/g, '<br>')}</div></article>`; }).join('')}</div>`
       : '<p class="news-wait">準備中</p>';
     const flyers = `<div class="flyers">${FLYERS.map(f => `<figure class="flyer" onclick="Activity.open('${f.id}')"><img src="img/story/${f.id}-t.jpg" alt="${h(f.title)}" loading="lazy"><figcaption>${h(this.ftitle(f.title))}</figcaption></figure>`).join('')}</div>`;
     $('#app').innerHTML = `<div class="brand"><div class="logo">NATURE <span>KOBE</span></div><div class="sub">活動記録</div></div>
