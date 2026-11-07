@@ -252,6 +252,43 @@ hr.sep{border:0;border-top:1px solid var(--line);margin:14px 0}
 .lightbox{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;z-index:100;padding:12px}
 .lightbox.on{display:flex}
 .lightbox img{max-width:100%;max-height:100%;border-radius:6px}
+
+.shead{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:rgba(250,249,245,.94);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+.slogo img{height:42px;display:block}
+.smenu-btn{font:inherit;font-weight:700;letter-spacing:.14em;font-size:12px;padding:8px 14px;border-radius:999px;border:1px solid var(--g);background:var(--g);color:#fff;cursor:pointer}
+.smenu{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;z-index:60}
+.smenu.on{display:block}
+.smenu-in{position:absolute;top:0;right:0;bottom:0;width:min(82vw,320px);background:#fff;padding:18px 18px 30px;overflow:auto;box-shadow:-4px 0 24px rgba(0,0,0,.2)}
+.smenu-in .x{position:absolute;top:10px;right:12px;font-size:20px;border:0;background:none;cursor:pointer;color:var(--mut)}
+.smenu-title{font-size:12px;letter-spacing:.14em;color:var(--mut);margin:6px 0 10px}
+.smenu-in a{display:block;padding:12px 6px;border-bottom:1px solid var(--line);color:var(--ink,#222);text-decoration:none;font-size:16px}
+.smenu-in a.on{color:var(--g);font-weight:700}
+.smenu-in a.order{color:var(--g);font-weight:700}
+.smenu-lang{margin-top:16px;display:flex;flex-wrap:wrap;gap:6px}
+.smenu-lang button{font:inherit;font-size:12px;padding:4px 9px;border:1px solid var(--line);background:#fff;border-radius:999px;color:var(--mut);cursor:pointer}
+.smenu-lang button.on{background:var(--g);border-color:var(--g);color:#fff;font-weight:700}
+.story{padding-bottom:20px}
+.shero{text-align:center;padding:26px 0 10px}
+.shero-logo{width:min(60%,240px);display:block;margin:0 auto 14px}
+.shero-h{font-family:Georgia,"Hiragino Mincho ProN","Yu Mincho",serif;font-size:22px;line-height:1.5;margin:0 0 6px;color:var(--g)}
+.shero-sub{color:var(--mut);margin:0;font-size:14px}
+.slead{font-size:15px;line-height:1.9;margin:14px 0 18px}
+.sfig{margin:0 0 18px;cursor:pointer}
+.sfig img{width:100%;display:block;border-radius:10px;box-shadow:0 4px 18px rgba(0,0,0,.1)}
+.sfig figcaption{text-align:right;font-size:12px;color:var(--mut);margin-top:4px}
+.ssec{font-size:17px;margin:22px 0 10px;padding-left:10px;border-left:4px solid var(--g)}
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (min-width:640px){.sgrid{grid-template-columns:repeat(3,1fr)}}
+.scard{display:block;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;text-decoration:none;color:inherit;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.scard img{width:100%;aspect-ratio:4/3;object-fit:cover;object-position:top;display:block}
+.scard-b{padding:8px 10px 10px}
+.scard-t{font-weight:700;font-size:14px;line-height:1.4}
+.scard-s{font-size:12px;color:var(--mut);margin-top:2px;line-height:1.4}
+.stitle{font-family:Georgia,"Hiragino Mincho ProN","Yu Mincho",serif;font-size:24px;margin:18px 0 6px;color:var(--g)}
+.ssub{color:var(--mut);margin:0 0 14px;font-size:14px}
+.sbody{font-size:15px;line-height:1.9;margin:0 0 18px}
+.sback{color:var(--g);font-size:14px}
+.sfoot{text-align:center;letter-spacing:.3em;font-size:11px;color:var(--mut);margin:30px 0 10px}
 </style>
 </head>
 <body>
@@ -442,7 +479,7 @@ const I18N = {
     en: {
       '資料・チラシ': 'Brochures', 'タップで拡大できます（日本語）': 'Tap to enlarge (Japanese)',
       'NATURE KOBEとは': 'What is NATURE KOBE?', 'なぜNATURE KOBEが必要なのか': 'Why NATURE KOBE?', '私たち3人': 'The three of us', '活動の記録': 'Journal', '準備中': 'Coming soon',
-      '但馬牛・神戸ビーフ ご注文': 'Kobe Beef — Order Direct from the Farm', '活動記録': 'Our Story', '📰 活動記録を見る': '📰 Read our story',
+      '但馬牛・神戸ビーフ ご注文': 'Kobe Beef — Order Direct from the Farm', '活動記録': 'Our Story', '📰 NATURE KOBEについて': '📰 About NATURE KOBE',
       'ご参加の皆さま限定': 'For guests of this event', 'ネットでのご注文': 'Online order', '🛒 ネット販売　※お振込みでのご注文': '🛒 Online shop · payment by bank transfer',
       '商品を選ぶ': 'Choose your cuts', 'お客様情報': 'Your details', '確認': 'Review',
       '＋ 追加': '+ Add', '＋ 別の量でも追加': '+ Add another size', '次へ': 'Next', '戻る': 'Back', '確認へ': 'Review order', '注文する': 'Place order', '送信中…': 'Sending…', '削除': 'Remove',
@@ -470,7 +507,7 @@ const I18N = {
     'zh-CN': {
       '資料・チラシ': '资料・宣传单', 'タップで拡大できます（日本語）': '点击放大（日文）',
       'NATURE KOBEとは': '什么是 NATURE KOBE', 'なぜNATURE KOBEが必要なのか': '为什么需要 NATURE KOBE', '私たち3人': '我们三个人', '活動の記録': '活动记录', '準備中': '准备中',
-      '但馬牛・神戸ビーフ ご注文': '正宗神户牛 · 牧场直送预订', '活動記録': '牧场故事', '📰 活動記録を見る': '📰 看看我们的牧场故事',
+      '但馬牛・神戸ビーフ ご注文': '正宗神户牛 · 牧场直送预订', '活動記録': '牧场故事', '📰 NATURE KOBEについて': '📰 关于 NATURE KOBE',
       'ご参加の皆さま限定': '限本次活动来宾', 'ネットでのご注文': '网上订购', '🛒 ネット販売　※お振込みでのご注文': '🛒 网上商店 · 银行转账付款',
       '商品を選ぶ': '选择部位', 'お客様情報': '填写信息', '確認': '确认订单',
       '＋ 追加': '＋ 加入', '＋ 別の量でも追加': '＋ 再加一份不同分量', '次へ': '下一步', '戻る': '上一步', '確認へ': '去确认', '注文する': '提交订单', '送信中…': '提交中…', '削除': '删除',
@@ -498,7 +535,7 @@ const I18N = {
     'zh-TW': {
       '資料・チラシ': '資料・傳單', 'タップで拡大できます（日本語）': '點擊放大（日文）',
       'NATURE KOBEとは': '什麼是 NATURE KOBE', 'なぜNATURE KOBEが必要なのか': '為什麼需要 NATURE KOBE', '私たち3人': '我們三個人', '活動の記録': '活動紀錄', '準備中': '準備中',
-      '但馬牛・神戸ビーフ ご注文': '正宗神戶牛 · 牧場直送訂購', '活動記録': '牧場故事', '📰 活動記録を見る': '📰 看看我們的牧場故事',
+      '但馬牛・神戸ビーフ ご注文': '正宗神戶牛 · 牧場直送訂購', '活動記録': '牧場故事', '📰 NATURE KOBEについて': '📰 關於 NATURE KOBE',
       'ご参加の皆さま限定': '限本次活動來賓', 'ネットでのご注文': '網路訂購', '🛒 ネット販売　※お振込みでのご注文': '🛒 網路商店 · 銀行轉帳付款',
       '商品を選ぶ': '選擇部位', 'お客様情報': '填寫資料', '確認': '確認訂單',
       '＋ 追加': '＋ 加入', '＋ 別の量でも追加': '＋ 再加一份不同份量', '次へ': '下一步', '戻る': '上一步', '確認へ': '前往確認', '注文する': '送出訂單', '送信中…': '送出中…', '削除': '刪除',
@@ -526,7 +563,7 @@ const I18N = {
     ko: {
       '資料・チラシ': '자료・전단', 'タップで拡大できます（日本語）': '탭하면 확대됩니다 (일본어)',
       'NATURE KOBEとは': 'NATURE KOBE란', 'なぜNATURE KOBEが必要なのか': '왜 NATURE KOBE가 필요한가', '私たち3人': '우리 세 사람', '活動の記録': '활동 기록', '準備中': '준비 중',
-      '但馬牛・神戸ビーフ ご注文': '고베규 · 농장 직송 주문', '活動記録': '농장 이야기', '📰 活動記録を見る': '📰 농장 이야기 보기',
+      '但馬牛・神戸ビーフ ご注文': '고베규 · 농장 직송 주문', '活動記録': '농장 이야기', '📰 NATURE KOBEについて': '📰 NATURE KOBE 소개',
       'ご参加の皆さま限定': '행사 참가자 전용', 'ネットでのご注文': '온라인 주문', '🛒 ネット販売　※お振込みでのご注文': '🛒 온라인 판매 · 계좌이체 결제',
       '商品を選ぶ': '부위 선택', 'お客様情報': '주문자 정보', '確認': '주문 확인',
       '＋ 追加': '＋ 담기', '＋ 別の量でも追加': '＋ 다른 양으로 추가', '次へ': '다음', '戻る': '이전', '確認へ': '확인하기', '注文する': '주문하기', '送信中…': '전송 중…', '削除': '삭제',
@@ -554,7 +591,7 @@ const I18N = {
     fr: {
       '資料・チラシ': 'Brochures', 'タップで拡大できます（日本語）': 'Touchez pour agrandir (en japonais)',
       'NATURE KOBEとは': 'Qu’est-ce que NATURE KOBE ?', 'なぜNATURE KOBEが必要なのか': 'Pourquoi NATURE KOBE ?', '私たち3人': 'Nous trois', '活動の記録': 'Journal', '準備中': 'Bientôt',
-      '但馬牛・神戸ビーフ ご注文': 'Bœuf de Kobe — en direct de l’éleveur', '活動記録': 'Notre histoire', '📰 活動記録を見る': '📰 Découvrir notre histoire',
+      '但馬牛・神戸ビーフ ご注文': 'Bœuf de Kobe — en direct de l’éleveur', '活動記録': 'Notre histoire', '📰 NATURE KOBEについて': '📰 À propos de NATURE KOBE',
       'ご参加の皆さま限定': 'Réservé aux invités de l’événement', 'ネットでのご注文': 'Commande en ligne', '🛒 ネット販売　※お振込みでのご注文': '🛒 Boutique en ligne · paiement par virement',
       '商品を選ぶ': 'Vos morceaux', 'お客様情報': 'Vos coordonnées', '確認': 'Récapitulatif',
       '＋ 追加': '+ Ajouter', '＋ 別の量でも追加': '+ Ajouter une autre quantité', '次へ': 'Continuer', '戻る': 'Retour', '確認へ': 'Vérifier la commande', '注文する': 'Commander', '送信中…': 'Envoi…', '削除': 'Retirer',
@@ -713,7 +750,7 @@ const I18N = {
   },
   init() { this.lang = this.get(); document.documentElement.lang = this.lang; },
   get() { const l = ls.get('nk-lang'); return LANGS.some(x => x[0] === l) ? l : 'ja'; },
-  set(l) { this.lang = l; ls.set('nk-lang', l); document.documentElement.lang = l; if (new URLSearchParams(location.search).get('page') === 'activity') { Activity.init(); return; } this.apply(); render_lang_bar(); },
+  set(l) { this.lang = l; ls.set('nk-lang', l); document.documentElement.lang = l; if (/^(activity|story)$/.test(new URLSearchParams(location.search).get('page') || '')) { Activity.init(); return; } this.apply(); render_lang_bar(); },
   /* 1行の文言を翻訳。訳がなければ null */
   t(src) {
     if (this.lang === 'ja') return null;
@@ -883,39 +920,185 @@ const ACTIVITY_ITEMS = [
   { date: '2026.10', title: 'めぐり米（NATURE RICE）', body: '牛の堆肥を田んぼに還し、その土で育てたお米を「めぐり米」としてお届けしています。ご注文をいただいてから精米し、精米したてをお送りします。', photo: 'img/story/rice-flyer.jpg', flyer: 'rice-flyer' },
   { date: '2026.09.27', title: '第1回 但馬牛販売会', body: 'NATURE KOBEとして初めての但馬牛・神戸ビーフの販売会を開催しました。会場でQRコードを読み取ってご注文いただき、後日ご自宅へお届けする仕組みを初めて使いました。', photo: '', flyer: '' },
 ];
+/* ===================================================================
+   NATURE KOBE 紹介ページ（名刺代わり）
+   URL: ?page=story（?page=activity も同じ）　画面の切替: &v=home|about|members|works|work&id=…|beef|rice|leaf
+   右上の「MENU」ボタン（追従）から各画面へ移動。本文は短く、チラシの画像を織り交ぜる。
+   =================================================================== */
+const STORY_T = {
+  en: { '牛尾・碓永・栗原': 'Ushio · Usunaga · Kurihara', 'メニュー': 'Menu', 'ホーム': 'Home', 'NATURE KOBEの想い': 'Our Philosophy', 'メンバー紹介': 'Members', '活動実績': 'Activities', 'ご注文': 'Order', '閉じる': 'Close', '一覧へ戻る': 'Back to list', 'もっと読む': 'Read more', 'チラシを見る': 'View flyer',
+    'いのちを巡らせる、循環型農業。': 'Circular farming that keeps life in motion.',
+    '牛を育て、土を育て、食を育てる。': 'Raise the cattle. Build the soil. Grow the food.',
+    '但馬牛・神戸ビーフを届けるだけで終わらない。牛の堆肥で土を育て、その土でお米や野菜をつくり、また牛へ。神戸から、いのちが巡る農業をつくっています。': 'We do more than deliver Kobe Beef. Cattle compost builds the soil, the soil grows rice and vegetables, and the crops feed the cattle again. From Kobe, we are building farming that keeps life in a circle.',
+    '神戸うすなが牧場の但馬牛・神戸ビーフ': 'Tajima and Kobe Beef from Usunaga Farm, Kobe',
+    '牛の堆肥で育てたお米': 'Rice grown with cattle compost',
+    '牛の堆肥で育てた野菜': 'Vegetables grown with cattle compost',
+    '私たちの取り組み': 'What we do', '最近の活動': 'Recent activities', 'すべて見る': 'See all',
+    '神戸の風土で育つ但馬牛・神戸ビーフ。ほどよいサシと長い余韻、小豆色の赤身。「A5・サシが多い」だけを良しとせず、食べておいしく、また食べたくなるお肉を目指しています。': 'Tajima and Kobe Beef raised in the terroir of Kobe: moderate marbling, a long finish, deep-red lean meat. We do not believe A5 and heavy marbling are the only measure — we aim for beef you want to eat again.',
+    '国産の餌を中心に、酒粕・おから・大豆粕・米ぬか・稲わらを配合。乳酸菌・酵母菌・納豆菌も取り入れ、季節や体調に合わせて丁寧に与えています。': 'Mostly domestic feed — sake lees, okara, soybean meal, rice bran and straw — with lactic acid bacteria, yeast and natto bacteria, adjusted carefully to the season and each animal.',
+    '牛の堆肥を田んぼに還し、その土で育てたお米です。毎年しっかり土づくりを重ねることで、天候の変化に負けにくい稲が育ち、粒立ちのよい、やさしい甘みのお米になります。': 'Rice grown in paddies where cattle compost has been returned to the soil. Year after year of soil building gives rice that stands up to the weather, with distinct grains and a gentle sweetness.',
+    'ご注文に合わせて精米したてをお届けします。産地は神戸・丹波・但馬など、季節によって変わりますが、その都度、単一原料米を選んでお届けします。': 'Milled to order and shipped fresh. The region — Kobe, Tamba, Tajima — changes with the season, and each time we select a single-origin rice.',
+    '同じ良質な堆肥で育てた野菜を「NATURE LEAF」としてお届けしていきます。第一弾は、但馬牛の堆肥で育てた兵庫県朝来市産の丹波黒大豆枝豆。大粒で、深いコクと甘みが特徴です。': 'Vegetables grown with the same rich compost, delivered as NATURE LEAF. First up: Tamba black-soybean edamame from Asago, Hyogo, grown with Tajima cattle compost — large beans, deep and sweet.',
+  },
+  'zh-CN': { 'メニュー': '菜单', 'ホーム': '首页', 'NATURE KOBEの想い': '我们的理念', 'メンバー紹介': '成员介绍', '活動実績': '活动实绩', 'ご注文': '订购', '閉じる': '关闭', '一覧へ戻る': '返回列表', 'もっと読む': '阅读更多', 'チラシを見る': '查看宣传单',
+    'いのちを巡らせる、循環型農業。': '让生命循环的农业。',
+    '牛を育て、土を育て、食を育てる。': '养牛，养土，养出好食物。',
+    '但馬牛・神戸ビーフを届けるだけで終わらない。牛の堆肥で土を育て、その土でお米や野菜をつくり、また牛へ。神戸から、いのちが巡る農業をつくっています。': '我们不只是销售神户牛。用牛的堆肥培育土壤，用土壤种出大米和蔬菜，再回到牛的饲料。从神户出发，打造让生命循环的农业。',
+    '神戸うすなが牧場の但馬牛・神戸ビーフ': '神户 Usunaga 牧场的但马牛・神户牛', '牛の堆肥で育てたお米': '用牛堆肥种植的大米', '牛の堆肥で育てた野菜': '用牛堆肥种植的蔬菜',
+    '私たちの取り組み': '我们的事业', '最近の活動': '最新活动', 'すべて見る': '查看全部',
+    '神戸の風土で育つ但馬牛・神戸ビーフ。ほどよいサシと長い余韻、小豆色の赤身。「A5・サシが多い」だけを良しとせず、食べておいしく、また食べたくなるお肉を目指しています。': '在神户风土中长大的但马牛・神户牛。油花适中，余韵悠长，瘦肉呈红豆色。我们不以“A5・雪花多”为唯一标准，追求吃了还想再吃的美味。',
+    '国産の餌を中心に、酒粕・おから・大豆粕・米ぬか・稲わらを配合。乳酸菌・酵母菌・納豆菌も取り入れ、季節や体調に合わせて丁寧に与えています。': '以国产饲料为主，配合酒粕、豆渣、大豆粕、米糠、稻草，并加入乳酸菌、酵母菌、纳豆菌，根据季节和牛的状态精心喂养。',
+    '牛の堆肥を田んぼに還し、その土で育てたお米です。毎年しっかり土づくりを重ねることで、天候の変化に負けにくい稲が育ち、粒立ちのよい、やさしい甘みのお米になります。': '把牛的堆肥还给稻田，在那片土地上种出的大米。年复一年地培育土壤，稻子更能抵御天气变化，米粒分明，甘甜柔和。',
+    'ご注文に合わせて精米したてをお届けします。産地は神戸・丹波・但馬など、季節によって変わりますが、その都度、単一原料米を選んでお届けします。': '接单后碾米，新鲜送达。产地随季节在神户、丹波、但马之间变化，每次都选用单一产地米。',
+    '同じ良質な堆肥で育てた野菜を「NATURE LEAF」としてお届けしていきます。第一弾は、但馬牛の堆肥で育てた兵庫県朝来市産の丹波黒大豆枝豆。大粒で、深いコクと甘みが特徴です。': '用同样优质堆肥种植的蔬菜，以 NATURE LEAF 的名义送达。第一款是用但马牛堆肥种植的兵库县朝来市产丹波黑大豆毛豆，颗粒大，浓郁香甜。',
+  },
+  'zh-TW': { 'メニュー': '選單', 'ホーム': '首頁', 'NATURE KOBEの想い': '我們的理念', 'メンバー紹介': '成員介紹', '活動実績': '活動實績', 'ご注文': '訂購', '閉じる': '關閉', '一覧へ戻る': '返回列表', 'もっと読む': '閱讀更多', 'チラシを見る': '查看傳單',
+    'いのちを巡らせる、循環型農業。': '讓生命循環的農業。',
+    '牛を育て、土を育て、食を育てる。': '養牛，養土，養出好食物。',
+    '但馬牛・神戸ビーフを届けるだけで終わらない。牛の堆肥で土を育て、その土でお米や野菜をつくり、また牛へ。神戸から、いのちが巡る農業をつくっています。': '我們不只是販售神戶牛。用牛的堆肥培育土壤，用土壤種出稻米與蔬菜，再回到牛的飼料。從神戶出發，打造讓生命循環的農業。',
+    '神戸うすなが牧場の但馬牛・神戸ビーフ': '神戶 Usunaga 牧場的但馬牛・神戶牛', '牛の堆肥で育てたお米': '用牛堆肥種植的稻米', '牛の堆肥で育てた野菜': '用牛堆肥種植的蔬菜',
+    '私たちの取り組み': '我們的事業', '最近の活動': '最新活動', 'すべて見る': '查看全部',
+    '神戸の風土で育つ但馬牛・神戸ビーフ。ほどよいサシと長い余韻、小豆色の赤身。「A5・サシが多い」だけを良しとせず、食べておいしく、また食べたくなるお肉を目指しています。': '在神戶風土中長大的但馬牛・神戶牛。油花適中，餘韻悠長，瘦肉呈紅豆色。我們不以「A5・油花多」為唯一標準，追求吃了還想再吃的美味。',
+    '国産の餌を中心に、酒粕・おから・大豆粕・米ぬか・稲わらを配合。乳酸菌・酵母菌・納豆菌も取り入れ、季節や体調に合わせて丁寧に与えています。': '以國產飼料為主，搭配酒粕、豆渣、大豆粕、米糠、稻草，並加入乳酸菌、酵母菌、納豆菌，依季節與牛的狀態細心餵養。',
+    '牛の堆肥を田んぼに還し、その土で育てたお米です。毎年しっかり土づくりを重ねることで、天候の変化に負けにくい稲が育ち、粒立ちのよい、やさしい甘みのお米になります。': '把牛的堆肥還給稻田，在那片土地上種出的稻米。年復一年培育土壤，稻子更能抵抗天候變化，米粒分明，甘甜柔和。',
+    'ご注文に合わせて精米したてをお届けします。産地は神戸・丹波・但馬など、季節によって変わりますが、その都度、単一原料米を選んでお届けします。': '接單後碾米，新鮮送達。產地隨季節在神戶、丹波、但馬之間變化，每次都選用單一產地米。',
+    '同じ良質な堆肥で育てた野菜を「NATURE LEAF」としてお届けしていきます。第一弾は、但馬牛の堆肥で育てた兵庫県朝来市産の丹波黒大豆枝豆。大粒で、深いコクと甘みが特徴です。': '用同樣優質堆肥種植的蔬菜，以 NATURE LEAF 之名送達。第一款是用但馬牛堆肥種植的兵庫縣朝來市產丹波黑大豆毛豆，顆粒大，濃郁香甜。',
+  },
+  ko: { '牛尾・碓永・栗原': '우시오・우스나가・구리하라', 'メニュー': '메뉴', 'ホーム': '홈', 'NATURE KOBEの想い': '우리의 생각', 'メンバー紹介': '멤버 소개', '活動実績': '활동 실적', 'ご注文': '주문', '閉じる': '닫기', '一覧へ戻る': '목록으로', 'もっと読む': '더 읽기', 'チラシを見る': '전단 보기',
+    'いのちを巡らせる、循環型農業。': '생명을 순환시키는 농업.',
+    '牛を育て、土を育て、食を育てる。': '소를 키우고, 흙을 키우고, 먹거리를 키웁니다.',
+    '但馬牛・神戸ビーフを届けるだけで終わらない。牛の堆肥で土を育て、その土でお米や野菜をつくり、また牛へ。神戸から、いのちが巡る農業をつくっています。': '고베규를 전하는 데서 끝나지 않습니다. 소의 퇴비로 흙을 키우고, 그 흙에서 쌀과 채소를 기르고, 다시 소에게. 고베에서 생명이 순환하는 농업을 만들어 갑니다.',
+    '神戸うすなが牧場の但馬牛・神戸ビーフ': '고베 우스나가 목장의 타지마규・고베규', '牛の堆肥で育てたお米': '소 퇴비로 키운 쌀', '牛の堆肥で育てた野菜': '소 퇴비로 키운 채소',
+    '私たちの取り組み': '우리의 일', '最近の活動': '최근 활동', 'すべて見る': '전체 보기',
+    '神戸の風土で育つ但馬牛・神戸ビーフ。ほどよいサシと長い余韻、小豆色の赤身。「A5・サシが多い」だけを良しとせず、食べておいしく、また食べたくなるお肉を目指しています。': '고베의 풍토에서 자란 타지마규・고베규. 적당한 마블링, 긴 여운, 팥색의 살코기. "A5・마블링이 많은 것"만을 좋다고 보지 않고, 또 먹고 싶어지는 고기를 지향합니다.',
+    '国産の餌を中心に、酒粕・おから・大豆粕・米ぬか・稲わらを配合。乳酸菌・酵母菌・納豆菌も取り入れ、季節や体調に合わせて丁寧に与えています。': '국산 사료를 중심으로 주박, 비지, 대두박, 쌀겨, 볏짚을 배합하고 유산균・효모균・낫토균도 더해, 계절과 소의 상태에 맞춰 정성껏 먹입니다.',
+    '牛の堆肥を田んぼに還し、その土で育てたお米です。毎年しっかり土づくりを重ねることで、天候の変化に負けにくい稲が育ち、粒立ちのよい、やさしい甘みのお米になります。': '소의 퇴비를 논에 돌려주고 그 흙에서 기른 쌀입니다. 해마다 흙을 가꾸어 날씨 변화에도 강한 벼가 자라며, 알이 또렷하고 은은하게 단 쌀이 됩니다.',
+    'ご注文に合わせて精米したてをお届けします。産地は神戸・丹波・但馬など、季節によって変わりますが、その都度、単一原料米を選んでお届けします。': '주문 후 도정해 갓 찧은 쌀을 보내 드립니다. 산지는 고베・단바・타지마 등 계절에 따라 바뀌며, 매번 단일 산지 쌀을 골라 보냅니다.',
+    '同じ良質な堆肥で育てた野菜を「NATURE LEAF」としてお届けしていきます。第一弾は、但馬牛の堆肥で育てた兵庫県朝来市産の丹波黒大豆枝豆。大粒で、深いコクと甘みが特徴です。': '같은 좋은 퇴비로 키운 채소를 NATURE LEAF로 전해 갑니다. 첫 번째는 타지마규 퇴비로 키운 효고현 아사고시산 단바 검은콩 에다마메. 알이 굵고 깊은 감칠맛과 단맛이 특징입니다.',
+  },
+  fr: { '牛尾・碓永・栗原': 'Ushio · Usunaga · Kurihara', 'メニュー': 'Menu', 'ホーム': 'Accueil', 'NATURE KOBEの想い': 'Notre philosophie', 'メンバー紹介': 'L’équipe', '活動実績': 'Nos actions', 'ご注文': 'Commander', '閉じる': 'Fermer', '一覧へ戻る': 'Retour à la liste', 'もっと読む': 'Lire la suite', 'チラシを見る': 'Voir la brochure',
+    'いのちを巡らせる、循環型農業。': 'Une agriculture circulaire qui fait tourner le vivant.',
+    '牛を育て、土を育て、食を育てる。': 'Élever le bétail. Nourrir le sol. Cultiver la nourriture.',
+    '但馬牛・神戸ビーフを届けるだけで終わらない。牛の堆肥で土を育て、その土でお米や野菜をつくり、また牛へ。神戸から、いのちが巡る農業をつくっています。': 'Nous ne faisons pas que livrer du bœuf de Kobe. Le compost des bovins nourrit le sol, le sol donne riz et légumes, et les récoltes reviennent nourrir les bêtes. Depuis Kobe, nous bâtissons une agriculture où la vie tourne en cercle.',
+    '神戸うすなが牧場の但馬牛・神戸ビーフ': 'Bœuf de Tajima et de Kobe de la ferme Usunaga', '牛の堆肥で育てたお米': 'Riz cultivé avec le compost des bovins', '牛の堆肥で育てた野菜': 'Légumes cultivés avec le compost des bovins',
+    '私たちの取り組み': 'Nos activités', '最近の活動': 'Actualités', 'すべて見る': 'Tout voir',
+    '神戸の風土で育つ但馬牛・神戸ビーフ。ほどよいサシと長い余韻、小豆色の赤身。「A5・サシが多い」だけを良しとせず、食べておいしく、また食べたくなるお肉を目指しています。': 'Du bœuf de Tajima et de Kobe élevé dans le terroir de Kobe : persillage mesuré, longue finale, chair d’un rouge profond. Pour nous, « A5 et très persillé » n’est pas le seul critère ; nous visons une viande dont on a envie de reprendre.',
+    '国産の餌を中心に、酒粕・おから・大豆粕・米ぬか・稲わらを配合。乳酸菌・酵母菌・納豆菌も取り入れ、季節や体調に合わせて丁寧に与えています。': 'Une alimentation surtout locale — lie de saké, okara, tourteau de soja, son de riz, paille — enrichie de ferments lactiques, de levures et de bacilles de nattō, ajustée à la saison et à chaque animal.',
+    '牛の堆肥を田んぼに還し、その土で育てたお米です。毎年しっかり土づくりを重ねることで、天候の変化に負けにくい稲が育ち、粒立ちのよい、やさしい甘みのお米になります。': 'Un riz cultivé dans des rizières où le compost des bovins retourne à la terre. Année après année, ce travail du sol donne un riz résistant aux aléas, aux grains bien détachés et à la douceur délicate.',
+    'ご注文に合わせて精米したてをお届けします。産地は神戸・丹波・但馬など、季節によって変わりますが、その都度、単一原料米を選んでお届けします。': 'Décortiqué à la commande et expédié frais. L’origine — Kobe, Tamba, Tajima — varie selon la saison ; nous choisissons chaque fois un riz d’origine unique.',
+    '同じ良質な堆肥で育てた野菜を「NATURE LEAF」としてお届けしていきます。第一弾は、但馬牛の堆肥で育てた兵庫県朝来市産の丹波黒大豆枝豆。大粒で、深いコクと甘みが特徴です。': 'Des légumes cultivés avec ce même compost, livrés sous le nom NATURE LEAF. Pour commencer : des edamame de soja noir de Tamba (Asago, Hyōgo), cultivés avec le compost de nos bovins — de gros grains, riches et doux.',
+  },
+};
 const Activity = {
+  q() { return new URLSearchParams(location.search); },
+  url(v, extra) { const q = this.q(); q.set('page', 'story'); if (v && v !== 'home') q.set('v', v); else q.delete('v'); q.delete('id'); if (extra) Object.keys(extra).forEach(k => q.set(k, extra[k])); return '?' + q.toString(); },
+  go(v, extra) { history.pushState(null, '', this.url(v, extra)); this.init(); window.scrollTo(0, 0); },
   txt(key) { const o = (ABOUT.i18n[I18N.lang] || {})[key]; return o || ABOUT[key] || ''; },
   ftitle(t) { return (FLYER_TITLES[I18N.lang] || {})[t] || t; },
+  item(a) { return (ACTIVITY_I18N[I18N.lang] || {})[a.title] || [a.title, a.body]; },
+  memberOf(m) { return ((ABOUT.i18n[I18N.lang] || {}).members || {})[m.name] || {}; },
+  nl(t) { return h(t).replace(/\n/g, '<br>'); },
+  open(id) { $('#lightbox-img').src = `img/story/${id}.jpg`; $('#lightbox').classList.add('on'); },
+  menu(on) { $('#smenu').classList.toggle('on', on); },
   init() {
-    const eid = new URLSearchParams(location.search).get('e') || '';
-    const para = t => t ? `<div class="news-body">${h(t).replace(/\n/g, '<br>')}</div>` : '<p class="news-wait">準備中</p>';
-    const members = ABOUT.members.length
-      ? `<div class="members">${ABOUT.members.map(m => { const tr = ((ABOUT.i18n[I18N.lang] || {}).members || {})[m.name] || {}; return `<div class="member">${m.photo ? `<img src="${h(m.photo)}" alt="${h(m.name)}">` : '<div class="member-ph">🐂</div>'}<div><div class="member-nm">${h(tr.name || m.name)}</div><div class="member-role">${h(tr.role || m.role || '')}</div><div class="news-body">${h(tr.bio || m.bio || '').replace(/\n/g, '<br>')}</div></div></div>`; }).join('')}</div>`
-      : '<p class="news-wait">準備中</p>';
-    const items = ACTIVITY_ITEMS.length
-      ? `<div class="news-grid">${ACTIVITY_ITEMS.map(a => { const t = (ACTIVITY_I18N[I18N.lang] || {})[a.title] || [a.title, a.body]; return `<article class="news-item">${a.photo ? `<img src="${h(a.photo.replace(/\.jpg$/, '-t.jpg'))}" alt="${h(t[0])}" loading="lazy" ${a.flyer ? `onclick="Activity.open('${a.flyer}')"` : ''}>` : ''}<div class="news-date">${h(a.date || '')}</div><h2 class="news-h">${h(t[0])}</h2><div class="news-body">${h(t[1]).replace(/\n/g, '<br>')}</div></article>`; }).join('')}</div>`
-      : '<p class="news-wait">準備中</p>';
-    const flyers = `<div class="flyers">${FLYERS.map(f => `<figure class="flyer" onclick="Activity.open('${f.id}')"><img src="img/story/${f.id}-t.jpg" alt="${h(f.title)}" loading="lazy"><figcaption>${h(this.ftitle(f.title))}</figcaption></figure>`).join('')}</div>`;
-    $('#app').innerHTML = `<div class="brand"><div class="logo">NATURE <span>KOBE</span></div><div class="sub">活動記録</div></div>
-      <div class="wrap">${langBar()}
-      <div class="news-mast"><div class="news-title">NATURE KOBE 活動記録</div><div class="news-sub">${h(this.txt('tagline'))}</div></div>
-      <section class="news-sec"><h2 class="news-sech">NATURE KOBEとは</h2>${para(this.txt('definition'))}</section>
-      <section class="news-sec"><h2 class="news-sech">なぜNATURE KOBEが必要なのか</h2>${para(this.txt('why'))}</section>
-      <section class="news-sec"><h2 class="news-sech">私たち3人</h2>${members}</section>
-      <section class="news-sec"><h2 class="news-sech">活動の記録</h2>${items}</section>
-      <section class="news-sec"><h2 class="news-sech">資料・チラシ</h2><p class="xs mut" style="margin:0 0 8px">タップで拡大できます（日本語）</p>${flyers}</section>
-      ${eid ? `<p style="text-align:center;margin:22px 0"><a class="btn pri" href="?e=${encodeURIComponent(eid)}">商品・注文はこちら</a></p>` : ''}</div>
+    const q = this.q(), v = q.get('v') || 'home', eid = q.get('e') || '';
+    const v2 = { home: this.home, about: this.about, members: this.members, works: this.works, work: this.work, beef: this.beef, rice: this.rice, leaf: this.leaf }[v] || this.home;
+    const nav = [['home', 'ホーム'], ['about', 'NATURE KOBEの想い'], ['members', 'メンバー紹介'], ['works', '活動実績'], ['beef', 'NATURE BEEF'], ['rice', 'NATURE RICE'], ['leaf', 'NATURE LEAF']];
+    $('#app').innerHTML = `
+      <div class="shead"><a href="${this.url('home')}" onclick="Activity.go('home');return false" class="slogo"><img src="img/story/logo.jpg" alt="NATURE KOBE"></a>
+        <button class="smenu-btn" onclick="Activity.menu(true)">MENU</button></div>
+      <div class="smenu" id="smenu" onclick="if(event.target===this)Activity.menu(false)"><div class="smenu-in">
+        <button class="x" onclick="Activity.menu(false)">✕</button>
+        <div class="smenu-title">${this.s('メニュー')}</div>
+        ${nav.map(([k, l]) => `<a href="${this.url(k)}" class="${v === k || (v === 'work' && k === 'works') ? 'on' : ''}" onclick="Activity.go('${k}');return false">${this.s(l)}</a>`).join('')}
+        ${eid ? `<a href="?e=${encodeURIComponent(eid)}" class="order">🛒 ${this.s('ご注文')}</a>` : ''}
+        <div class="smenu-lang">${langButtons()}</div></div></div>
+      <div class="wrap story">${v2.call(this, q)}
+        ${eid && v !== 'home' ? `<p style="text-align:center;margin:26px 0 10px"><a class="btn pri" href="?e=${encodeURIComponent(eid)}">商品・注文はこちら</a></p>` : ''}
+        <p class="sfoot">NATURE KOBE</p></div>
       <div class="lightbox" id="lightbox" onclick="this.classList.remove('on')"><img id="lightbox-img" alt=""></div>`;
     I18N.apply();
+    this.applyStory();
   },
-  open(id) { const lb = $('#lightbox'); $('#lightbox-img').src = `img/story/${id}.jpg`; lb.classList.add('on'); },
+  // STORY_T は data-s 属性の付いた要素だけ丸ごと差し替え（長文も1語も同じ扱い）
+  applyStory() {
+    const d = STORY_T[I18N.lang]; if (!d) return;
+    document.querySelectorAll('#app [data-s]').forEach(el => { const k = el.dataset.s; if (d[k]) el.textContent = d[k]; });
+  },
+  s(key, tag = 'span', cls = '') { return `<${tag} data-s="${h(key)}"${cls ? ` class="${cls}"` : ''}>${h(key)}</${tag}>`; },
+  card(img, title, sub, onclick) { return `<a class="scard" href="#" onclick="${onclick};return false"><img src="img/story/${img}-t.jpg" alt="" loading="lazy"><div class="scard-b"><div class="scard-t">${title}</div>${sub ? `<div class="scard-s">${sub}</div>` : ''}</div></a>`; },
+  home() {
+    const eid = this.q().get('e') || '';
+    const recent = ACTIVITY_ITEMS.slice(0, 3);
+    return `
+      <section class="shero"><img src="img/story/logo.jpg" alt="NATURE KOBE" class="shero-logo">
+        ${this.s('いのちを巡らせる、循環型農業。', 'h1', 'shero-h')}
+        ${this.s('牛を育て、土を育て、食を育てる。', 'p', 'shero-sub')}</section>
+      ${this.s('但馬牛・神戸ビーフを届けるだけで終わらない。牛の堆肥で土を育て、その土でお米や野菜をつくり、また牛へ。神戸から、いのちが巡る農業をつくっています。', 'p', 'slead')}
+      <figure class="sfig" onclick="Activity.open('cycle')"><img src="img/story/cycle.jpg" alt="循環型農業のしくみ" loading="lazy"><figcaption>${this.s('チラシを見る')} ↗</figcaption></figure>
+      <p style="text-align:center;margin:0 0 22px"><a class="btn" href="#" onclick="Activity.go('about');return false">${this.s('NATURE KOBEの想い')} →</a></p>
+      <h2 class="ssec">${this.s('私たちの取り組み')}</h2>
+      <div class="sgrid">
+        ${this.card('usunaga-beef', 'NATURE BEEF', this.s('神戸うすなが牧場の但馬牛・神戸ビーフ'), "Activity.go('beef')")}
+        ${this.card('rice-bag', 'NATURE RICE', this.s('牛の堆肥で育てたお米'), "Activity.go('rice')")}
+        ${this.card('edamame-500g', 'NATURE LEAF', this.s('牛の堆肥で育てた野菜'), "Activity.go('leaf')")}
+        ${this.card('intro', this.s('メンバー紹介'), this.s('牛尾・碓永・栗原'), "Activity.go('members')")}
+      </div>
+      <h2 class="ssec">${this.s('最近の活動')}</h2>
+      <div class="sgrid">${recent.map((a, i) => { const t = this.item(a); return this.card(a.flyer || 'intro', h(t[0]), h(a.date || ''), `Activity.go('work',{id:${i}})`); }).join('')}</div>
+      <p style="text-align:center;margin:8px 0 22px"><a class="btn" href="#" onclick="Activity.go('works');return false">${this.s('すべて見る')} →</a></p>
+      ${eid ? `<p style="text-align:center;margin:10px 0"><a class="btn pri block" href="?e=${encodeURIComponent(eid)}">商品・注文はこちら</a></p>` : ''}`;
+  },
+  about() {
+    return `<h1 class="stitle">${this.s('NATURE KOBEの想い')}</h1>
+      <h2 class="ssec">NATURE KOBEとは</h2><div class="sbody">${this.nl(this.txt('definition'))}</div>
+      <figure class="sfig" onclick="Activity.open('intro')"><img src="img/story/intro.jpg" alt="" loading="lazy"><figcaption>${this.s('チラシを見る')} ↗</figcaption></figure>
+      <h2 class="ssec">なぜNATURE KOBEが必要なのか</h2><div class="sbody">${this.nl(this.txt('why'))}</div>
+      <figure class="sfig" onclick="Activity.open('tajima')"><img src="img/story/tajima.jpg" alt="" loading="lazy"><figcaption>${this.s('チラシを見る')} ↗</figcaption></figure>`;
+  },
+  members() {
+    return `<h1 class="stitle">${this.s('メンバー紹介')}</h1>
+      <div class="members">${ABOUT.members.map(m => { const tr = this.memberOf(m); return `<div class="member">${m.photo ? `<img src="${h(m.photo)}" alt="">` : '<div class="member-ph">🐂</div>'}<div><div class="member-nm">${h(tr.name || m.name)}</div><div class="member-role">${h(tr.role || m.role || '')}</div><div class="news-body">${this.nl(tr.bio || m.bio || '')}</div></div></div>`; }).join('')}</div>`;
+  },
+  works() {
+    return `<h1 class="stitle">${this.s('活動実績')}</h1>
+      <div class="sgrid">${ACTIVITY_ITEMS.map((a, i) => { const t = this.item(a); return this.card(a.flyer || 'intro', h(t[0]), h(a.date || ''), `Activity.go('work',{id:${i}})`); }).join('')}</div>`;
+  },
+  work(q) {
+    const i = +q.get('id') || 0, a = ACTIVITY_ITEMS[i]; if (!a) return this.works();
+    const t = this.item(a);
+    return `<p><a href="#" onclick="Activity.go('works');return false" class="sback">← ${this.s('一覧へ戻る')}</a></p>
+      <div class="news-date">${h(a.date || '')}</div><h1 class="stitle" style="margin-top:4px">${h(t[0])}</h1>
+      ${a.flyer ? `<figure class="sfig" onclick="Activity.open('${a.flyer}')"><img src="img/story/${a.flyer}.jpg" alt="" loading="lazy"><figcaption>${this.s('チラシを見る')} ↗</figcaption></figure>` : ''}
+      <div class="sbody">${this.nl(t[1])}</div>`;
+  },
+  beef() {
+    return `<h1 class="stitle">NATURE BEEF</h1>${this.s('神戸うすなが牧場の但馬牛・神戸ビーフ', 'p', 'ssub')}
+      ${this.s('神戸の風土で育つ但馬牛・神戸ビーフ。ほどよいサシと長い余韻、小豆色の赤身。「A5・サシが多い」だけを良しとせず、食べておいしく、また食べたくなるお肉を目指しています。', 'p', 'sbody')}
+      <figure class="sfig" onclick="Activity.open('usunaga-beef')"><img src="img/story/usunaga-beef.jpg" alt="" loading="lazy"><figcaption>${this.s('チラシを見る')} ↗</figcaption></figure>
+      ${this.s('国産の餌を中心に、酒粕・おから・大豆粕・米ぬか・稲わらを配合。乳酸菌・酵母菌・納豆菌も取り入れ、季節や体調に合わせて丁寧に与えています。', 'p', 'sbody')}
+      <figure class="sfig" onclick="Activity.open('tajima')"><img src="img/story/tajima.jpg" alt="" loading="lazy"><figcaption>${this.s('チラシを見る')} ↗</figcaption></figure>`;
+  },
+  rice() {
+    return `<h1 class="stitle">NATURE RICE</h1>${this.s('牛の堆肥で育てたお米', 'p', 'ssub')}
+      ${this.s('牛の堆肥を田んぼに還し、その土で育てたお米です。毎年しっかり土づくりを重ねることで、天候の変化に負けにくい稲が育ち、粒立ちのよい、やさしい甘みのお米になります。', 'p', 'sbody')}
+      <figure class="sfig" onclick="Activity.open('rice-flyer')"><img src="img/story/rice-flyer.jpg" alt="" loading="lazy"><figcaption>${this.s('チラシを見る')} ↗</figcaption></figure>
+      ${this.s('ご注文に合わせて精米したてをお届けします。産地は神戸・丹波・但馬など、季節によって変わりますが、その都度、単一原料米を選んでお届けします。', 'p', 'sbody')}
+      <figure class="sfig" onclick="Activity.open('rice-bag')"><img src="img/story/rice-bag.jpg" alt="" loading="lazy"><figcaption>めぐり米 5kg</figcaption></figure>`;
+  },
+  leaf() {
+    return `<h1 class="stitle">NATURE LEAF</h1>${this.s('牛の堆肥で育てた野菜', 'p', 'ssub')}
+      ${this.s('同じ良質な堆肥で育てた野菜を「NATURE LEAF」としてお届けしていきます。第一弾は、但馬牛の堆肥で育てた兵庫県朝来市産の丹波黒大豆枝豆。大粒で、深いコクと甘みが特徴です。', 'p', 'sbody')}
+      <figure class="sfig" onclick="Activity.open('edamame-500g')"><img src="img/story/edamame-500g.jpg" alt="" loading="lazy"><figcaption>${this.s('チラシを見る')} ↗</figcaption></figure>`;
+  },
 };
+window.addEventListener('popstate', () => { if (new URLSearchParams(location.search).get('page')) Activity.init(); });
 
 /* ===== ルーティング ===== */
 function route() {
   const q = new URLSearchParams(location.search);
   I18N.init();
-  if (q.get('page') === 'activity') return Activity.init();
+  if (q.get('page') === 'activity' || q.get('page') === 'story') return Activity.init();
   if (q.get('e')) return Customer.init(q.get('e'));
   const hs = location.hash.slice(1);
   if (hs.startsWith('shop')) return Shop.init();
@@ -980,7 +1163,7 @@ const Customer = {
   head() {
     const ev = this.C.ev;
     return `${DEMO ? '<div class="demo">プレビュー（デモデータ）：ここでの注文は保存されません</div>' : ''}${ev.net ? '<div class="netbar">🛒 ネット販売　※お振込みでのご注文</div>' : ''}<div class="brand"><div class="logo">NATURE <span>KOBE</span></div><div class="sub">但馬牛・神戸ビーフ ご注文</div></div>
-    <div class="wrap">${langBar()}<p class="news-link"><a href="?page=activity&e=${encodeURIComponent(this.C.eid)}">📰 活動記録を見る</a></p><h1 class="serif">${h(ev.name)}</h1><div class="mut sm"><span>${h(jdate(ev.date))}</span>${ev.venue ? '　' + h(ev.venue) : ''}　<span>${ev.net ? 'ネットでのご注文' : 'ご参加の皆さま限定'}</span></div></div>`;
+    <div class="wrap">${langBar()}<p class="news-link"><a href="?page=story&e=${encodeURIComponent(this.C.eid)}">📰 NATURE KOBEについて</a></p><h1 class="serif">${h(ev.name)}</h1><div class="mut sm"><span>${h(jdate(ev.date))}</span>${ev.venue ? '　' + h(ev.venue) : ''}　<span>${ev.net ? 'ネットでのご注文' : 'ご参加の皆さま限定'}</span></div></div>`;
   },
   renderItems() {
     const C = this.C, cats = [];
