@@ -289,6 +289,24 @@ hr.sep{border:0;border-top:1px solid var(--line);margin:14px 0}
 .sbody{font-size:15px;line-height:1.9;margin:0 0 18px}
 .sback{color:var(--g);font-size:14px}
 .sfoot{text-align:center;letter-spacing:.3em;font-size:11px;color:var(--mut);margin:30px 0 10px}
+
+.hero2{position:relative;margin:0 -16px;overflow:hidden;background:#1c4a3a}
+.hero2-img{width:100%;display:block;aspect-ratio:4/4.4;object-fit:cover;object-position:50% 0%}
+.hero2-in{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;text-align:center;padding:0 20px 24px;background:linear-gradient(180deg,rgba(0,0,0,0) 45%,rgba(0,0,0,.62) 100%)}
+.hero2-logo{width:min(46%,190px);mix-blend-mode:multiply;margin-bottom:8px}
+.hero2-h{font-family:Georgia,"Hiragino Mincho ProN","Yu Mincho",serif;font-size:21px;text-wrap:balance;line-height:1.45;margin:0 0 6px;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.5)}
+.hero2-sub{margin:0;font-size:14px;color:#f1e7c8;text-shadow:0 1px 8px rgba(0,0,0,.5)}
+@media (min-width:640px){.hero2{margin:0 0 6px;border-radius:14px}.hero2-img{aspect-ratio:16/10;object-position:50% 20%}.hero2-h{font-size:30px}}
+.cyc{display:flex;align-items:flex-start;justify-content:space-between;margin:6px 0 14px}
+.cyc-i{text-align:center;width:17%}
+.cyc-i img{width:100%;max-width:64px;border-radius:50%;display:block;margin:0 auto 4px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.cyc-i span{font-size:10.5px;color:var(--g);line-height:1.2;display:block}
+.cyc-a{color:var(--gold,#b8923a);font-weight:700;margin-top:22px;font-size:14px}
+.pill{position:relative;border-radius:12px;overflow:hidden;margin:0 0 12px;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.1)}
+.pill img{width:100%;aspect-ratio:16/8;object-fit:cover;display:block}
+.pill-t{position:absolute;left:0;right:0;bottom:0;padding:26px 14px 12px;background:linear-gradient(180deg,rgba(0,0,0,0),rgba(0,0,0,.65));color:#fff}
+.pill-t b{display:block;font-size:18px;letter-spacing:.08em}
+.pill-t span{font-size:13px;opacity:.95}
 </style>
 </head>
 <body>
@@ -926,7 +944,7 @@ const ACTIVITY_ITEMS = [
    右上の「MENU」ボタン（追従）から各画面へ移動。本文は短く、チラシの画像を織り交ぜる。
    =================================================================== */
 const STORY_T = {
-  en: { 'チラシ（6言語）': 'Brochures (6 languages)', 'NATURE KOBE 紹介': 'About NATURE KOBE', '但馬牛とは？': 'What is Tajima Beef?', 'うすながビーフが美味しい理由': 'Why Usunaga Beef tastes special', 'チラシ・資料': 'Brochures', 'NATURE KOBE 紹介チラシ（6言語）': 'NATURE KOBE brochure (6 languages)', 'これまでのチラシ（日本語）': 'Past flyers (Japanese)', 'めぐり米 5kg': 'Meguri Rice, 5 kg', '牛尾・碓永・栗原': 'Ushio · Usunaga · Kurihara', 'メニュー': 'Menu', 'ホーム': 'Home', 'NATURE KOBEの想い': 'Our Philosophy', 'メンバー紹介': 'Members', '活動実績': 'Activities', 'ご注文': 'Order', '閉じる': 'Close', '一覧へ戻る': 'Back to list', 'もっと読む': 'Read more', 'チラシを見る': 'View flyer',
+  en: { '牛': 'Cattle', '堆肥': 'Compost', '土づくり': 'Soil', 'お米・野菜': 'Rice & vegetables', '食卓へ': 'Your table', 'チラシ（6言語）': 'Brochures (6 languages)', 'NATURE KOBE 紹介': 'About NATURE KOBE', '但馬牛とは？': 'What is Tajima Beef?', 'うすながビーフが美味しい理由': 'Why Usunaga Beef tastes special', 'チラシ・資料': 'Brochures', 'NATURE KOBE 紹介チラシ（6言語）': 'NATURE KOBE brochure (6 languages)', 'これまでのチラシ（日本語）': 'Past flyers (Japanese)', 'めぐり米 5kg': 'Meguri Rice, 5 kg', '牛尾・碓永・栗原': 'Ushio · Usunaga · Kurihara', 'メニュー': 'Menu', 'ホーム': 'Home', 'NATURE KOBEの想い': 'Our Philosophy', 'メンバー紹介': 'Members', '活動実績': 'Activities', 'ご注文': 'Order', '閉じる': 'Close', '一覧へ戻る': 'Back to list', 'もっと読む': 'Read more', 'チラシを見る': 'View flyer',
     'いのちを巡らせる、循環型農業。': 'Circular farming that keeps life in motion.',
     '牛を育て、土を育て、食を育てる。': 'Raise the cattle. Build the soil. Grow the food.',
     '但馬牛・神戸ビーフを届けるだけで終わらない。牛の堆肥で土を育て、その土でお米や野菜をつくり、また牛へ。神戸から、いのちが巡る農業をつくっています。': 'We do more than deliver Kobe Beef. Cattle compost builds the soil, the soil grows rice and vegetables, and the crops feed the cattle again. From Kobe, we are building farming that keeps life in a circle.',
@@ -940,7 +958,7 @@ const STORY_T = {
     'ご注文に合わせて精米したてをお届けします。産地は神戸・丹波・但馬など、季節によって変わりますが、その都度、単一原料米を選んでお届けします。': 'Milled to order and shipped fresh. The region — Kobe, Tamba, Tajima — changes with the season, and each time we select a single-origin rice.',
     '同じ良質な堆肥で育てた野菜を「NATURE LEAF」としてお届けしていきます。但馬牛の堆肥で育てた兵庫県朝来市産の丹波黒大豆枝豆は、大粒で深いコクと甘みが特徴。冬は朝来の岩津ネギもお届けします。': 'Vegetables grown with the same rich compost, delivered as NATURE LEAF. Tamba black-soybean edamame from Asago, Hyogo, grown with Tajima cattle compost — large beans, deep and sweet. In winter we also deliver Iwatsu leeks, Asago’s famous winter leek.',
   },
-  'zh-CN': { 'チラシ（6言語）': '宣传单（6 种语言）', 'NATURE KOBE 紹介': 'NATURE KOBE 介绍', '但馬牛とは？': '什么是但马牛？', 'うすながビーフが美味しい理由': 'Usunaga 牛肉美味的理由', 'チラシ・資料': '宣传单・资料', 'NATURE KOBE 紹介チラシ（6言語）': 'NATURE KOBE 介绍宣传单（6 种语言）', 'これまでのチラシ（日本語）': '过往宣传单（日文）', 'めぐり米 5kg': '循环米 5kg', 'メニュー': '菜单', 'ホーム': '首页', 'NATURE KOBEの想い': '我们的理念', 'メンバー紹介': '成员介绍', '活動実績': '活动实绩', 'ご注文': '订购', '閉じる': '关闭', '一覧へ戻る': '返回列表', 'もっと読む': '阅读更多', 'チラシを見る': '查看宣传单',
+  'zh-CN': { '牛': '牛', '堆肥': '堆肥', '土づくり': '培育土壤', 'お米・野菜': '大米・蔬菜', '食卓へ': '餐桌', 'チラシ（6言語）': '宣传单（6 种语言）', 'NATURE KOBE 紹介': 'NATURE KOBE 介绍', '但馬牛とは？': '什么是但马牛？', 'うすながビーフが美味しい理由': 'Usunaga 牛肉美味的理由', 'チラシ・資料': '宣传单・资料', 'NATURE KOBE 紹介チラシ（6言語）': 'NATURE KOBE 介绍宣传单（6 种语言）', 'これまでのチラシ（日本語）': '过往宣传单（日文）', 'めぐり米 5kg': '循环米 5kg', 'メニュー': '菜单', 'ホーム': '首页', 'NATURE KOBEの想い': '我们的理念', 'メンバー紹介': '成员介绍', '活動実績': '活动实绩', 'ご注文': '订购', '閉じる': '关闭', '一覧へ戻る': '返回列表', 'もっと読む': '阅读更多', 'チラシを見る': '查看宣传单',
     'いのちを巡らせる、循環型農業。': '让生命循环的农业。',
     '牛を育て、土を育て、食を育てる。': '养牛，养土，养出好食物。',
     '但馬牛・神戸ビーフを届けるだけで終わらない。牛の堆肥で土を育て、その土でお米や野菜をつくり、また牛へ。神戸から、いのちが巡る農業をつくっています。': '我们不只是销售神户牛。用牛的堆肥培育土壤，用土壤种出大米和蔬菜，再回到牛的饲料。从神户出发，打造让生命循环的农业。',
@@ -952,7 +970,7 @@ const STORY_T = {
     'ご注文に合わせて精米したてをお届けします。産地は神戸・丹波・但馬など、季節によって変わりますが、その都度、単一原料米を選んでお届けします。': '接单后碾米，新鲜送达。产地随季节在神户、丹波、但马之间变化，每次都选用单一产地米。',
     '同じ良質な堆肥で育てた野菜を「NATURE LEAF」としてお届けしていきます。但馬牛の堆肥で育てた兵庫県朝来市産の丹波黒大豆枝豆は、大粒で深いコクと甘みが特徴。冬は朝来の岩津ネギもお届けします。': '用同样优质堆肥种植的蔬菜，以 NATURE LEAF 的名义送达。用但马牛堆肥种植的兵库县朝来市产丹波黑大豆毛豆，颗粒大，浓郁香甜。冬季还有朝来名产“岩津葱”。',
   },
-  'zh-TW': { 'チラシ（6言語）': '傳單（6 種語言）', 'NATURE KOBE 紹介': 'NATURE KOBE 介紹', '但馬牛とは？': '什麼是但馬牛？', 'うすながビーフが美味しい理由': 'Usunaga 牛肉美味的理由', 'チラシ・資料': '傳單・資料', 'NATURE KOBE 紹介チラシ（6言語）': 'NATURE KOBE 介紹傳單（6 種語言）', 'これまでのチラシ（日本語）': '過往傳單（日文）', 'めぐり米 5kg': '循環米 5kg', 'メニュー': '選單', 'ホーム': '首頁', 'NATURE KOBEの想い': '我們的理念', 'メンバー紹介': '成員介紹', '活動実績': '活動實績', 'ご注文': '訂購', '閉じる': '關閉', '一覧へ戻る': '返回列表', 'もっと読む': '閱讀更多', 'チラシを見る': '查看傳單',
+  'zh-TW': { '牛': '牛', '堆肥': '堆肥', '土づくり': '培育土壤', 'お米・野菜': '稻米・蔬菜', '食卓へ': '餐桌', 'チラシ（6言語）': '傳單（6 種語言）', 'NATURE KOBE 紹介': 'NATURE KOBE 介紹', '但馬牛とは？': '什麼是但馬牛？', 'うすながビーフが美味しい理由': 'Usunaga 牛肉美味的理由', 'チラシ・資料': '傳單・資料', 'NATURE KOBE 紹介チラシ（6言語）': 'NATURE KOBE 介紹傳單（6 種語言）', 'これまでのチラシ（日本語）': '過往傳單（日文）', 'めぐり米 5kg': '循環米 5kg', 'メニュー': '選單', 'ホーム': '首頁', 'NATURE KOBEの想い': '我們的理念', 'メンバー紹介': '成員介紹', '活動実績': '活動實績', 'ご注文': '訂購', '閉じる': '關閉', '一覧へ戻る': '返回列表', 'もっと読む': '閱讀更多', 'チラシを見る': '查看傳單',
     'いのちを巡らせる、循環型農業。': '讓生命循環的農業。',
     '牛を育て、土を育て、食を育てる。': '養牛，養土，養出好食物。',
     '但馬牛・神戸ビーフを届けるだけで終わらない。牛の堆肥で土を育て、その土でお米や野菜をつくり、また牛へ。神戸から、いのちが巡る農業をつくっています。': '我們不只是販售神戶牛。用牛的堆肥培育土壤，用土壤種出稻米與蔬菜，再回到牛的飼料。從神戶出發，打造讓生命循環的農業。',
@@ -964,7 +982,7 @@ const STORY_T = {
     'ご注文に合わせて精米したてをお届けします。産地は神戸・丹波・但馬など、季節によって変わりますが、その都度、単一原料米を選んでお届けします。': '接單後碾米，新鮮送達。產地隨季節在神戶、丹波、但馬之間變化，每次都選用單一產地米。',
     '同じ良質な堆肥で育てた野菜を「NATURE LEAF」としてお届けしていきます。但馬牛の堆肥で育てた兵庫県朝来市産の丹波黒大豆枝豆は、大粒で深いコクと甘みが特徴。冬は朝来の岩津ネギもお届けします。': '用同樣優質堆肥種植的蔬菜，以 NATURE LEAF 之名送達。用但馬牛堆肥種植的兵庫縣朝來市產丹波黑大豆毛豆，顆粒大，濃郁香甜。冬季還有朝來名產「岩津蔥」。',
   },
-  ko: { 'チラシ（6言語）': '전단 (6개 언어)', 'NATURE KOBE 紹介': 'NATURE KOBE 소개', '但馬牛とは？': '타지마규란?', 'うすながビーフが美味しい理由': '우스나가 비프가 맛있는 이유', 'チラシ・資料': '전단・자료', 'NATURE KOBE 紹介チラシ（6言語）': 'NATURE KOBE 소개 전단 (6개 언어)', 'これまでのチラシ（日本語）': '지난 전단 (일본어)', 'めぐり米 5kg': '메구리 쌀 5kg', '牛尾・碓永・栗原': '우시오・우스나가・구리하라', 'メニュー': '메뉴', 'ホーム': '홈', 'NATURE KOBEの想い': '우리의 생각', 'メンバー紹介': '멤버 소개', '活動実績': '활동 실적', 'ご注文': '주문', '閉じる': '닫기', '一覧へ戻る': '목록으로', 'もっと読む': '더 읽기', 'チラシを見る': '전단 보기',
+  ko: { '牛': '소', '堆肥': '퇴비', '土づくり': '흙 만들기', 'お米・野菜': '쌀・채소', '食卓へ': '식탁으로', 'チラシ（6言語）': '전단 (6개 언어)', 'NATURE KOBE 紹介': 'NATURE KOBE 소개', '但馬牛とは？': '타지마규란?', 'うすながビーフが美味しい理由': '우스나가 비프가 맛있는 이유', 'チラシ・資料': '전단・자료', 'NATURE KOBE 紹介チラシ（6言語）': 'NATURE KOBE 소개 전단 (6개 언어)', 'これまでのチラシ（日本語）': '지난 전단 (일본어)', 'めぐり米 5kg': '메구리 쌀 5kg', '牛尾・碓永・栗原': '우시오・우스나가・구리하라', 'メニュー': '메뉴', 'ホーム': '홈', 'NATURE KOBEの想い': '우리의 생각', 'メンバー紹介': '멤버 소개', '活動実績': '활동 실적', 'ご注文': '주문', '閉じる': '닫기', '一覧へ戻る': '목록으로', 'もっと読む': '더 읽기', 'チラシを見る': '전단 보기',
     'いのちを巡らせる、循環型農業。': '생명을 순환시키는 농업.',
     '牛を育て、土を育て、食を育てる。': '소를 키우고, 흙을 키우고, 먹거리를 키웁니다.',
     '但馬牛・神戸ビーフを届けるだけで終わらない。牛の堆肥で土を育て、その土でお米や野菜をつくり、また牛へ。神戸から、いのちが巡る農業をつくっています。': '고베규를 전하는 데서 끝나지 않습니다. 소의 퇴비로 흙을 키우고, 그 흙에서 쌀과 채소를 기르고, 다시 소에게. 고베에서 생명이 순환하는 농업을 만들어 갑니다.',
@@ -976,7 +994,7 @@ const STORY_T = {
     'ご注文に合わせて精米したてをお届けします。産地は神戸・丹波・但馬など、季節によって変わりますが、その都度、単一原料米を選んでお届けします。': '주문 후 도정해 갓 찧은 쌀을 보내 드립니다. 산지는 고베・단바・타지마 등 계절에 따라 바뀌며, 매번 단일 산지 쌀을 골라 보냅니다.',
     '同じ良質な堆肥で育てた野菜を「NATURE LEAF」としてお届けしていきます。但馬牛の堆肥で育てた兵庫県朝来市産の丹波黒大豆枝豆は、大粒で深いコクと甘みが特徴。冬は朝来の岩津ネギもお届けします。': '같은 좋은 퇴비로 키운 채소를 NATURE LEAF로 전해 갑니다. 타지마규 퇴비로 키운 효고현 아사고시산 단바 검은콩 에다마메는 알이 굵고 깊은 감칠맛과 단맛이 특징. 겨울에는 아사고의 명물 이와쓰 파도 전합니다.',
   },
-  fr: { 'チラシ（6言語）': 'Brochures (6 langues)', 'NATURE KOBE 紹介': 'Présentation de NATURE KOBE', '但馬牛とは？': 'Qu’est-ce que le bœuf de Tajima ?', 'うすながビーフが美味しい理由': 'Pourquoi le bœuf Usunaga est si bon', 'チラシ・資料': 'Brochures', 'NATURE KOBE 紹介チラシ（6言語）': 'Brochure NATURE KOBE (6 langues)', 'これまでのチラシ（日本語）': 'Anciennes brochures (en japonais)', 'めぐり米 5kg': 'Riz Meguri, 5 kg', '牛尾・碓永・栗原': 'Ushio · Usunaga · Kurihara', 'メニュー': 'Menu', 'ホーム': 'Accueil', 'NATURE KOBEの想い': 'Notre philosophie', 'メンバー紹介': 'L’équipe', '活動実績': 'Nos actions', 'ご注文': 'Commander', '閉じる': 'Fermer', '一覧へ戻る': 'Retour à la liste', 'もっと読む': 'Lire la suite', 'チラシを見る': 'Voir la brochure',
+  fr: { '牛': 'Bovins', '堆肥': 'Compost', '土づくり': 'Sol', 'お米・野菜': 'Riz et légumes', '食卓へ': 'Votre table', 'チラシ（6言語）': 'Brochures (6 langues)', 'NATURE KOBE 紹介': 'Présentation de NATURE KOBE', '但馬牛とは？': 'Qu’est-ce que le bœuf de Tajima ?', 'うすながビーフが美味しい理由': 'Pourquoi le bœuf Usunaga est si bon', 'チラシ・資料': 'Brochures', 'NATURE KOBE 紹介チラシ（6言語）': 'Brochure NATURE KOBE (6 langues)', 'これまでのチラシ（日本語）': 'Anciennes brochures (en japonais)', 'めぐり米 5kg': 'Riz Meguri, 5 kg', '牛尾・碓永・栗原': 'Ushio · Usunaga · Kurihara', 'メニュー': 'Menu', 'ホーム': 'Accueil', 'NATURE KOBEの想い': 'Notre philosophie', 'メンバー紹介': 'L’équipe', '活動実績': 'Nos actions', 'ご注文': 'Commander', '閉じる': 'Fermer', '一覧へ戻る': 'Retour à la liste', 'もっと読む': 'Lire la suite', 'チラシを見る': 'Voir la brochure',
     'いのちを巡らせる、循環型農業。': 'Une agriculture circulaire qui fait tourner le vivant.',
     '牛を育て、土を育て、食を育てる。': 'Élever le bétail. Nourrir le sol. Cultiver la nourriture.',
     '但馬牛・神戸ビーフを届けるだけで終わらない。牛の堆肥で土を育て、その土でお米や野菜をつくり、また牛へ。神戸から、いのちが巡る農業をつくっています。': 'Nous ne faisons pas que livrer du bœuf de Kobe. Le compost des bovins nourrit le sol, le sol donne riz et légumes, et les récoltes reviennent nourrir les bêtes. Depuis Kobe, nous bâtissons une agriculture où la vie tourne en cercle.',
@@ -989,9 +1007,11 @@ const STORY_T = {
     '同じ良質な堆肥で育てた野菜を「NATURE LEAF」としてお届けしていきます。但馬牛の堆肥で育てた兵庫県朝来市産の丹波黒大豆枝豆は、大粒で深いコクと甘みが特徴。冬は朝来の岩津ネギもお届けします。': 'Des légumes cultivés avec ce même compost, livrés sous le nom NATURE LEAF. Des edamame de soja noir de Tamba (Asago, Hyōgo), cultivés avec le compost de nos bovins — de gros grains, riches et doux. En hiver, nous livrons aussi le poireau d’Iwatsu, spécialité d’Asago.',
   },
 };
+const NET_EVENT_ID = 'NET-ONLINE'; // ネット販売（注文サイト）のイベントID
 const Activity = {
   q() { return new URLSearchParams(location.search); },
   url(v, extra) { const q = this.q(); q.set('page', 'story'); if (v && v !== 'home') q.set('v', v); else q.delete('v'); q.delete('id'); if (extra) Object.keys(extra).forEach(k => q.set(k, extra[k])); return '?' + q.toString(); },
+  orderUrl() { const e = this.q().get('e') || NET_EVENT_ID; return '?e=' + encodeURIComponent(e); },
   go(v, extra) { history.pushState(null, '', this.url(v, extra)); this.init(); window.scrollTo(0, 0); },
   txt(key) { const o = (ABOUT.i18n[I18N.lang] || {})[key]; return o || ABOUT[key] || ''; },
   ftitle(t) { return (FLYER_TITLES[I18N.lang] || {})[t] || t; },
@@ -1011,10 +1031,10 @@ const Activity = {
         <button class="x" onclick="Activity.menu(false)">✕</button>
         <div class="smenu-title">${this.s('メニュー')}</div>
         ${nav.map(([k, l]) => `<a href="${this.url(k)}" class="${v === k || (v === 'work' && k === 'works') ? 'on' : ''}" onclick="Activity.go('${k}');return false">${this.s(l)}</a>`).join('')}
-        ${eid ? `<a href="?e=${encodeURIComponent(eid)}" class="order">🛒 ${this.s('ご注文')}</a>` : ''}
+        <a href="${this.orderUrl()}" class="order">🛒 ${this.s('ご注文')}</a>
         <div class="smenu-lang">${langButtons()}</div></div></div>
       <div class="wrap story">${v2.call(this, q)}
-        ${eid && v !== 'home' ? `<p style="text-align:center;margin:26px 0 10px"><a class="btn pri" href="?e=${encodeURIComponent(eid)}">商品・注文はこちら</a></p>` : ''}
+        ${v !== 'home' ? `<p style="text-align:center;margin:26px 0 10px"><a class="btn pri" href="${this.orderUrl()}">商品・注文はこちら</a></p>` : ''}
         <p class="sfoot">NATURE KOBE</p></div>
       <div class="lightbox" id="lightbox" onclick="this.classList.remove('on')"><img id="lightbox-img" alt=""></div>`;
     I18N.apply();
@@ -1028,26 +1048,28 @@ const Activity = {
   s(key, tag = 'span', cls = '') { return `<${tag} data-s="${h(key)}"${cls ? ` class="${cls}"` : ''}>${h(key)}</${tag}>`; },
   card(img, title, sub, onclick) { return `<a class="scard" href="#" onclick="${onclick};return false"><img src="img/story/${img}-t.jpg" alt="" loading="lazy"><div class="scard-b"><div class="scard-t">${title}</div>${sub ? `<div class="scard-s">${sub}</div>` : ''}</div></a>`; },
   home() {
-    const eid = this.q().get('e') || '';
     const recent = ACTIVITY_ITEMS.slice(0, 3);
+    const cyc = [['cow', '牛'], ['compost', '堆肥'], ['soil', '土づくり'], ['rice', 'お米・野菜'], ['table', '食卓へ']];
     return `
-      <section class="shero"><img src="img/story/logo.jpg" alt="NATURE KOBE" class="shero-logo">
-        ${this.s('いのちを巡らせる、循環型農業。', 'h1', 'shero-h')}
-        ${this.s('牛を育て、土を育て、食を育てる。', 'p', 'shero-sub')}</section>
+      <section class="hero2"><img src="img/story/hero.jpg" alt="" class="hero2-img">
+        <div class="hero2-in">
+          ${this.s('いのちを巡らせる、循環型農業。', 'h1', 'hero2-h')}
+          ${this.s('牛を育て、土を育て、食を育てる。', 'p', 'hero2-sub')}</div></section>
       ${this.s('但馬牛・神戸ビーフを届けるだけで終わらない。牛の堆肥で土を育て、その土でお米や野菜をつくり、また牛へ。神戸から、いのちが巡る農業をつくっています。', 'p', 'slead')}
-      ${this.langFlyer()}
-      <p style="text-align:center;margin:0 0 22px"><a class="btn" href="#" onclick="Activity.go('about');return false">${this.s('NATURE KOBEの想い')} →</a></p>
+      <div class="cyc">${cyc.map(([k, l], i) => `<div class="cyc-i"><img src="img/story/c-${k}.png" alt="">${this.s(l, 'span')}</div>${i < 4 ? '<div class="cyc-a">→</div>' : ''}`).join('')}</div>
+      <p style="text-align:center;margin:4px 0 26px"><a class="btn" href="#" onclick="Activity.go('about');return false">${this.s('NATURE KOBEの想い')} →</a></p>
       <h2 class="ssec">${this.s('私たちの取り組み')}</h2>
-      <div class="sgrid">
-        ${this.card('usunaga-beef', 'NATURE BEEF', this.s('神戸うすなが牧場の但馬牛・神戸ビーフ'), "Activity.go('beef')")}
-        ${this.card('rice-bag', 'NATURE RICE', this.s('牛の堆肥で育てたお米'), "Activity.go('rice')")}
-        ${this.card('edamame-500g', 'NATURE LEAF', this.s('牛の堆肥で育てた野菜'), "Activity.go('leaf')")}
-        ${this.card('team', this.s('メンバー紹介'), this.s('牛尾・碓永・栗原'), "Activity.go('members')")}
-      </div>
+      <div class="pill" onclick="Activity.go('beef')"><img src="img/story/p-beef.jpg" alt=""><div class="pill-t"><b>NATURE BEEF</b>${this.s('神戸うすなが牧場の但馬牛・神戸ビーフ', 'span')}</div></div>
+      <div class="pill" onclick="Activity.go('rice')"><img src="img/story/p-rice.jpg" alt=""><div class="pill-t"><b>NATURE RICE</b>${this.s('牛の堆肥で育てたお米', 'span')}</div></div>
+      <div class="pill" onclick="Activity.go('leaf')"><img src="img/story/p-leaf.jpg" alt=""><div class="pill-t"><b>NATURE LEAF</b>${this.s('牛の堆肥で育てた野菜', 'span')}</div></div>
+      <div class="pill" onclick="Activity.go('members')"><img src="img/story/team-t.jpg" alt="" style="object-position:50% 35%"><div class="pill-t"><b>${this.s('メンバー紹介', 'span')}</b>${this.s('牛尾・碓永・栗原', 'span')}</div></div>
       <h2 class="ssec">${this.s('最近の活動')}</h2>
       <div class="sgrid">${recent.map((a, i) => { const t = this.item(a); return this.card(a.flyer || 'intro', h(t[0]), h(a.date || ''), `Activity.go('work',{id:${i}})`); }).join('')}</div>
       <p style="text-align:center;margin:8px 0 22px"><a class="btn" href="#" onclick="Activity.go('works');return false">${this.s('すべて見る')} →</a></p>
-      ${eid ? `<p style="text-align:center;margin:10px 0"><a class="btn pri block" href="?e=${encodeURIComponent(eid)}">商品・注文はこちら</a></p>` : ''}`;
+      <h2 class="ssec">${this.s('チラシ・資料')}</h2>
+      ${this.langFlyer()}
+      <p style="text-align:center;margin:0 0 10px"><a class="btn" href="#" onclick="Activity.go('flyers');return false">${this.s('チラシ・資料')} →</a></p>
+      <p style="text-align:center;margin:18px 0 10px"><a class="btn pri block" href="${this.orderUrl()}">🛒 商品・注文はこちら</a></p>`;
   },
   about() {
     return `<h1 class="stitle">${this.s('NATURE KOBEの想い')}</h1>
@@ -1090,12 +1112,12 @@ const Activity = {
   // 表示中の言語の紹介チラシ（画像をタップで拡大、PDFも開ける）
   langFlyer(kind = 'intro') {
     const l = I18N.lang, id = 'flyer-' + kind + '-' + l;
-    return `<figure class="sfig" onclick="Activity.open('${id}')"><img src="img/story/${id}-t.jpg" alt="NATURE KOBE" loading="lazy"><figcaption>${this.s('チラシを見る')} ↗　<a href="img/story/${id}.pdf" target="_blank" rel="noopener" onclick="event.stopPropagation()">PDF</a></figcaption></figure>`;
+    return `<figure class="sfig" onclick="Activity.open('${id}')"><img src="img/story/${id}-t.jpg" alt="NATURE KOBE" loading="lazy"><figcaption>${this.s('チラシを見る')} ↗</figcaption></figure>`;
   },
   flyers() {
     const l = I18N.lang;
     const kinds = [['intro', 'NATURE KOBE 紹介'], ['tajima', '但馬牛とは？'], ['usunaga', 'うすながビーフが美味しい理由']];
-    const intro = kinds.map(([k, t]) => `<h3 class="ssub" style="margin:14px 0 8px;font-weight:700;color:var(--g)">${this.s(t)}</h3><div class="sgrid">${LANGS.map(([c, n]) => `<a class="scard" href="#" onclick="Activity.open('flyer-${k}-${c}');return false"><img src="img/story/flyer-${k}-${c}-t.jpg" alt="" loading="lazy" style="aspect-ratio:1/1.3;object-position:top"><div class="scard-b"><div class="scard-t">${n}</div><div class="scard-s"><a href="img/story/flyer-${k}-${c}.pdf" target="_blank" rel="noopener" onclick="event.stopPropagation()">PDF</a></div></div></a>`).join('')}</div>`).join('');
+    const intro = kinds.map(([k, t]) => `<h3 class="ssub" style="margin:14px 0 8px;font-weight:700;color:var(--g)">${this.s(t)}</h3><div class="sgrid">${LANGS.map(([c, n]) => `<a class="scard" href="#" onclick="Activity.open('flyer-${k}-${c}');return false"><img src="img/story/flyer-${k}-${c}-t.jpg" alt="" loading="lazy" style="aspect-ratio:1/1.3;object-position:top"><div class="scard-b"><div class="scard-t">${n}</div></div></a>`).join('')}</div>`).join('');
     const jp = `<div class="flyers">${FLYERS.map(f => `<figure class="flyer" onclick="Activity.open('${f.id}')"><img src="img/story/${f.id}-t.jpg" alt="${h(f.title)}" loading="lazy"><figcaption>${h(this.ftitle(f.title))}</figcaption></figure>`).join('')}</div>`;
     return `<h1 class="stitle">${this.s('チラシ・資料')}</h1>
       <h2 class="ssec">${this.s('チラシ（6言語）')}</h2>${intro}
