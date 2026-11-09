@@ -14,7 +14,8 @@
  * データは「data」シートに1行1件で入ります。シートを直接編集しないでください。
  *
  * 在庫表の読み込み：SRC_ID の在庫表（梅本さんの在庫管理表）を読み取り専用で読み込みます。
- * このスクリプトの持ち主のGoogleアカウントに、その在庫表の閲覧権限が必要です。在庫表には書き込みません。
+ * このスクリプトの持ち主のGoogleアカウントに、その在庫表の閲覧権限が必要です。在庫表には書き込みません（セルの色も読むだけ）。
+ * 証明書PDFは、このスクリプトの持ち主のドライブ「うすなが卸台帳 証明書」フォルダに保存します。
  */
 
 const PASS = ''; // ← ここに合言葉を入れる（例：'usunaga2026'）
@@ -53,12 +54,29 @@ function doPost(e) {
     try {
       const ss = SpreadsheetApp.openById(SRC_ID);
       const out = {};
-      SRC_SHEETS.forEach(n => { const sh = ss.getSheetByName(n); if (sh) out[n] = sh.getDataRange().getDisplayValues(); });
-      return json_({ ok: true, name: ss.getName(), sheets: out, at: Date.now() });
+      const bgs = {};
+      // 在庫表のシートを全部見て、「部位」「左重量」の見出しがあるシートだけ読む（シート名が変わっても大丈夫なように）
+      const names = ss.getSheets().map(sh => sh.getName());
+      ss.getSheets().forEach(sh => {
+        const n = sh.getName();
+        if (sh.isSheetHidden() && SRC_SHEETS.indexOf(n) < 0) return;
+        const rg = sh.getDataRange();
+        const vals = rg.getDisplayValues();
+        const head = vals.slice(0, 8).map(r => r.join('|')).join('|');
+        if (SRC_SHEETS.indexOf(n) < 0 && !(head.indexOf('部位') >= 0 && head.indexOf('左') >= 0)) return;
+        out[n] = vals;
+        // セルの色（白以外だけ）："行,列" → 色。色で 在庫／売約／一部売約／納品済 を見分ける
+        const m = {};
+        rg.getBackgrounds().forEach((row, i) => row.forEach((c, j) => { if (c && c !== '#ffffff') m[i + ',' + j] = c; }));
+        bgs[n] = m;
+      });
+      return json_({ ok: true, name: ss.getName(), names: names, sheets: out, bgs: bgs, at: Date.now() });
     } catch (err) {
       return json_({ ok: false, error: 'src: ' + err });
     }
   }
+
+  if (body.op && body.op.indexOf('cert') === 0) return cert_(body);
 
   const sh = sheet_();
   const lock = LockService.getScriptLock();
@@ -105,5 +123,42 @@ function doPost(e) {
     return json_({ ok: false, error: 'unknown op' });
   } finally {
     lock.releaseLock();
+  }
+}
+
+/* ---------- 証明書（PDF）の保管：このスクリプトの持ち主のGoogleドライブ「うすなが卸台帳 証明書」フォルダ ---------- */
+const CERT_FOLDER = 'うすなが卸台帳 証明書';
+function certFolder_() {
+  const it = DriveApp.getFoldersByName(CERT_FOLDER);
+  return it.hasNext() ? it.next() : DriveApp.createFolder(CERT_FOLDER);
+}
+function certInfo_(f) {
+  let meta = {}; try { meta = JSON.parse(f.getDescription() || '{}'); } catch (err) {}
+  return { id: f.getId(), name: f.getName(), edaban: meta.edaban || '', kind: meta.kind || '', size: f.getSize(), at: f.getDateCreated().getTime() };
+}
+function cert_(body) {
+  try {
+    const folder = certFolder_();
+    if (body.op === 'certlist') {
+      const list = []; const it = folder.getFiles();
+      while (it.hasNext()) { const f = it.next(); if (!f.isTrashed()) list.push(certInfo_(f)); }
+      return json_({ ok: true, files: list });
+    }
+    if (body.op === 'certput') {
+      if (!body.data || !body.edaban) return json_({ ok: false, error: 'no data' });
+      const blob = Utilities.newBlob(Utilities.base64Decode(body.data), body.mime || 'application/pdf', String(body.name || 'cert.pdf'));
+      const f = folder.createFile(blob);
+      f.setDescription(JSON.stringify({ edaban: String(body.edaban), kind: String(body.kind || '') }));
+      return json_({ ok: true, file: certInfo_(f) });
+    }
+    const f = DriveApp.getFileById(String(body.id || ''));
+    let inFolder = false; const ps = f.getParents(); while (ps.hasNext()) { if (ps.next().getId() === folder.getId()) inFolder = true; }
+    if (!inFolder) return json_({ ok: false, error: 'not found' });
+    if (body.op === 'certget') return json_({ ok: true, file: certInfo_(f), mime: f.getMimeType(), data: Utilities.base64Encode(f.getBlob().getBytes()) });
+    if (body.op === 'certset') { f.setDescription(JSON.stringify({ edaban: String(body.edaban || ''), kind: String(body.kind || '') })); return json_({ ok: true, file: certInfo_(f) }); }
+    if (body.op === 'certdel') { f.setTrashed(true); return json_({ ok: true }); }
+    return json_({ ok: false, error: 'unknown op' });
+  } catch (err) {
+    return json_({ ok: false, error: 'cert: ' + err });
   }
 }
