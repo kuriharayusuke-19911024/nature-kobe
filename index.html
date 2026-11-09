@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<title>NATURE KOBE｜いのちを巡らせる、循環型農業。</title>
+<title>NATURE KOBE のご紹介｜いのちを巡らせる、循環型農業。</title>
 <meta name="description" content="但馬牛・神戸ビーフを届けるだけで終わらない。牛の堆肥で土を育て、その土でお米や野菜をつくり、また牛へ。神戸から、いのちが巡る農業をつくっています。">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="NATURE KOBE">
-<meta property="og:title" content="NATURE KOBE｜いのちを巡らせる、循環型農業。">
+<meta property="og:title" content="NATURE KOBE のご紹介｜いのちを巡らせる、循環型農業。">
 <meta property="og:description" content="但馬牛・神戸ビーフを届けるだけで終わらない。牛の堆肥で土を育て、その土でお米や野菜をつくり、また牛へ。神戸から、いのちが巡る農業をつくっています。">
 <meta property="og:image" content="https://kuriharayusuke-19911024.github.io/nature-kobe/img/story/og.jpg">
-<meta property="og:url" content="https://kuriharayusuke-19911024.github.io/nature-kobe/?page=story">
+<meta property="og:url" content="https://kuriharayusuke-19911024.github.io/nature-kobe/?page=info">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@500;700&display=swap" rel="stylesheet">
@@ -783,7 +783,7 @@ const I18N = {
   },
   init() { this.lang = this.get(); document.documentElement.lang = this.lang; },
   get() { const l = ls.get('nk-lang'); return LANGS.some(x => x[0] === l) ? l : 'ja'; },
-  set(l) { this.lang = l; ls.set('nk-lang', l); document.documentElement.lang = l; if (/^(activity|story)$/.test(new URLSearchParams(location.search).get('page') || '')) { Activity.init(); return; } this.apply(); render_lang_bar(); },
+  set(l) { this.lang = l; ls.set('nk-lang', l); document.documentElement.lang = l; if (/^(activity|story|info)$/.test(new URLSearchParams(location.search).get('page') || '')) { Activity.init(); return; } this.apply(); render_lang_bar(); },
   /* 1行の文言を翻訳。訳がなければ null */
   t(src) {
     if (this.lang === 'ja') return null;
@@ -956,7 +956,7 @@ const ACTIVITY_ITEMS = [
 ];
 /* ===================================================================
    NATURE KOBE 紹介ページ（名刺代わり）
-   URL: ?page=story（?page=activity も同じ）　画面の切替: &v=home|about|members|works|work&id=…|beef|rice|leaf
+   URL: ?page=info（?page=story / ?page=activity も同じ）　画面の切替: &v=home|about|members|works|work&id=…|beef|rice|leaf
    右上の「MENU」ボタン（追従）から各画面へ移動。本文は短く、チラシの画像を織り交ぜる。
    =================================================================== */
 const STORY_T = {
@@ -1027,7 +1027,7 @@ const NET_EVENT_ID = 'NET-ONLINE'; // ネット販売（注文サイト）のイ
 const INSTAGRAM_URL = 'https://www.instagram.com/naturekobe_official/'; // NATURE KOBE 公式Instagram
 const Activity = {
   q() { return new URLSearchParams(location.search); },
-  url(v, extra) { const q = this.q(); q.set('page', 'story'); if (v && v !== 'home') q.set('v', v); else q.delete('v'); q.delete('id'); if (extra) Object.keys(extra).forEach(k => q.set(k, extra[k])); return '?' + q.toString(); },
+  url(v, extra) { const q = this.q(); if (!q.get('page')) q.set('page', 'story'); if (v && v !== 'home') q.set('v', v); else q.delete('v'); q.delete('id'); if (extra) Object.keys(extra).forEach(k => q.set(k, extra[k])); return '?' + q.toString(); },
   // 注文への入口は、販売会のQRから来た場合（?e=）だけ出す。価格は販売会ごとに違うため、紹介ページからネット販売へは誘導しない（牛尾さんの指摘 2026-11-08）
   orderUrl() { const e = this.q().get('e'); return e ? '?e=' + encodeURIComponent(e) : ''; },
   go(v, extra) { history.pushState(null, '', this.url(v, extra)); this.init(); window.scrollTo(0, 0); },
@@ -1161,7 +1161,7 @@ window.addEventListener('popstate', () => { if (new URLSearchParams(location.sea
 function route() {
   const q = new URLSearchParams(location.search);
   I18N.init();
-  if (q.get('page') === 'activity' || q.get('page') === 'story') return Activity.init();
+  if (/^(activity|story|info)$/.test(q.get('page') || '')) return Activity.init();
   document.title = 'NATURE KOBE ご注文';
   if (q.get('e')) return Customer.init(q.get('e'));
   const hs = location.hash.slice(1);
@@ -1227,7 +1227,7 @@ const Customer = {
   head() {
     const ev = this.C.ev;
     return `${DEMO ? '<div class="demo">プレビュー（デモデータ）：ここでの注文は保存されません</div>' : ''}${ev.net ? '<div class="netbar">🛒 ネット販売　※お振込みでのご注文</div>' : ''}<div class="brand"><div class="logo">NATURE <span>KOBE</span></div><div class="sub">但馬牛・神戸ビーフ ご注文</div></div>
-    <div class="wrap">${langBar()}<p class="news-link"><a href="?page=story&e=${encodeURIComponent(this.C.eid)}">📰 NATURE KOBEについて</a></p><h1 class="serif">${h(ev.name)}</h1><div class="mut sm"><span>${h(jdate(ev.date))}</span>${ev.venue ? '　' + h(ev.venue) : ''}　<span>${ev.net ? 'ネットでのご注文' : 'ご参加の皆さま限定'}</span></div></div>`;
+    <div class="wrap">${langBar()}<p class="news-link"><a href="?page=info&e=${encodeURIComponent(this.C.eid)}">📰 NATURE KOBEについて</a></p><h1 class="serif">${h(ev.name)}</h1><div class="mut sm"><span>${h(jdate(ev.date))}</span>${ev.venue ? '　' + h(ev.venue) : ''}　<span>${ev.net ? 'ネットでのご注文' : 'ご参加の皆さま限定'}</span></div></div>`;
   },
   renderItems() {
     const C = this.C, cats = [];
