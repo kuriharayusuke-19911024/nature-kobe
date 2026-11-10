@@ -214,6 +214,7 @@ hr.sep{border:0;border-top:1px solid var(--line);margin:14px 0}
 .rc table td{border:1px solid #111;padding:5px 10px}
 .rc .iss{font-size:14px;text-align:right;line-height:1.7;display:flex;align-items:center;justify-content:flex-end}
 .rc .iss b{font-size:17px}
+.rc .note8{font-size:11px;color:#444;margin:8px 0 0}
 .rc .iss-t{flex:0 1 auto}
 .rc .seal{width:20mm;height:20mm;flex:0 0 auto;margin-left:4mm}
 .pk{font-family:'Noto Sans JP',sans-serif;font-size:12px;color:#111}
@@ -1715,8 +1716,8 @@ const Admin = {
       <div class="to">${h(E.receiptTo || E.name)}　様</div>
       <div class="amt">金額　${yen(o.total)} −<span style="font-size:15px">（税込）</span></div>
       <div class="tadashi">但し　${h(this.receiptTadashi(E))}</div><div class="tadashi">上記正に領収いたしました。</div>
-      <div class="bd2"><table><tr><td colspan="2">内訳</td></tr>${o.shipping && o.shipTaxRate !== o.taxRate ? `<tr><td>${o.taxRate}%対象（税抜）</td><td class="right">${yen(o.subtotal)}</td></tr><tr><td>　消費税額（${o.taxRate}%）</td><td class="right">${yen(o.taxFood)}</td></tr><tr><td>${o.shipTaxRate}%対象（送料・税抜）</td><td class="right">${yen(o.shipping)}</td></tr><tr><td>　消費税額（${o.shipTaxRate}%）</td><td class="right">${yen(o.taxShip)}</td></tr>` : `<tr><td>税抜金額</td><td class="right">${yen(o.subtotal + o.shipping)}</td></tr><tr><td>消費税額（${o.taxRate}%）</td><td class="right">${yen(o.tax)}</td></tr>`}<tr><td>消費税額 合計</td><td class="right">${yen(o.tax)}</td></tr></table>
-      <div class="iss"><div class="iss-t"><b>${h(S.sellerName || 'NATURE KOBE')}</b><br>${h(S.sellerAddress || '')}${S.sellerTel ? '<br>TEL ' + h(S.sellerTel) : ''}</div><img class="seal" src="${SEAL_URI}" alt="角印"></div></div></div>`;
+      <div class="bd2"><div><table><tr><td colspan="2">内訳</td></tr>${o.shipping && o.shipTaxRate !== o.taxRate ? `<tr><td>${o.taxRate}%対象（税抜）</td><td class="right">${yen(o.subtotal)}</td></tr><tr><td>　消費税額（${o.taxRate}%）</td><td class="right">${yen(o.taxFood)}</td></tr><tr><td>${o.shipTaxRate}%対象（送料・税抜）</td><td class="right">${yen(o.shipping)}</td></tr><tr><td>　消費税額（${o.shipTaxRate}%）</td><td class="right">${yen(o.taxShip)}</td></tr>` : `<tr><td>税抜金額</td><td class="right">${yen(o.subtotal + o.shipping)}</td></tr><tr><td>消費税額（${o.taxRate}%）</td><td class="right">${yen(o.tax)}</td></tr>`}<tr><td>消費税額 合計</td><td class="right">${yen(o.tax)}</td></tr></table>${o.taxRate === 8 ? '<p class="note8">※お肉は軽減税率（8%）対象です。</p>' : ''}</div>
+      <div class="iss"><div class="iss-t"><b>${h(S.sellerName || 'NATURE KOBE')}</b><br>${h(S.sellerAddress || '')}${S.sellerTel ? '<br>TEL ' + h(S.sellerTel) : ''}${S.sellerEmail ? '<br>' + h(S.sellerEmail) : ''}</div><img class="seal" src="${SEAL_URI}" alt="角印"></div></div></div>`;
     setTimeout(() => window.print(), 50);
   },
   /* ---- 精肉店へ発注 ---- */
