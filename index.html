@@ -1696,15 +1696,14 @@ const Admin = {
   mailtoHref() { return `mailto:${encodeURIComponent(this.E.email || '')}?subject=${encodeURIComponent($('#msub').value)}&body=${encodeURIComponent($('#mbody').value)}`; },
   async markSent(kind) { this.E.mail = this.E.mail || {}; this.E.mail[kind] = true; if (await this.saveE(true)) { toast('送信済みにしました'); this.renderEdit(); } },
   /* ---- 領収書 ---- */
-  /* 領収書の但し書き：注文の商品名から品目を判定して組み立てる */
+  /* 領収書の但し書き：注文の商品名から品目を判定して組み立てる。
+     肉は部位名が増えるため列挙せず、「肉以外と判定できなかったもの」を但馬牛として扱う */
   receiptTadashi(o) {
-    const names = (o.items || []).map(i => i.name || '').concat((o.extras || []).map(x => x.name || '')).join(' / ');
-    const hit = [];
-    const add = (re, label) => { if (re.test(names) && !hit.includes(label)) hit.push(label); };
-    add(/牛|ビーフ|beef|ロース|カルビ|ハラミ|サーロイン|ヒレ|モモ|バラ|ミスジ|ランプ|イチボ|シャトーブリアン|ステーキ|すき焼|しゃぶ|焼肉|挽肉|ひき肉|テール|スジ|ホルモン/i, '但馬牛・神戸ビーフ');
-    add(/米|ライス|rice/i, 'お米');
-    add(/枝豆|えだまめ|エダマメ/, '丹波黒枝豆');
-    add(/ねぎ|ネギ|葱/, '岩津ネギ');
+    const RULES = [[/枝豆|えだまめ|エダマメ/, '丹波黒枝豆'], [/米|\brice\b/i, 'お米'], [/ねぎ|ネギ|葱/, '岩津ネギ']];
+    const names = (o.items || []).map(i => i.name || '').concat((o.extras || []).map(x => x.name || '')).filter(n => n.trim());
+    const hit = []; let beef = false;
+    names.forEach(n => { const r = RULES.find(x => x[0].test(n)); if (r) { if (!hit.includes(r[1])) hit.push(r[1]); } else beef = true; });
+    if (beef) hit.unshift('但馬牛・神戸ビーフ');
     return (hit.length ? hit.join('、') : 'お品') + '代として';
   },
   receipt() {
