@@ -1696,6 +1696,17 @@ const Admin = {
   mailtoHref() { return `mailto:${encodeURIComponent(this.E.email || '')}?subject=${encodeURIComponent($('#msub').value)}&body=${encodeURIComponent($('#mbody').value)}`; },
   async markSent(kind) { this.E.mail = this.E.mail || {}; this.E.mail[kind] = true; if (await this.saveE(true)) { toast('送信済みにしました'); this.renderEdit(); } },
   /* ---- 領収書 ---- */
+  /* 領収書の但し書き：注文の商品名から品目を判定して組み立てる */
+  receiptTadashi(o) {
+    const names = (o.items || []).map(i => i.name || '').concat((o.extras || []).map(x => x.name || '')).join(' / ');
+    const hit = [];
+    const add = (re, label) => { if (re.test(names) && !hit.includes(label)) hit.push(label); };
+    add(/牛|ビーフ|beef|ロース|カルビ|ハラミ|サーロイン|ヒレ|モモ|バラ|ミスジ|ランプ|イチボ|シャトーブリアン|ステーキ|すき焼|しゃぶ|焼肉|挽肉|ひき肉|テール|スジ|ホルモン/i, '但馬牛・神戸ビーフ');
+    add(/米|ライス|rice/i, 'お米');
+    add(/枝豆|えだまめ|エダマメ/, '丹波黒枝豆');
+    add(/ねぎ|ネギ|葱/, '岩津ネギ');
+    return (hit.length ? hit.join('、') : 'お品') + '代として';
+  },
   receipt() {
     const E = this.E, o = this.calcE(), S = this.A.settings;
     if (!E.paid) toast('まだ入金済みになっていません（発行はできます）', true);
@@ -1704,7 +1715,7 @@ const Admin = {
       <div class="no"><span>No. ${h(E.id)}</span><span>発行日　${h(jdate(d))}</span></div>
       <div class="to">${h(E.receiptTo || E.name)}　様</div>
       <div class="amt">金額　${yen(o.total)} −<span style="font-size:15px">（税込）</span></div>
-      <div class="tadashi">但し　但馬牛・神戸ビーフ代として</div><div class="tadashi">上記正に領収いたしました。</div>
+      <div class="tadashi">但し　${h(this.receiptTadashi(E))}</div><div class="tadashi">上記正に領収いたしました。</div>
       <div class="bd2"><table><tr><td colspan="2">内訳</td></tr>${o.shipping && o.shipTaxRate !== o.taxRate ? `<tr><td>${o.taxRate}%対象（税抜）</td><td class="right">${yen(o.subtotal)}</td></tr><tr><td>　消費税額（${o.taxRate}%）</td><td class="right">${yen(o.taxFood)}</td></tr><tr><td>${o.shipTaxRate}%対象（送料・税抜）</td><td class="right">${yen(o.shipping)}</td></tr><tr><td>　消費税額（${o.shipTaxRate}%）</td><td class="right">${yen(o.taxShip)}</td></tr>` : `<tr><td>税抜金額</td><td class="right">${yen(o.subtotal + o.shipping)}</td></tr><tr><td>消費税額（${o.taxRate}%）</td><td class="right">${yen(o.tax)}</td></tr>`}<tr><td>消費税額 合計</td><td class="right">${yen(o.tax)}</td></tr></table>
       <div class="iss"><div class="iss-t"><b>${h(S.sellerName || 'NATURE KOBE')}</b><br>${h(S.sellerAddress || '')}${S.sellerTel ? '<br>TEL ' + h(S.sellerTel) : ''}</div><img class="seal" src="${SEAL_URI}" alt="角印"></div></div></div>`;
     setTimeout(() => window.print(), 50);
