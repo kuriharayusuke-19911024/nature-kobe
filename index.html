@@ -1536,10 +1536,18 @@ const Admin = {
   open(id) { this.E = clone(this.A.orders.find(o => o.id === id)); this.E.shipTo = this.E.shipTo || { on: false }; this.E.mail = this.E.mail || { confirm: false, ship: false }; this.renderEdit(); },
   evMarkup(id) { const e = this.A.events.find(x => x.id === id); return e ? (+e.markup || 0) : 0; },
   curMarkup() { const E = this.E; return E.markup != null && E.markup !== '' ? +E.markup : this.evMarkup(E.eventId); },
-  calcE() { const E = this.E; const tmp = clone(E); tmp.markup = this.curMarkup(); computeOrder(tmp, this.A.settings, this.A.products, true); return tmp; },
+  /* 販売会ごとの追加商品（ランプなど）は商品マスタに無い。注文の販売会の分を足さないと
+     商品の選択欄がどれにも一致せず、先頭の商品に化けてしまう（2026-11-11 牛尾さんの指摘） */
+  prodsFor(eventId) {
+    const ev = (this.A.events || []).find(e => e.id === eventId);
+    const ex = (ev && ev.extras) || [];
+    return ex.length ? (this.A.products || []).concat(ex) : (this.A.products || []);
+  },
+  calcE() { const E = this.E; const tmp = clone(E); tmp.markup = this.curMarkup(); computeOrder(tmp, this.A.settings, this.prodsFor(E.eventId), true); return tmp; },
   renderEdit() {
     const E = this.E, A = this.A, t = this.calcE();
-    const pOpts = sel => A.products.map(p => `<option value="${p.id}" ${sel === p.id ? 'selected' : ''}>${h(p.cat)} ${h(p.name)}</option>`).join('') + `<option value="" ${!sel ? 'selected' : ''}>（自由入力）</option>`;
+    const PR = this.prodsFor(E.eventId);
+    const pOpts = sel => PR.map(p => `<option value="${p.id}" ${sel === p.id ? 'selected' : ''}>${h(p.cat)} ${h(p.name)}</option>`).join('') + `<option value="" ${!sel ? 'selected' : ''}>（自由入力）</option>`;
     const fld = (path, label, opt = {}) => `<label class="f">${label}</label><input class="in" type="${opt.type || 'text'}" value="${h(this.get(path))}" oninput="Admin.setE('${path}',this.value)" placeholder="${h(opt.ph || '')}">`;
     const segE = (path, opts) => `<div class="seg">${opts.map(o => `<label class="${this.get(path) === o ? 'on' : ''}"><input type="radio" ${this.get(path) === o ? 'checked' : ''} onchange="Admin.setE('${path}','${o}',1)">${o}</label>`).join('')}</div>`;
     openSheet(`<div class="hd"><button class="x" onclick="closeSheet()" aria-label="閉じる">✕</button><div class="t">${E.id ? h(E.id) + '　' + h(E.name) + ' 様' : '新しい注文'}</div><span class="chip c-${E.status}">${E.status}</span></div>
@@ -1634,7 +1642,7 @@ const Admin = {
   updTot() { const el = $('#etot'); if (el) el.innerHTML = this.totHtml(this.calcE()); },
   setItem(i, k, v, re) {
     const it = this.E.items[i];
-    if (k === 'pid') { it.pid = v; const p = this.A.products.find(x => x.id === v); if (p) { it.basePrice = p.price; delete it.unitPrice; it.name = p.cat + ' ' + p.name; it.variable = p.variable; } }
+    if (k === 'pid') { it.pid = v; const p = this.prodsFor(this.E.eventId).find(x => x.id === v); if (p) { it.basePrice = p.price; delete it.unitPrice; it.name = p.cat + ' ' + p.name; it.variable = p.variable; } }
     else if (k === 'basePrice') { it.basePrice = v === '' ? '' : +v; delete it.unitPrice; }
     else it[k] = (k === 'g' || k === 'count') ? (v === '' ? '' : +v) : v;
     if (re) return this.rerenderEdit();
