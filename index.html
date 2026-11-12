@@ -418,8 +418,8 @@ function brandBar(title, right, tabs) {
 }
 /* 量の選択肢：全商品300gパック単位（多い場合は個数で調整） */
 const isCut = p => false;
-const gOpts = p => { const a = []; for (let g = 300; g <= 3000; g += 100) a.push(g); return a; }; // 100g単位（300g以上）
-const gOk = (p, g) => g >= 300 && g % 100 === 0;
+const gOpts = p => { const a = []; for (let g = 300; g <= 3000; g += 300) a.push(g); return a; }; // お客さんは300g単位。管理画面からは任意のgで入力できる
+const gOk = (p, g) => g >= 300 && g % 300 === 0;
 const MIN_PACK = 300;
 /* 商品写真（写真がある商品だけ表示。タップで拡大） */
 const PHOTOS = { 's-aka': 'img/s-aka.jpg?v=3', 's-shimo': 'img/s-shimo.jpg?v=2', 'st-aka': 'img/st-aka.jpg?v=2', 'st-shimo': 'img/st-shimo.jpg?v=2', 'o-kiri': 'img/o-kiri.jpg?v=2' };
@@ -540,7 +540,7 @@ const I18N = {
       '赤身': 'Lean', '霜降り': 'Marbled', '赤身（特上）': 'Lean · Premium', '赤身（上）': 'Lean · Select', '赤身（並）': 'Lean · Standard', '霜降り（特上）': 'Marbled · Premium', '霜降り（上）': 'Marbled · Select', '霜降り（並）': 'Marbled · Standard',
       '切り落とし': 'Trimmings', 'スジ肉': 'Tendon (for stew)', 'テール': 'Oxtail',
       '【赤身】ランプ': 'Rump (lean)', '【赤身】イチボ': 'Top sirloin cap (lean)', '【赤身】ウチヒラ': 'Top round (lean)', '【霜降り】ヒウチ': 'Tri-tip (marbled)', '【霜降り】カイノミ': 'Flap (marbled)', '【赤身】ソトヒラ': 'Bottom round (lean)', '【赤身】カメノコ': 'Knuckle (lean)',
-      'お肉は100g単位（300g以上）で選んでください': 'Please choose in 100 g steps (300 g minimum)', '住所を入力しました。番地・建物名を続けて入力してください': 'Address filled in. Please add the street number and building.', 'コピーしました': 'Copied',
+      'お肉は300g単位で選んでください': 'Please choose in 300 g steps', '住所を入力しました。番地・建物名を続けて入力してください': 'Address filled in. Please add the street number and building.', 'コピーしました': 'Copied',
       'PH:例）神戸 花子': 'e.g. Emma Smith', 'PH:example@mail.com': 'name@example.com', 'PH:090-1234-5678': '090-1234-5678 or +1 …', 'PH:123-4567': '123-4567', 'PH:都道府県から建物名・部屋番号まで': 'Hotel / street address in Japan, incl. room number', 'PH:例）月曜か火曜に届くと助かります／すき焼き用に': 'e.g. Deliver to hotel front desk by Friday', 'PH:例）株式会社〇〇': 'e.g. Company name',
     },
     'zh-CN': {
@@ -571,7 +571,7 @@ const I18N = {
       '赤身': '瘦肉', '霜降り': '雪花', '赤身（特上）': '瘦肉（特上）', '赤身（上）': '瘦肉（上）', '赤身（並）': '瘦肉（标准）', '霜降り（特上）': '雪花（特上）', '霜降り（上）': '雪花（上）', '霜降り（並）': '雪花（标准）',
       '切り落とし': '碎切肉', 'スジ肉': '牛筋肉（炖煮用）', 'テール': '牛尾',
       '【赤身】ランプ': '臀肉（瘦）', '【赤身】イチボ': '臀腰肉盖（瘦）', '【赤身】ウチヒラ': '内腿肉（瘦）', '【霜降り】ヒウチ': '三角肉（雪花）', '【霜降り】カイノミ': '腹肉心（雪花）', '【赤身】ソトヒラ': '外腿肉（瘦）', '【赤身】カメノコ': '和尚头（瘦）',
-      'お肉は100g単位（300g以上）で選んでください': '请以100g为单位选择（300g起）', '住所を入力しました。番地・建物名を続けて入力してください': '地址已填写，请补充门牌号和楼名', 'コピーしました': '已复制',
+      'お肉は300g単位で選んでください': '请以300g为单位选择', '住所を入力しました。番地・建物名を続けて入力してください': '地址已填写，请补充门牌号和楼名', 'コピーしました': '已复制',
       'PH:例）神戸 花子': '例：王小明', 'PH:example@mail.com': 'name@example.com', 'PH:090-1234-5678': '090-1234-5678 或 +86 …', 'PH:123-4567': '123-4567', 'PH:都道府県から建物名・部屋番号まで': '日本国内的酒店或住址，含房间号', 'PH:例）月曜か火曜に届くと助かります／すき焼き用に': '例：请周五前送到酒店前台', 'PH:例）株式会社〇〇': '例：公司名称',
     },
     'zh-TW': {
@@ -602,7 +602,7 @@ const I18N = {
       '赤身': '瘦肉', '霜降り': '霜降', '赤身（特上）': '瘦肉（特上）', '赤身（上）': '瘦肉（上）', '赤身（並）': '瘦肉（標準）', '霜降り（特上）': '霜降（特上）', '霜降り（上）': '霜降（上）', '霜降り（並）': '霜降（標準）',
       '切り落とし': '碎切肉', 'スジ肉': '牛筋肉（燉煮用）', 'テール': '牛尾',
       '【赤身】ランプ': '臀肉（瘦）', '【赤身】イチボ': '臀腰肉蓋（瘦）', '【赤身】ウチヒラ': '內腿肉（瘦）', '【霜降り】ヒウチ': '三角肉（霜降）', '【霜降り】カイノミ': '腹肉心（霜降）', '【赤身】ソトヒラ': '外腿肉（瘦）', '【赤身】カメノコ': '和尚頭（瘦）',
-      'お肉は100g単位（300g以上）で選んでください': '請以 100g 為單位選擇（300g 起）', '住所を入力しました。番地・建物名を続けて入力してください': '地址已填入，請補上門牌號與樓名', 'コピーしました': '已複製',
+      'お肉は300g単位で選んでください': '請以 300g 為單位選擇', '住所を入力しました。番地・建物名を続けて入力してください': '地址已填入，請補上門牌號與樓名', 'コピーしました': '已複製',
       'PH:例）神戸 花子': '例：王小明', 'PH:example@mail.com': 'name@example.com', 'PH:090-1234-5678': '090-1234-5678 或 +886 …', 'PH:123-4567': '123-4567', 'PH:都道府県から建物名・部屋番号まで': '日本國內的飯店或住址，含房號', 'PH:例）月曜か火曜に届くと助かります／すき焼き用に': '例：請週五前送到飯店櫃台', 'PH:例）株式会社〇〇': '例：公司名稱',
     },
     ko: {
@@ -633,7 +633,7 @@ const I18N = {
       '赤身': '살코기', '霜降り': '마블링', '赤身（特上）': '살코기 (특상)', '赤身（上）': '살코기 (상)', '赤身（並）': '살코기 (일반)', '霜降り（特上）': '마블링 (특상)', '霜降り（上）': '마블링 (상)', '霜降り（並）': '마블링 (일반)',
       '切り落とし': '자투리 (불고기용)', 'スジ肉': '스지 (국・찜용)', 'テール': '소꼬리',
       '【赤身】ランプ': '우둔살 (살코기)', '【赤身】イチボ': '보섭살 (살코기)', '【赤身】ウチヒラ': '설도 안쪽 (살코기)', '【霜降り】ヒウチ': '삼각살 (마블링)', '【霜降り】カイノミ': '업진안살 (마블링)', '【赤身】ソトヒラ': '설도 바깥쪽 (살코기)', '【赤身】カメノコ': '도가니살 (살코기)',
-      'お肉は100g単位（300g以上）で選んでください': '100g 단위로 선택해 주세요 (300g 이상)', '住所を入力しました。番地・建物名を続けて入力してください': '주소를 입력했습니다. 번지와 건물명을 이어서 입력해 주세요', 'コピーしました': '복사했습니다',
+      'お肉は300g単位で選んでください': '300g 단위로 선택해 주세요', '住所を入力しました。番地・建物名を続けて入力してください': '주소를 입력했습니다. 번지와 건물명을 이어서 입력해 주세요', 'コピーしました': '복사했습니다',
       'PH:例）神戸 花子': '예) 김민준', 'PH:example@mail.com': 'name@example.com', 'PH:090-1234-5678': '090-1234-5678 또는 +82 …', 'PH:123-4567': '123-4567', 'PH:都道府県から建物名・部屋番号まで': '일본 내 호텔 또는 주소 (호수까지)', 'PH:例）月曜か火曜に届くと助かります／すき焼き用に': '예) 금요일까지 호텔 프런트로 배송 부탁드립니다', 'PH:例）株式会社〇〇': '예) 회사명',
     },
     fr: {
@@ -664,7 +664,7 @@ const I18N = {
       '赤身': 'Maigre', '霜降り': 'Persillé', '赤身（特上）': 'Maigre · Prestige', '赤身（上）': 'Maigre · Supérieur', '赤身（並）': 'Maigre · Classique', '霜降り（特上）': 'Persillé · Prestige', '霜降り（上）': 'Persillé · Supérieur', '霜降り（並）': 'Persillé · Classique',
       '切り落とし': 'Chutes (émincé)', 'スジ肉': 'Tendons (à mijoter)', 'テール': 'Queue de bœuf',
       '【赤身】ランプ': 'Rumsteck (maigre)', '【赤身】イチボ': 'Aiguillette de rumsteck (maigre)', '【赤身】ウチヒラ': 'Tende de tranche (maigre)', '【霜降り】ヒウチ': 'Aiguillette baronne (persillé)', '【霜降り】カイノミ': 'Bavette d’aloyau (persillé)', '【赤身】ソトヒラ': 'Gîte à la noix (maigre)', '【赤身】カメノコ': 'Rond de tranche (maigre)',
-      'お肉は100g単位（300g以上）で選んでください': 'Choisissez par pas de 100 g (300 g minimum)', '住所を入力しました。番地・建物名を続けて入力してください': 'Adresse complétée. Ajoutez le numéro et le bâtiment.', 'コピーしました': 'Copié',
+      'お肉は300g単位で選んでください': 'Choisissez par pas de 300 g', '住所を入力しました。番地・建物名を続けて入力してください': 'Adresse complétée. Ajoutez le numéro et le bâtiment.', 'コピーしました': 'Copié',
       'PH:例）神戸 花子': 'ex. Marie Dupont', 'PH:example@mail.com': 'nom@exemple.com', 'PH:090-1234-5678': '090-1234-5678 ou +33 …', 'PH:123-4567': '123-4567', 'PH:都道府県から建物名・部屋番号まで': 'Hôtel ou adresse au Japon, avec n° de chambre', 'PH:例）月曜か火曜に届くと助かります／すき焼き用に': 'ex. Livrer à la réception de l’hôtel avant vendredi', 'PH:例）株式会社〇〇': 'ex. Nom de la société',
     },
   },
@@ -739,7 +739,7 @@ const I18N = {
   /* data-i18n を付けた要素の中身（HTML可。{0}{1}… に元の <b data-v> の中身が入る） */
   html: {
     en: {
-      intro: 'Choose a weight and quantity — the price updates automatically. Prices are <b>per kg, excl. tax, in Japanese yen (¥)</b>.<br>Beef is sold in <b>100 g steps from 300 g</b>. Delivery is within Japan only (your hotel works too).',
+      intro: 'Choose a weight and quantity — the price updates automatically. Prices are <b>per kg, excl. tax, in Japanese yen (¥)</b>.<br>Beef is sold in <b>300 g steps</b>. Delivery is within Japan only (your hotel works too).',
       perks: '<b>🍷 Wine gift</b> — complimentary wine when your beef subtotal (excl. tax) reaches:',
       perksNote: 'Wine is handed over at the shop after your order has shipped.',
       varNote: 'Items marked <span class="var">Market price</span> may vary with the cut and supply; we confirm the final amount by email.',
@@ -751,7 +751,7 @@ const I18N = {
       closed: '<p class="b">Ordering for this event has closed.</p><p class="mut sm">Please ask a member of our staff if you have any questions.</p>',
     },
     'zh-CN': {
-      intro: '选择分量和份数，金额会自动计算。价格为<b>每公斤・不含税・日元（¥）</b>。<br>牛肉以 <b>100g 为单位，300g 起</b>订购。仅限日本国内配送（可寄到酒店）。',
+      intro: '选择分量和份数，金额会自动计算。价格为<b>每公斤・不含税・日元（¥）</b>。<br>牛肉以 <b>300g 为单位</b>订购。仅限日本国内配送（可寄到酒店）。',
       perks: '<b>🍷 购物好礼</b> — 牛肉小计（不含税）达到以下金额，赠葡萄酒：',
       perksNote: '葡萄酒在订单发货后，于店内领取。',
       varNote: '标有<span class="var">时价</span>的商品，价格可能因部位和进货情况变动，最终金额以邮件确认。',
@@ -763,7 +763,7 @@ const I18N = {
       closed: '<p class="b">本次活动的订购已结束。</p><p class="mut sm">如有疑问，请询问现场工作人员。</p>',
     },
     'zh-TW': {
-      intro: '選擇份量與數量，金額會自動計算。價格為<b>每公斤・未稅・日圓（¥）</b>。<br>牛肉以 <b>100g 為單位，300g 起</b>訂購。僅限日本國內配送（可寄到飯店）。',
+      intro: '選擇份量與數量，金額會自動計算。價格為<b>每公斤・未稅・日圓（¥）</b>。<br>牛肉以 <b>300g 為單位</b>訂購。僅限日本國內配送（可寄到飯店）。',
       perks: '<b>🍷 購物好禮</b> — 牛肉小計（未稅）達以下金額，贈葡萄酒：',
       perksNote: '葡萄酒於訂單出貨後，在店內領取。',
       varNote: '標有<span class="var">時價</span>的商品，價格可能因部位與進貨狀況變動，最終金額以 e-mail 確認。',
@@ -775,7 +775,7 @@ const I18N = {
       closed: '<p class="b">本次活動的訂購已結束。</p><p class="mut sm">如有疑問，請洽現場工作人員。</p>',
     },
     ko: {
-      intro: '양과 개수를 선택하면 금액이 자동으로 계산됩니다. 가격은 <b>1kg당 · 세전 · 일본 엔(¥)</b>입니다.<br>고기는 <b>300g부터 100g 단위</b>로 선택할 수 있습니다. 배송은 일본 국내만 가능합니다 (호텔 배송 가능).',
+      intro: '양과 개수를 선택하면 금액이 자동으로 계산됩니다. 가격은 <b>1kg당 · 세전 · 일본 엔(¥)</b>입니다.<br>고기는 <b>300g 단위</b>로 선택할 수 있습니다. 배송은 일본 국내만 가능합니다 (호텔 배송 가능).',
       perks: '<b>🍷 와인 증정</b> — 고기 소계(세전)가 아래 금액에 도달하면 와인을 드립니다:',
       perksNote: '와인은 발송 완료 후 매장에서 전달합니다.',
       varNote: '<span class="var">시세</span> 표시 상품은 부위・입고 상황에 따라 가격이 달라질 수 있으며, 확정 금액은 이메일로 안내합니다.',
@@ -787,7 +787,7 @@ const I18N = {
       closed: '<p class="b">이 행사의 주문 접수가 마감되었습니다.</p><p class="mut sm">궁금한 점은 직원에게 문의해 주세요.</p>',
     },
     fr: {
-      intro: 'Choisissez le poids et la quantité : le prix se calcule automatiquement. Prix <b>au kilo, HT, en yens japonais (¥)</b>.<br>La viande se commande <b>par pas de 100 g, à partir de 300 g</b>. Livraison au Japon uniquement (votre hôtel convient).',
+      intro: 'Choisissez le poids et la quantité : le prix se calcule automatiquement. Prix <b>au kilo, HT, en yens japonais (¥)</b>.<br>La viande se commande <b>par pas de 300 g</b>. Livraison au Japon uniquement (votre hôtel convient).',
       perks: '<b>🍷 Vin offert</b> — une bouteille vous est offerte dès que votre sous-total viande (HT) atteint :',
       perksNote: 'Le vin vous est remis à la boutique après l’expédition de la commande.',
       varNote: 'Les articles <span class="var">Prix du marché</span> peuvent varier selon le morceau et l’arrivage ; le montant définitif est confirmé par e-mail.',
@@ -1252,7 +1252,7 @@ const Customer = {
   renderItems() {
     const C = this.C, cats = [];
     C.products.forEach(p => { if (!cats.includes(p.cat)) cats.push(p.cat); });
-    return `<p class="sm mut" style="margin:12px 0 0" data-i18n="intro">量（g）と個数を選ぶと金額が自動で計算されます。表示価格は<b>税抜・1kgあたり</b>です。<br>お肉は<b>300g以上、100g単位</b>でお選びいただけます。</p>${parsePerks(C.ev.perks).length ? `<div class="card" style="background:var(--goldl);border-color:#e6d3a8;margin-top:10px"><div data-i18n="perks"><b>🍷 ご購入特典（税抜のお肉代の合計）</b></div><div class="sm">${parsePerks(C.ev.perks).map(p => `${yen(p.min)}以上 → ${yen(p.val)}相当のワイン`).join('<br>')}</div><div class="xs mut" data-i18n="perksNote">ワインは発送完了後、店頭でお渡しします。</div></div>` : ''}` +
+    return `<p class="sm mut" style="margin:12px 0 0" data-i18n="intro">量（g）と個数を選ぶと金額が自動で計算されます。表示価格は<b>税抜・1kgあたり</b>です。<br>お肉は<b>300g単位</b>でお選びいただけます。</p>${parsePerks(C.ev.perks).length ? `<div class="card" style="background:var(--goldl);border-color:#e6d3a8;margin-top:10px"><div data-i18n="perks"><b>🍷 ご購入特典（税抜のお肉代の合計）</b></div><div class="sm">${parsePerks(C.ev.perks).map(p => `${yen(p.min)}以上 → ${yen(p.val)}相当のワイン`).join('<br>')}</div><div class="xs mut" data-i18n="perksNote">ワインは発送完了後、店頭でお渡しします。</div></div>` : ''}` +
       cats.map(cat => `<div class="cat"><h3>${h(cat)}</h3>${C.products.filter(p => p.cat === cat).map(p => this.prodHtml(p)).join('')}</div>`).join('') +
       `<p class="xs mut">${Customer.sellerLine()}<br>${+C.S.shippingFee ? '※送料は1回のご注文につき ' + yen(C.S.shippingFee) + '（税別）です。<br>' : ''}<span data-i18n="varNote">※<span class="var">価格変動</span>の商品は、部位・入荷状況により価格が変わる場合があります。確定額はメールでご連絡します。</span><br>※${h(C.S.deliveryNote || '')}</p>`;
   },
@@ -1305,7 +1305,7 @@ const Customer = {
     I18N.apply();
   },
   go(step) {
-    if (step === 2 && this.items().some(i => !gOk(i.p, i.g))) { toast('お肉は100g単位（300g以上）で選んでください', true); return; }
+    if (step === 2 && this.items().some(i => !gOk(i.p, i.g))) { toast('お肉は300g単位で選んでください', true); return; }
     this.C.step = step; this.C.err = ''; this.render(); window.scrollTo(0, 0);
   },
   set(k, v) { this.C.info[k] = v; this.save(); },
