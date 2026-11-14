@@ -170,8 +170,10 @@ const setBar=()=>{const n=Object.keys(Q).length;bar.className=lastErr?'err':(n||
   bar.querySelector('#cl-re').onclick=()=>{pull();flush()};
   bar.querySelector('#cl-out').onclick=()=>{if(Object.keys(Q).length){alertBox('まだ送信していない記録があります。通信できる状態で「更新」を押してから変更してください。');return}showForm('合言葉や接続先を入れ直します。')};};
 function alertBox(m){bar.querySelector('span:nth-child(2)').textContent=m;setTimeout(setBar,4000)}
+// 保存先のスプレッドシートが「2026-09」のようなIDを日付に変えてしまうことがあるので、元の「年-月」に戻す
+const fixId=x=>{const id=String(x.id);if(/^[A-Z][a-z]{2} [A-Z][a-z]{2} \d{2} \d{4} /.test(id)){const d=new Date(id.replace(/ \(.*\)$/,''));x.id=(x.doc&&x.doc.month)||(isNaN(d)?id:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'))}return x};
 function apply(docs){const touched=new Set();
-  docs.forEach(x=>{const k=x.col+'/'+x.id;if(Q[k])return;const cur=(D[x.col]||{})[x.id];if(cur&&Number(cur._u||0)>Number(x.doc._u||0))return;(D[x.col]=D[x.col]||{})[x.id]=x.doc;touched.add(x.col)});
+  docs.forEach(x=>{fixId(x);const k=x.col+'/'+x.id;if(Q[k])return;const cur=(D[x.col]||{})[x.id];if(cur&&Number(cur._u||0)>Number(x.doc._u||0))return;(D[x.col]=D[x.col]||{})[x.id]=x.doc;touched.add(x.col)});
   touched.forEach(fire)}
 async function pull(){try{const j=await call({op:'get',since:since?since-120000:0});apply(j.docs||[]);since=j.now||Date.now();lastErr=''}catch(e){lastErr=String(e.message||e)}setBar()}
 async function flush(){if(sending)return;const items=Object.entries(Q);if(!items.length){setBar();return}

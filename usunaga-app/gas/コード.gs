@@ -58,6 +58,8 @@ function doPost(e) {
   try {
     const last = sh.getLastRow();
     const rows = last > 1 ? sh.getRange(2, 1, last - 1, 4).getValues() : [];
+    // スプレッドシートが「2026-09」のようなIDを日付に変えてしまうので、元の文字に戻す
+    rows.forEach(r => { r[1] = idOf_(r); });
 
     if (body.op === 'get') {
       const since = Number(body.since || 0);
@@ -92,6 +94,7 @@ function doPost(e) {
           append.push(row);
         }
       });
+      sh.getRange(2, 2, Math.max(sh.getMaxRows() - 1, 1), 1).setNumberFormat('@'); // IDの列は文字として保存する
       Object.keys(changed).forEach(k => { const i = Number(k); sh.getRange(i + 2, 1, 1, 4).setValues([rows[i]]); });
       if (append.length) sh.getRange(rows.length + 2, 1, append.length, 4).setValues(append);
       return json_({ ok: true });
@@ -141,4 +144,11 @@ function ai_(body) {
     return { ok: true, text: c ? (c.content.parts || []).map(x => x.text || '').join('') : '' };
   }
   return { ok: false, error: 'no ai key' };
+}
+
+function idOf_(r) {
+  const v = r[1];
+  if (!(v instanceof Date)) return String(v);
+  try { const d = JSON.parse(r[2]); if (d && d.month) return String(d.month); } catch (err) {}
+  return Utilities.formatDate(v, Session.getScriptTimeZone(), 'yyyy-MM');
 }
