@@ -133,6 +133,7 @@ td.wrap{white-space:normal;min-width:140px}
     <button data-tab="stock">在庫・発注</button>
     <button data-tab="invoice">請求書</button>
     <button data-tab="goals">目標・設定</button>
+    <button data-tab="req">💬 改善リクエスト</button>
   </nav>
 </header>
 <main id="view"><div class="empty">データを読み込んでいます…</div></main>
@@ -258,7 +259,7 @@ const yen=v=>v==null?'—':'¥'+Math.round(v).toLocaleString('ja-JP');
 const GEST=285; // 黒毛和種の妊娠期間（日）
 
 /* ---------- state ---------- */
-const COLS=['ai','opu','semen','calving','cattle','carcass','items','orders','invoices','reports','income','feedstock'];
+const COLS=['ai','opu','semen','calving','cattle','carcass','items','orders','invoices','reports','income','feedstock','requests'];
 const S={settings:null}; COLS.forEach(c=>S[c]=[]);
 let db=null, sample=null, downloads=null, loaded=false, dbState='wait';
 let tab='report';
@@ -1063,6 +1064,35 @@ function bindCommon(){
   document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>openForm(b.dataset.add));
   document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{const r=S[b.dataset.edit].find(x=>x.id===b.dataset.id);if(r)openForm(b.dataset.edit,r)});
 }
+/* ---------- 改善リクエスト（Claudeが1日3回読んで、画面の小さな変更は直す） ---------- */
+const REQ_ST={'未対応':'none','対応中':'warn','確認待ち':'warn','対応済み':'good','対応しない':'none','取り下げ':'none'};
+const TAB_NAMES=[...document.querySelectorAll('#tabs button')].map(b=>b.textContent.trim()).filter(t=>!/改善/.test(t));
+V.req=()=>{
+  const list=S.requests.slice().sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
+  let by='';try{by=localStorage.getItem('usn-req-by')||''}catch(e){}
+  return `<h1 class="pg">💬 改善リクエスト</h1>
+  <section class="sec"><div class="sec-h"><h2>直してほしいこと・あったら便利なこと</h2></div>
+    <p class="sub" style="margin:0">ここに書くと、1日3回（朝・昼・夜）Claudeが読んで、表示の変更や項目の追加などの小さなことは、その日のうちに直します。結果はこの下に返事が付きます。計算の仕方・お金・データの消去に関わることは、栗原さんに確認してから対応します。</p>
+    <div class="form">
+      <div class="fld"><label for="rq_by">お名前</label><input id="rq_by" value="${esc(by)}" placeholder="例：碓永"></div>
+      <div class="fld"><label for="rq_screen">どの画面のことか</label><select id="rq_screen"><option value="">（分からない・全体）</option>${TAB_NAMES.map(t=>`<option>${esc(t)}</option>`).join('')}</select></div>
+      <div class="fld full" style="grid-column:1/-1"><label for="rq_text">内容（できるだけ具体的に。例：「請求書の一覧に、請求元の電話番号も出してほしい」）</label><textarea id="rq_text" rows="4"></textarea></div>
+    </div>
+    <div class="row"><button class="btn pri" id="rqSend">送る</button></div></section>
+  <section class="sec"><div class="sec-h"><h2>これまでのリクエスト</h2><span class="sub">${list.filter(r=>r.status==='未対応').length}件が対応待ち</span></div>
+    ${list.length?list.map(r=>`<div style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px">
+      <div class="row" style="gap:8px;flex-wrap:wrap">${pill(REQ_ST[r.status]||'none',r.status||'未対応')}<span class="muted">${esc((r.createdAt||'').slice(0,10))}${r.by?'・'+esc(r.by):''}${r.screen?'・'+esc(r.screen):''}</span>
+        ${r.status==='未対応'?`<button class="btn sm" data-rqcancel="${r.id}" style="margin-left:auto">取り下げる</button>`:''}</div>
+      <p style="margin:6px 0 0;white-space:pre-wrap">${esc(r.text)}</p>
+      ${r.reply?`<p style="margin:6px 0 0;padding:8px 10px;border-radius:8px;background:var(--none-bg);white-space:pre-wrap"><b>返事</b>（${esc((r.repliedAt||'').slice(0,10))}）：${esc(r.reply)}</p>`:''}</div>`).join(''):'<div class="empty">まだリクエストはありません。</div>'}</section>`};
+V.req.bind=()=>{
+  $('#rqSend').onclick=async()=>{const text=$('#rq_text').value.trim();if(!text){toast('内容を書いてください');return}
+    const by=$('#rq_by').value.trim();try{localStorage.setItem('usn-req-by',by)}catch(e){}
+    if(await save('requests',null,{text,by,screen:$('#rq_screen').value,status:'未対応',createdAt:new Date().toISOString()})){toast('送りました。1日3回、順番に対応します');render()}};
+  document.querySelectorAll('[data-rqcancel]').forEach(b=>b.onclick=async()=>{const r=S.requests.find(x=>x.id===b.dataset.rqcancel);if(!r)return;
+    const {id,...rest}=r;if(await save('requests',id,{...rest,status:'取り下げ'}))toast('取り下げました')});
+};
+
 function render(){
   document.querySelectorAll('#tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===tab?'true':'false'));
   $('#mPick').value=M;
