@@ -1254,7 +1254,7 @@ const Customer = {
       const r = await api('public', { e: eid });
       const draft = (() => { try { return JSON.parse(ls.get('nk-draft-' + eid) || 'null'); } catch (e) { return null; } })();
       this.C = { eid, ev: r.event, products: r.products, S: r.settings, step: 1, cart: {}, err: '', sending: false,
-        info: { name: '', email: '', phone: '', zip: '', address: '', storage: '', payment: '', receipt: false, receiptTo: '', shipOn: false, shipName: '', shipPhone: '', shipZip: '', shipAddress: '', note: '', clientKey: 'c' + Date.now() + Math.random().toString(36).slice(2, 7) } };
+        info: { name: '', email: '', phone: '', zip: '', address: '', storage: '', payment: '', receipt: false, receiptTo: '', noshi: false, noshiType: '御歳暮', noshiName: '', hopeDate: '', shipOn: false, shipName: '', shipPhone: '', shipZip: '', shipAddress: '', note: '', clientKey: 'c' + Date.now() + Math.random().toString(36).slice(2, 7) } };
       if (draft) { this.C.cart = draft.cart || {}; Object.assign(this.C.info, draft.info || {}); }
       Object.keys(this.C.cart).forEach(pid => { const pr = r.products.find(x => x.id === pid); if (!pr) { delete this.C.cart[pid]; return; } this.C.cart[pid].forEach(l => { if (!gOk(pr, +l.g)) l.g = gOpts(pr).find(g => g >= +l.g) || gOpts(pr).slice(-1)[0]; }); });
       this.render();
@@ -1409,6 +1409,14 @@ const Customer = {
     </div>
     <div class="card"><h3>ご希望の保存状態<span class="req" style="font-size:11px;color:#fff;background:var(--red);padding:0 6px;border-radius:4px;margin-left:6px;vertical-align:2px">必須</span></h3>${radio('storage', [['冷凍', '冷凍'], ['冷蔵', '冷蔵']])}</div>
     <div class="card"><h3>お支払い方法<span class="req" style="font-size:11px;color:#fff;background:var(--red);padding:0 6px;border-radius:4px;margin-left:6px;vertical-align:2px">必須</span></h3>${this.bankOnly() ? '<p class="hint" style="margin:0" data-i18n="netPay"><b>銀行振込のみ</b>です。ご注文後に振込先をご案内します。ご注文から7日以内にお振込みください。</p>' : radio('payment', [['現金', '現金'], ['振込', '銀行振込']]) + '\n      <p class="hint">現金はこの場でスタッフにお支払いください。お支払いを確認後、領収書をメールでお送りします。</p><p class="hint">銀行振込を選んだ場合は、ご注文後に振込先をメールでご案内します。ご注文から7日以内にお振込みください。期限を過ぎた場合はキャンセル扱いとさせていただきます。</p>'}</div>
+    ${shipFreeEvent(this.C.eid) ? `<div class="card"><h3>のし<span class="opt" style="margin-left:6px">無料</span></h3>
+      <label class="tog"><input type="checkbox" ${f.noshi ? 'checked' : ''} onchange="Customer.setRe('noshi',this.checked)">のしを付ける</label>
+      ${f.noshi ? `<label class="f">表書き</label><select class="in" onchange="Customer.set('noshiType',this.value)">${['御歳暮', '御年賀', '寒中御見舞', '御礼'].map(t => `<option ${f.noshiType === t ? 'selected' : ''}>${t}</option>`).join('')}</select>
+      <label class="f">お名前（名入れ）<span class="opt">空欄ならご注文者のお名前で入れます</span></label><input class="in" placeholder="例）栗原" value="${h(f.noshiName)}" oninput="Customer.set('noshiName',this.value)">` : ''}
+    </div>
+    <div class="card"><h3>お届け希望日<span class="opt" style="margin-left:6px">任意</span></h3>
+      <input class="in" type="date" value="${h(f.hopeDate)}" onchange="Customer.set('hopeDate',this.value)">
+      <p class="hint" style="margin:8px 0 0">ご指定がなければ、準備が整い次第お送りします。</p></div>` : ''}
     <div class="card"><h3>領収書</h3>
       <label class="tog"><input type="checkbox" ${f.receipt ? 'checked' : ''} onchange="Customer.setRe('receipt',this.checked)">領収書が必要</label>
       ${f.receipt ? `<label class="f">宛名<span class="opt">空欄ならお名前で発行します</span></label><input class="in" placeholder="例）株式会社〇〇" value="${h(f.receiptTo)}" oninput="Customer.set('receiptTo',this.value)">` : ''}
@@ -1452,6 +1460,7 @@ const Customer = {
       <dt>お名前</dt><dd>${h(f.name)} 様</dd><dt>メール</dt><dd>${h(f.email)}</dd><dt>電話</dt><dd>${h(f.phone)}</dd>
       <dt>ご住所</dt><dd>〒${h(f.zip)}<br>${h(f.address)}</dd>
       <dt>お届け先</dt><dd>${f.shipOn ? `${h(f.shipName)} 様<br>〒${h(f.shipZip)} ${h(f.shipAddress)}${f.shipPhone ? '<br>' + h(f.shipPhone) : ''}` : 'ご住所と同じ'}</dd>
+      ${shipFreeEvent(C.eid) ? `<dt>のし</dt><dd>${f.noshi ? h(f.noshiType) + '／' + h(f.noshiName || f.name) : '付けない'}</dd><dt>お届け希望日</dt><dd>${f.hopeDate ? h(jdate(f.hopeDate)) : '指定なし'}</dd>` : ''}
       <dt>保存状態</dt><dd>${h(f.storage)}</dd><dt>お支払い</dt><dd>${this.bankOnly() ? '銀行振込（ご注文後にご案内する口座へお振込み）' : h(payLabel(f.payment)) + '（この場でお支払い）'}</dd>
       <dt>領収書</dt><dd>${f.receipt ? '必要（宛名：' + h(f.receiptTo || f.name) + ' 様）' : '不要'}</dd>
       ${f.note ? `<dt>備考</dt><dd>${h(f.note)}</dd>` : ''}</dl>
@@ -1464,7 +1473,7 @@ const Customer = {
     C.sending = true; C.err = ''; this.render();
     const order = { eventId: C.ev.id, clientKey: f.clientKey, name: f.name, email: f.email, phone: f.phone, zip: f.zip, address: f.address,
       shipTo: f.shipOn ? { on: true, name: f.shipName, phone: f.shipPhone, zip: f.shipZip, address: f.shipAddress } : { on: false },
-      storage: f.storage, payment: this.bankOnly() ? '振込' : f.payment, receipt: f.receipt, receiptTo: f.receiptTo, note: f.note,
+      storage: f.storage, payment: this.bankOnly() ? '振込' : f.payment, receipt: f.receipt, receiptTo: f.receiptTo, note: this.noteWithGift(),
       items: this.items().map(i => ({ pid: i.pid, g: i.g, count: i.count })) };
     try {
       const r = await api('submit', { order });
@@ -1472,6 +1481,16 @@ const Customer = {
       ls.del('nk-draft-' + C.eid);
       this.render(); window.scrollTo(0, 0);
     } catch (e) { C.sending = false; C.err = e.message; this.render(); window.scrollTo(0, 0); }
+  },
+  /* のし・お届け希望日は備考の先頭に入れて、管理画面と碓永さんへの発注通知に流す */
+  noteWithGift() {
+    const f = this.C.info;
+    if (!shipFreeEvent(this.C.eid)) return f.note;
+    const l = [];
+    if (f.noshi) l.push('【のし】' + f.noshiType + '／' + (f.noshiName || f.name));
+    if (f.hopeDate) l.push('【お届け希望日】' + jdate(f.hopeDate));
+    if (f.note) l.push(f.note);
+    return l.join('\n');
   },
   /* 同じ内容で別の方に贈る。ご注文者の情報と商品はそのまま、お届け先だけ空にする。
      （お歳暮は1回のご注文につきお届け先1件のため。2026-11-16） */
