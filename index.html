@@ -504,6 +504,10 @@ OSEIBO_SETS.forEach(s => { COST_BY_EVENT[OSEIBO_EVENT]['追加 ' + s.name] = s.c
 /* 商品がお歳暮セットなら、その定義を返す（違えば null） */
 /* 価格に送料が含まれている販売会（お客様から送料をいただかない） */
 const shipFreeEvent = eid => eid === OSEIBO_EVENT;
+/* お届け希望日に選べる範囲。発送まで1週間ほどかかるため最短は注文の7日後、
+   年内は冷凍発送で指定日可能（碓永さん 2026-11-16） */
+const OSEIBO_HOPE_MAX = '2026-12-31';
+const hopeMin = () => new Date(Date.now() + 7 * 864e5 + 9 * 36e5).toISOString().slice(0, 10);
 const setOf = p => (p && (OSEIBO_BY_NAME[(p.cat || '') + ' ' + (p.name || '')] || OSEIBO_BY_NAME[p.name || ''])) || null;
 // 販売会の追加商品の入力欄（名前:税抜単価:原価 のカンマ区切り）⇄ データ
 function parseExtras(s){
@@ -1310,7 +1314,8 @@ const Customer = {
   renderOseibo() {
     const C = this.C, sets = C.products.map(p => ({ p, s: setOf(p) })).filter(x => x.s), tiers = [];
     sets.forEach(x => { if (!tiers.includes(x.s.tier)) tiers.push(x.s.tier); });
-    return `<p class="sm mut" style="margin:12px 0 0" data-i18n="introOseibo">ご予算からお選びください。価格は<b>税抜・全国送料込み</b>です。<br>同じご予算で<b>量重視</b>と<b>質重視</b>をお選びいただけます。</p>` +
+    return `<p class="sm mut" style="margin:12px 0 0" data-i18n="introOseibo">ご予算からお選びください。価格は<b>税抜・全国送料込み</b>です。<br>同じご予算で<b>量重視</b>と<b>質重視</b>をお選びいただけます。</p>
+      <p class="sm" style="margin:8px 0 0" data-i18n="oseiboCut">すべての部位を<b>スライスカット</b>でお届けします。すき焼き・しゃぶしゃぶ・焼肉・炒めものに、そのままお使いいただけます。<br>お届けは<b>冷凍</b>です。</p>` +
       tiers.map(t => `<div class="cat"><h3>${yen(t)}セット</h3>${sets.filter(x => x.s.tier === t).map(x => this.prodHtml(x.p)).join('')}</div>`).join('') +
       `<p class="xs mut">${Customer.sellerLine()}<br><span data-i18n="oseiboNote">※お届け先が複数ある場合は、お手数ですがお届け先ごとにご注文ください。</span>${C.S.deliveryNote ? '<br>※' + h(C.S.deliveryNote) : ''}</p>`;
   },
@@ -1386,8 +1391,11 @@ const Customer = {
   setRe(k, v) { this.C.info[k] = v; this.save(); const y = window.scrollY; this.render(); window.scrollTo(0, y); },
   /* 振込のみで受ける販売会か（ネット販売・お歳暮） */
   bankOnly() { return !!(this.C.ev.net || shipFreeEvent(this.C.eid)); },
+  /* お歳暮は冷凍でのお届けのみ（碓永さん 2026-11-16） */
+  frozenOnly() { return shipFreeEvent(this.C.eid); },
   renderInfo() {
     if (this.bankOnly()) this.C.info.payment = '振込';
+    if (this.frozenOnly()) this.C.info.storage = '冷凍';
     const f = this.C.info;
     const inp = (k, label, opt = {}) => `<label class="f" for="f-${k}">${label}${opt.req === false ? '<span class="opt">任意</span>' : '<span class="req">必須</span>'}</label>
       <input class="in" id="f-${k}" type="${opt.type || 'text'}" ${opt.im ? `inputmode="${opt.im}"` : ''} ${opt.ac ? `autocomplete="${opt.ac}"` : ''} placeholder="${h(opt.ph || '')}" value="${h(f[k])}" oninput="Customer.set('${k}',this.value)">${opt.hint ? `<div class="hint">${opt.hint}</div>` : ''}`;
@@ -1408,7 +1416,7 @@ const Customer = {
         <div class="row"><input class="in" id="f-shipZip" style="max-width:180px" inputmode="numeric" placeholder="123-4567" value="${h(f.shipZip)}" oninput="Customer.set('shipZip',this.value)"><button class="btn" onclick="Customer.zip('shipZip','shipAddress')">住所を自動入力</button></div>
         ${inp('shipAddress', 'お届け先のご住所')}` : '<p class="hint" style="margin:0">上のご住所にお届けします</p>'}
     </div>
-    <div class="card"><h3>ご希望の保存状態<span class="req" style="font-size:11px;color:#fff;background:var(--red);padding:0 6px;border-radius:4px;margin-left:6px;vertical-align:2px">必須</span></h3>${radio('storage', [['冷凍', '冷凍'], ['冷蔵', '冷蔵']])}</div>
+    <div class="card"><h3>ご希望の保存状態<span class="req" style="font-size:11px;color:#fff;background:var(--red);padding:0 6px;border-radius:4px;margin-left:6px;vertical-align:2px">必須</span></h3>${this.frozenOnly() ? '<p class="hint" style="margin:0" data-i18n="frozenOnly"><b>冷凍</b>でのお届けとなります。</p>' : radio('storage', [['冷凍', '冷凍'], ['冷蔵', '冷蔵']])}</div>
     <div class="card"><h3>お支払い方法<span class="req" style="font-size:11px;color:#fff;background:var(--red);padding:0 6px;border-radius:4px;margin-left:6px;vertical-align:2px">必須</span></h3>${this.bankOnly() ? '<p class="hint" style="margin:0" data-i18n="netPay"><b>銀行振込のみ</b>です。ご注文後に振込先をご案内します。ご注文から7日以内にお振込みください。</p>' : radio('payment', [['現金', '現金'], ['振込', '銀行振込']]) + '\n      <p class="hint">現金はこの場でスタッフにお支払いください。お支払いを確認後、領収書をメールでお送りします。</p><p class="hint">銀行振込を選んだ場合は、ご注文後に振込先をメールでご案内します。ご注文から7日以内にお振込みください。期限を過ぎた場合はキャンセル扱いとさせていただきます。</p>'}</div>
     ${shipFreeEvent(this.C.eid) ? `<div class="card"><h3>のし<span class="opt" style="margin-left:6px">無料</span></h3>
       <label class="tog"><input type="checkbox" ${f.noshi ? 'checked' : ''} onchange="Customer.setRe('noshi',this.checked)">のしを付ける</label>
@@ -1416,7 +1424,7 @@ const Customer = {
       <label class="f">お名前（名入れ）<span class="opt">空欄ならご注文者のお名前で入れます</span></label><input class="in" placeholder="例）栗原" value="${h(f.noshiName)}" oninput="Customer.set('noshiName',this.value)">` : ''}
     </div>
     <div class="card"><h3>お届け希望日<span class="opt" style="margin-left:6px">任意</span></h3>
-      <input class="in" type="date" value="${h(f.hopeDate)}" onchange="Customer.set('hopeDate',this.value)">
+      <input class="in" type="date" min="${h(hopeMin())}" max="${h(OSEIBO_HOPE_MAX)}" value="${h(f.hopeDate)}" onchange="Customer.set('hopeDate',this.value)">
       <p class="hint" style="margin:8px 0 0">ご指定がなければ、準備が整い次第お送りします。</p></div>` : ''}
     <div class="card"><h3>領収書</h3>
       <label class="tog"><input type="checkbox" ${f.receipt ? 'checked' : ''} onchange="Customer.setRe('receipt',this.checked)">領収書が必要</label>
