@@ -105,6 +105,12 @@ hr.sep{border:0;border-top:1px solid var(--line);margin:14px 0}
 .cat>h3{font-family:'Noto Serif JP',serif;font-size:16px;border-left:4px solid var(--gold);padding-left:8px;margin-bottom:6px}
 .prod{background:#fff;border:1px solid var(--line);border-radius:12px;margin:8px 0;overflow:hidden}
 .prod.has{border-color:#9fbfae;box-shadow:0 0 0 1px #9fbfae}
+/* お歳暮セット */
+.prod.set .prow{align-items:flex-start}
+.prod.set .nm{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.stag{font-size:11px;font-weight:600;color:#6b5b3e;background:var(--goldl);border:1px solid #e6d3a8;border-radius:999px;padding:1px 8px}
+.setc{font-size:13px;color:#333;margin:3px 0 2px;line-height:1.5}
+.prod.set .pr b{font-size:17px;color:var(--ink)}
 .prow{display:flex;align-items:center;gap:10px;padding:12px 14px}
 .prow .nm{font-weight:700}
 .pimg{width:64px;height:64px;border-radius:8px;object-fit:cover;flex:none;cursor:zoom-in;background:#eee}
@@ -434,7 +440,10 @@ const parsePerks = s => String(s || '').split(/[,、\s]+/).map(x => x.split(/[:�
 const perkFor = (perks, sub) => { let cur = null, next = null; perks.forEach(p => { if (sub >= p.min) cur = p; else if (!next) next = p; }); return { cur, next }; };
 const perkText = (perks, sub) => { if (!perks.length) return ''; const { cur, next } = perkFor(perks, sub); return (cur ? `🍷 ${yen(cur.val)}相当のワイン特典の対象です` : '') + (next ? `${cur ? '（' : '🍷 '}あと ${yen(next.min - sub)} で ${yen(next.val)}相当のワイン${cur ? '）' : ''}` : ''); };
 
-const PAYMENTS = ['現金', 'クレジットカード', '振込'];
+/* 自社贈答：NATURE KOBE から取引先へ贈る分。売上には入れず、原価だけを見る（2026-11-15 牛尾さんの要望） */
+const GIFT_PAY = '自社贈答';
+const isGift = o => o && o.payment === GIFT_PAY;
+const PAYMENTS = ['現金', 'クレジットカード', '振込', GIFT_PAY];
 // 原価（碓永さん側の請求書 2026-10-14・9/27奈良販売会の単価・税抜・円/kg）。商品名（カテゴリ＋名前）ごとに設定で計算
 const COST_PER_KG = {
   // 2回目以降（10/25〜）の原価（梅本さん・円/kg・税抜）
@@ -457,6 +466,44 @@ const COST_BY_EVENT = {
     'その他 切り落とし': 5500, 'その他 スジ肉': 2200, 'その他 テール': 3500
   }
 };
+/* ===== お歳暮セット 2026 =====
+   2026-11-15 のLINEで碓永さん・牛尾さんと確定した内容。
+   ・価格はすべて税抜・全国送料込み（お客様から送料はいただかない）
+   ・仕入れ原価は300gあたり税込（箱・梱包・手間賃込／碓永さん提示）
+   アプリは「円/kg × g」で金額を出す作りなので、セットは総gを固定し、
+   円/kg ＝ 定額 ÷ (総g/1000) を逆算して登録している。お客様はgを選べず個数だけ選ぶ。 */
+const OSEIBO_EVENT = 'e-oseibo2026';
+const OSEIBO_COST300 = { '小間切れ': 2000, 'ブリスケ': 3000, 'クラシタ': 5500, 'リブロース': 10000 }; // 300gあたり税込
+const OSEIBO_SETS = [
+  { tier: 6000,  type: '',   mix: [['ブリスケ', 1]] },
+  { tier: 10000, type: '量', mix: [['小間切れ', 1], ['ブリスケ', 1]] },
+  { tier: 10000, type: '質', mix: [['クラシタ', 1]] },
+  { tier: 15000, type: '量', mix: [['小間切れ', 2], ['ブリスケ', 2]] },
+  { tier: 15000, type: '質', mix: [['クラシタ', 1], ['ブリスケ', 1]] },
+  { tier: 20000, type: '量', mix: [['クラシタ', 1], ['ブリスケ', 1], ['小間切れ', 3]] },
+  { tier: 20000, type: '質', mix: [['リブロース', 1], ['ブリスケ', 1]] },
+  { tier: 25000, type: '量', mix: [['リブロース', 1], ['ブリスケ', 1], ['小間切れ', 3]] },
+  { tier: 25000, type: '質', mix: [['リブロース', 1], ['クラシタ', 1], ['小間切れ', 1]] }
+].map(s => {
+  const g = s.mix.reduce((a, m) => a + m[1], 0) * 300;
+  const label = s.mix.map(m => m[0] + (m[1] * 300) + 'g').join('＋');
+  const cost = s.mix.reduce((a, m) => a + OSEIBO_COST300[m[0]] * m[1], 0) / 1.08; // 税抜
+  return Object.assign({}, s, {
+    g, label, cost,
+    name: 'お歳暮' + s.tier.toLocaleString() + '円' + (s.type ? '【' + s.type + '】' : ' ') + label,
+    price: s.tier / (g / 1000),     // 円/kg（逆算・税抜）
+    costPerKg: cost / (g / 1000)    // 円/kg（原価・税抜）
+  });
+});
+const OSEIBO_BY_NAME = {};
+OSEIBO_SETS.forEach(s => { OSEIBO_BY_NAME[s.name] = s; OSEIBO_BY_NAME['追加 ' + s.name] = s; });
+/* お歳暮の原価表（商品名→円/kg・税抜）。orderCostOf が参照する */
+COST_BY_EVENT[OSEIBO_EVENT] = Object.assign({}, COST_PER_KG);
+OSEIBO_SETS.forEach(s => { COST_BY_EVENT[OSEIBO_EVENT]['追加 ' + s.name] = s.costPerKg; });
+/* 商品がお歳暮セットなら、その定義を返す（違えば null） */
+/* 価格に送料が含まれている販売会（お客様から送料をいただかない） */
+const shipFreeEvent = eid => eid === OSEIBO_EVENT;
+const setOf = p => (p && (OSEIBO_BY_NAME[(p.cat || '') + ' ' + (p.name || '')] || OSEIBO_BY_NAME[p.name || ''])) || null;
 // 販売会の追加商品の入力欄（名前:税抜単価:原価 のカンマ区切り）⇄ データ
 function parseExtras(s){
   return String(s || '').split(/[,，]/).map(t => t.trim()).filter(Boolean).map(t => {
@@ -1224,7 +1271,8 @@ const Customer = {
   },
   totals() {
     const S = this.C.S, its = this.items();
-    const sub = its.reduce((a, b) => a + b.amount, 0), ship = +S.shippingFee || 0, rate = +S.taxRate || 10, srate = +S.shipTaxRate || 10;
+    const sub = its.reduce((a, b) => a + b.amount, 0), rate = +S.taxRate || 10, srate = +S.shipTaxRate || 10;
+    const ship = shipFreeEvent(this.C.eid) ? 0 : (+S.shippingFee || 0); // お歳暮は送料込みの価格なので別途いただかない
     const taxFood = Math.floor(sub * rate / 100), taxShip = Math.floor(ship * srate / 100), tax = taxFood + taxShip;
     return { sub, ship, rate, srate, taxFood, taxShip, tax, total: sub + ship + tax, count: its.length, variable: its.some(i => i.p.variable) };
   },
@@ -1251,12 +1299,33 @@ const Customer = {
   },
   renderItems() {
     const C = this.C, cats = [];
+    if (C.eid === OSEIBO_EVENT || C.products.some(p => setOf(p))) return this.renderOseibo();
     C.products.forEach(p => { if (!cats.includes(p.cat)) cats.push(p.cat); });
     return `<p class="sm mut" style="margin:12px 0 0" data-i18n="intro">量（g）と個数を選ぶと金額が自動で計算されます。表示価格は<b>税抜・1kgあたり</b>です。<br>お肉は<b>300g単位</b>でお選びいただけます。</p>${parsePerks(C.ev.perks).length ? `<div class="card" style="background:var(--goldl);border-color:#e6d3a8;margin-top:10px"><div data-i18n="perks"><b>🍷 ご購入特典（税抜のお肉代の合計）</b></div><div class="sm">${parsePerks(C.ev.perks).map(p => `${yen(p.min)}以上 → ${yen(p.val)}相当のワイン`).join('<br>')}</div><div class="xs mut" data-i18n="perksNote">ワインは発送完了後、店頭でお渡しします。</div></div>` : ''}` +
       cats.map(cat => `<div class="cat"><h3>${h(cat)}</h3>${C.products.filter(p => p.cat === cat).map(p => this.prodHtml(p)).join('')}</div>`).join('') +
       `<p class="xs mut">${Customer.sellerLine()}<br>${+C.S.shippingFee ? '※送料は1回のご注文につき ' + yen(C.S.shippingFee) + '（税別）です。<br>' : ''}<span data-i18n="varNote">※<span class="var">価格変動</span>の商品は、部位・入荷状況により価格が変わる場合があります。確定額はメールでご連絡します。</span><br>※${h(C.S.deliveryNote || '')}</p>`;
   },
+  /* お歳暮：ご予算ごとに「量重視／質重視」を並べる */
+  renderOseibo() {
+    const C = this.C, sets = C.products.map(p => ({ p, s: setOf(p) })).filter(x => x.s), tiers = [];
+    sets.forEach(x => { if (!tiers.includes(x.s.tier)) tiers.push(x.s.tier); });
+    return `<p class="sm mut" style="margin:12px 0 0" data-i18n="introOseibo">ご予算からお選びください。価格は<b>税抜・全国送料込み</b>です。<br>同じご予算で<b>量重視</b>と<b>質重視</b>をお選びいただけます。</p>` +
+      tiers.map(t => `<div class="cat"><h3>${yen(t)}セット</h3>${sets.filter(x => x.s.tier === t).map(x => this.prodHtml(x.p)).join('')}</div>`).join('') +
+      `<p class="xs mut">${Customer.sellerLine()}<br><span data-i18n="oseiboNote">※お届け先が複数ある場合は、お手数ですがお届け先ごとにご注文ください。</span><br>※${h(C.S.deliveryNote || '')}</p>`;
+  },
+  /* お歳暮セット：gは固定なので個数だけ選んでもらう */
+  setProdHtml(p, s) {
+    const l = (this.C.cart[p.id] || [])[0];
+    return `<div class="prod set ${l ? 'has' : ''}" id="prod-${p.id}">
+      <div class="prow"><div class="grow">
+        ${s.type ? `<div class="nm">${s.type === '量' ? '量重視' : '質重視'}<span class="stag">合計${s.g.toLocaleString()}g</span></div>` : `<div class="nm">${h(s.label)}<span class="stag">合計${s.g.toLocaleString()}g</span></div>`}
+        ${s.type ? `<div class="setc">${h(s.label)}</div>` : ''}
+        <div class="pr"><b>${yen(s.tier)}</b> <span class="mut xs">税抜・全国送料込み</span></div>
+      </div>${l ? '' : `<button class="btn sm pri" onclick="Customer.add('${p.id}')">＋ 追加</button>`}</div>
+      ${l ? `<div class="line"><span class="grow sm">個数</span><span class="stepper"><button onclick="Customer.cnt('${p.id}',0,-1)" aria-label="減らす">−</button><span>${l.count}</span><button onclick="Customer.cnt('${p.id}',0,1)" aria-label="増やす">＋</button></span><span class="amt num">${yen(s.tier * l.count)}</span><button class="del" onclick="Customer.del('${p.id}',0)">削除</button></div>` : ''}</div>`;
+  },
   prodHtml(p) {
+    const st = setOf(p); if (st) return this.setProdHtml(p, st);
     const lines = this.C.cart[p.id] || [];
     return `<div class="prod ${lines.length ? 'has' : ''}" id="prod-${p.id}">
       <div class="prow">${PHOTOS[p.id] ? `<img class="pimg" src="${PHOTOS[p.id]}" alt="${h(p.cat + ' ' + p.name)}" loading="lazy" onclick="showPhoto('${p.id}')">` : ''}<div class="grow"><div class="nm">${h(p.name)}${p.variable ? '<span class="var">価格変動</span>' : ''}</div><div class="pr"><b>${yen(p.price)}${p.variable ? '〜' : ''}</b> / kg（100gあたり ${yen(p.price / 10)}）</div></div>
@@ -1278,7 +1347,11 @@ const Customer = {
     if (el) el.outerHTML = this.prodHtml(p);
     this.updateBar(); this.save();
   },
-  add(pid) { const C = this.C, p = C.products.find(x => x.id === pid); (C.cart[pid] = C.cart[pid] || []).push({ g: isCut(p) ? 600 : 300, count: 1 }); this.rerenderProd(pid); },
+  add(pid) {
+    const C = this.C, p = C.products.find(x => x.id === pid), st = setOf(p);
+    if (st) { C.cart[pid] = [{ g: st.g, count: 1 }]; this.rerenderProd(pid); return; } // セットは量が決まっている
+    (C.cart[pid] = C.cart[pid] || []).push({ g: isCut(p) ? 600 : 300, count: 1 }); this.rerenderProd(pid);
+  },
   del(pid, i) { const C = this.C; C.cart[pid].splice(i, 1); if (!C.cart[pid].length) delete C.cart[pid]; this.rerenderProd(pid); },
   setG(pid, i, v) { const l = this.C.cart[pid][i]; if (v === 'custom') { l.custom = true; } else { l.custom = false; l.g = +v; } this.rerenderProd(pid); },
   setCustomG(pid, i, v) {
@@ -1310,8 +1383,10 @@ const Customer = {
   },
   set(k, v) { this.C.info[k] = v; this.save(); },
   setRe(k, v) { this.C.info[k] = v; this.save(); const y = window.scrollY; this.render(); window.scrollTo(0, y); },
+  /* 振込のみで受ける販売会か（ネット販売・お歳暮） */
+  bankOnly() { return !!(this.C.ev.net || shipFreeEvent(this.C.eid)); },
   renderInfo() {
-    if (this.C.ev.net) this.C.info.payment = '振込';
+    if (this.bankOnly()) this.C.info.payment = '振込';
     const f = this.C.info;
     const inp = (k, label, opt = {}) => `<label class="f" for="f-${k}">${label}${opt.req === false ? '<span class="opt">任意</span>' : '<span class="req">必須</span>'}</label>
       <input class="in" id="f-${k}" type="${opt.type || 'text'}" ${opt.im ? `inputmode="${opt.im}"` : ''} ${opt.ac ? `autocomplete="${opt.ac}"` : ''} placeholder="${h(opt.ph || '')}" value="${h(f[k])}" oninput="Customer.set('${k}',this.value)">${opt.hint ? `<div class="hint">${opt.hint}</div>` : ''}`;
@@ -1333,7 +1408,7 @@ const Customer = {
         ${inp('shipAddress', 'お届け先のご住所')}` : '<p class="hint" style="margin:0">上のご住所にお届けします</p>'}
     </div>
     <div class="card"><h3>ご希望の保存状態<span class="req" style="font-size:11px;color:#fff;background:var(--red);padding:0 6px;border-radius:4px;margin-left:6px;vertical-align:2px">必須</span></h3>${radio('storage', [['冷凍', '冷凍'], ['冷蔵', '冷蔵']])}</div>
-    <div class="card"><h3>お支払い方法<span class="req" style="font-size:11px;color:#fff;background:var(--red);padding:0 6px;border-radius:4px;margin-left:6px;vertical-align:2px">必須</span></h3>${this.C.ev.net ? '<p class="hint" style="margin:0" data-i18n="netPay"><b>銀行振込のみ</b>です。ご注文後に振込先をご案内します。ご注文から7日以内にお振込みください。</p>' : radio('payment', [['現金', '現金'], ['振込', '銀行振込']]) + '\n      <p class="hint">現金はこの場でスタッフにお支払いください。お支払いを確認後、領収書をメールでお送りします。</p><p class="hint">銀行振込を選んだ場合は、ご注文後に振込先をメールでご案内します。ご注文から7日以内にお振込みください。期限を過ぎた場合はキャンセル扱いとさせていただきます。</p>'}</div>
+    <div class="card"><h3>お支払い方法<span class="req" style="font-size:11px;color:#fff;background:var(--red);padding:0 6px;border-radius:4px;margin-left:6px;vertical-align:2px">必須</span></h3>${this.bankOnly() ? '<p class="hint" style="margin:0" data-i18n="netPay"><b>銀行振込のみ</b>です。ご注文後に振込先をご案内します。ご注文から7日以内にお振込みください。</p>' : radio('payment', [['現金', '現金'], ['振込', '銀行振込']]) + '\n      <p class="hint">現金はこの場でスタッフにお支払いください。お支払いを確認後、領収書をメールでお送りします。</p><p class="hint">銀行振込を選んだ場合は、ご注文後に振込先をメールでご案内します。ご注文から7日以内にお振込みください。期限を過ぎた場合はキャンセル扱いとさせていただきます。</p>'}</div>
     <div class="card"><h3>領収書</h3>
       <label class="tog"><input type="checkbox" ${f.receipt ? 'checked' : ''} onchange="Customer.setRe('receipt',this.checked)">領収書が必要</label>
       ${f.receipt ? `<label class="f">宛名<span class="opt">空欄ならお名前で発行します</span></label><input class="in" placeholder="例）株式会社〇〇" value="${h(f.receiptTo)}" oninput="Customer.set('receiptTo',this.value)">` : ''}
@@ -1377,7 +1452,7 @@ const Customer = {
       <dt>お名前</dt><dd>${h(f.name)} 様</dd><dt>メール</dt><dd>${h(f.email)}</dd><dt>電話</dt><dd>${h(f.phone)}</dd>
       <dt>ご住所</dt><dd>〒${h(f.zip)}<br>${h(f.address)}</dd>
       <dt>お届け先</dt><dd>${f.shipOn ? `${h(f.shipName)} 様<br>〒${h(f.shipZip)} ${h(f.shipAddress)}${f.shipPhone ? '<br>' + h(f.shipPhone) : ''}` : 'ご住所と同じ'}</dd>
-      <dt>保存状態</dt><dd>${h(f.storage)}</dd><dt>お支払い</dt><dd>${C.ev.net ? '銀行振込（ご注文後にご案内する口座へお振込み）' : h(payLabel(f.payment)) + '（この場でお支払い）'}</dd>
+      <dt>保存状態</dt><dd>${h(f.storage)}</dd><dt>お支払い</dt><dd>${this.bankOnly() ? '銀行振込（ご注文後にご案内する口座へお振込み）' : h(payLabel(f.payment)) + '（この場でお支払い）'}</dd>
       <dt>領収書</dt><dd>${f.receipt ? '必要（宛名：' + h(f.receiptTo || f.name) + ' 様）' : '不要'}</dd>
       ${f.note ? `<dt>備考</dt><dd>${h(f.note)}</dd>` : ''}</dl>
       <button class="btn sm" onclick="Customer.go(2)" style="margin-top:10px">お客様情報を変更</button></div>
@@ -1389,7 +1464,7 @@ const Customer = {
     C.sending = true; C.err = ''; this.render();
     const order = { eventId: C.ev.id, clientKey: f.clientKey, name: f.name, email: f.email, phone: f.phone, zip: f.zip, address: f.address,
       shipTo: f.shipOn ? { on: true, name: f.shipName, phone: f.shipPhone, zip: f.shipZip, address: f.shipAddress } : { on: false },
-      storage: f.storage, payment: C.ev.net ? '振込' : f.payment, receipt: f.receipt, receiptTo: f.receiptTo, note: f.note,
+      storage: f.storage, payment: this.bankOnly() ? '振込' : f.payment, receipt: f.receipt, receiptTo: f.receiptTo, note: f.note,
       items: this.items().map(i => ({ pid: i.pid, g: i.g, count: i.count })) };
     try {
       const r = await api('submit', { order });
@@ -1503,18 +1578,21 @@ const Admin = {
     const list = this.filtered();
     const invs = A.events.filter(e => e.invoice && (A.ev === 'all' || e.id === A.ev));
     const invBar = invs.length ? `<div class="filters" style="margin-top:8px">${invs.map(e => `<a class="btn sm" href="${h(e.invoice)}" target="_blank" rel="noopener">📄 請求書を開く（${h(e.name)}）</a>`).join('')}</div>` : '';
-    const sum = k => base.reduce((a, o) => a + (+o[k] || 0), 0);
-    const unpaid = base.filter(o => !o.paid).reduce((a, o) => a + o.total, 0);
+    const paidBase = base.filter(o => !isGift(o)); // 自社贈答は売上に入れない
+    const sum = k => paidBase.reduce((a, o) => a + (+o[k] || 0), 0);
+    const unpaid = paidBase.filter(o => !o.paid).reduce((a, o) => a + o.total, 0);
+    const gifts = base.filter(isGift);
+    const giftCost = gifts.reduce((a, o) => a + orderCostOf(o).cost, 0);
     const costs = base.map(o => orderCostOf(o));
     const costTotal = costs.reduce((a, c) => a + c.cost, 0);
     const costUnknownCount = costs.filter(c => c.unknown).length;
     const costUnknown = costUnknownCount > 0;
     const shipCost = [...new Set(base.map(o => o.eventId))].reduce((a, id) => a + (SHIP_COST_BY_EVENT[id] || 0), 0);
     const gross = sum('subtotal') - sum('back') - costTotal - shipCost;
-    const cnt = st => st === 'all' ? base.length : st === '未入金' ? base.filter(o => !o.paid).length : st === '要確認' ? base.filter(o => (o.checks || '').trim()).length : st === 'メール未' ? base.filter(o => !o.email || !(o.mail && o.mail.confirm)).length : A.orders.filter(o => (A.ev === 'all' || o.eventId === A.ev) && o.status === st).length;
+    const cnt = st => st === 'all' ? base.length : st === '未入金' ? paidBase.filter(o => !o.paid).length : st === '要確認' ? base.filter(o => (o.checks || '').trim()).length : st === 'メール未' ? base.filter(o => !o.email || !(o.mail && o.mail.confirm)).length : A.orders.filter(o => (A.ev === 'all' || o.eventId === A.ev) && o.status === st).length;
     const chips = ['all', '受付', '発注済', '発送済', '未入金', '要確認', 'メール未', 'キャンセル'];
     return `<div class="filters">${this.evSelect(A.ev, "Admin.A.ev=this.value;Admin.render()", true)}<input type="search" placeholder="名前・電話・番号で検索" value="${h(A.q)}" oninput="Admin.A.q=this.value;Admin.refreshList()" style="flex:1;min-width:180px"></div>
-      ${invBar}<div class="stats"><div class="stat"><div class="l">注文数</div><div class="v">${base.length}件</div></div><div class="stat"><div class="l">税抜合計</div><div class="v num">${yen(sum('subtotal'))}</div></div><div class="stat"><div class="l">税込合計</div><div class="v num">${yen(sum('total'))}</div></div><div class="stat"><div class="l">未入金</div><div class="v num" style="color:var(--red)">${yen(unpaid)}</div></div>${sum('back') ? `<div class="stat"><div class="l">販売店バック（税抜）</div><div class="v num" style="color:var(--amb)">${yen(sum('back'))}</div></div><div class="stat"><div class="l">手元に残る額（税抜）</div><div class="v num">${yen(sum('subtotal') - sum('back'))}</div></div>` : ''}<div class="stat"><div class="l">原価（卸値×重量・概算）</div><div class="v num">${yen(costTotal)}</div></div>${shipCost ? `<div class="stat"><div class="l">送料の原価（概算）</div><div class="v num">${yen(shipCost)}</div></div>` : ''}<div class="stat"><div class="l">粗利（税抜・概算）</div><div class="v num" style="color:${gross < 0 ? 'var(--red)' : 'inherit'}">${yen(gross)}</div></div>${costUnknown ? `<div class="stat" style="grid-column:1/-1"><div class="l" style="color:var(--amb)">※原価が不明な商品があるため、粗利は実際より多く出ています（${costUnknownCount}件）</div></div>` : ''}</div>
+      ${invBar}<div class="stats"><div class="stat"><div class="l">注文数</div><div class="v">${base.length}件</div></div><div class="stat"><div class="l">税抜合計</div><div class="v num">${yen(sum('subtotal'))}</div></div><div class="stat"><div class="l">税込合計</div><div class="v num">${yen(sum('total'))}</div></div><div class="stat"><div class="l">未入金</div><div class="v num" style="color:var(--red)">${yen(unpaid)}</div></div>${gifts.length ? `<div class="stat"><div class="l">自社贈答（原価）</div><div class="v num" style="color:var(--mut)">${gifts.length}件 ${yen(giftCost)}</div></div>` : ''}${sum('back') ? `<div class="stat"><div class="l">販売店バック（税抜）</div><div class="v num" style="color:var(--amb)">${yen(sum('back'))}</div></div><div class="stat"><div class="l">手元に残る額（税抜）</div><div class="v num">${yen(sum('subtotal') - sum('back'))}</div></div>` : ''}<div class="stat"><div class="l">原価（卸値×重量・概算）</div><div class="v num">${yen(costTotal)}</div></div>${shipCost ? `<div class="stat"><div class="l">送料の原価（概算）</div><div class="v num">${yen(shipCost)}</div></div>` : ''}<div class="stat"><div class="l">粗利（税抜・概算）</div><div class="v num" style="color:${gross < 0 ? 'var(--red)' : 'inherit'}">${yen(gross)}</div></div>${costUnknown ? `<div class="stat" style="grid-column:1/-1"><div class="l" style="color:var(--amb)">※原価が不明な商品があるため、粗利は実際より多く出ています（${costUnknownCount}件）</div></div>` : ''}</div>
       <div class="chips">${chips.map(c => `<button class="${A.st === c ? 'on' : ''}" onclick="Admin.A.st='${c}';Admin.render()">${c === 'all' ? 'すべて' : c === 'メール未' ? '確認メール未送信' : c} ${cnt(c)}</button>`).join('')}</div>
       <div class="olist" id="olist">${this.cards(list)}</div>`;
   },
