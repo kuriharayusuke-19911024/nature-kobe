@@ -1473,6 +1473,17 @@ const Customer = {
       this.render(); window.scrollTo(0, 0);
     } catch (e) { C.sending = false; C.err = e.message; this.render(); window.scrollTo(0, 0); }
   },
+  /* 同じ内容で別の方に贈る。ご注文者の情報と商品はそのまま、お届け先だけ空にする。
+     （お歳暮は1回のご注文につきお届け先1件のため。2026-11-16） */
+  again() {
+    const C = this.C;
+    C.info = Object.assign({}, C.info, {
+      shipOn: true, shipName: '', shipPhone: '', shipZip: '', shipAddress: '', note: '',
+      clientKey: 'c' + Date.now() + Math.random().toString(36).slice(2, 7)
+    });
+    C.done = null; C.err = ''; C.sending = false;
+    this.save(); this.go(2);
+  },
   renderDone() {
     const C = this.C, o = C.done;
     const dueYmd = new Date(new Date(String(o.createdAt || '').slice(0, 10) + 'T00:00:00+09:00').getTime() + 7 * 864e5 + 9 * 36e5).toISOString().slice(0, 10);
@@ -1488,6 +1499,9 @@ const Customer = {
       <p style="font-size:22px;font-weight:700;margin:12px 0 0">${yen(o.total)} <span class="sm mut">（税込）</span></p></div>
       ${payCard}
       <div class="card"><p style="margin:0" data-i18n="doneMail">ご注文の確認メールを <b data-v>${h(o.email)}</b> にお送りします。<br>${h(C.S.deliveryNote || '')}発送の際は伝票番号をメールでお知らせします。</p></div>
+      ${shipFreeEvent(C.eid) || (o.shipTo && o.shipTo.on) ? `<div class="card"><h3>続けて別の方に贈る</h3>
+        <p class="sm" style="margin:0 0 10px" data-i18n="againNote">お届け先が複数ある場合は、下のボタンから続けてご注文いただけます。<br><b>お名前・ご連絡先の入力は不要です</b>（お届け先だけご入力ください）。</p>
+        <button class="btn pri block" onclick="Customer.again()">同じ内容で別の方に贈る</button></div>` : ''}
       <p class="xs mut">${this.sellerLine()}</p><p class="center"><button class="btn block" onclick="location.reload()">続けて別の注文をする</button></p></div>`;
   }
 };
