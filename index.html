@@ -490,7 +490,8 @@ const OSEIBO_SETS = [
   const cost = s.mix.reduce((a, m) => a + OSEIBO_COST300[m[0]] * m[1], 0) / 1.08; // 税抜
   return Object.assign({}, s, {
     g, label, cost,
-    name: 'お歳暮' + s.tier.toLocaleString() + '円' + (s.type ? '【' + s.type + '】' : ' ') + label,
+    // 追加商品はカンマ区切りで登録するため、商品名に桁区切りのカンマを入れない
+    name: 'お歳暮' + s.tier + '円' + (s.type ? '【' + s.type + '】' : ' ') + label,
     price: s.tier / (g / 1000),     // 円/kg（逆算・税抜）
     costPerKg: cost / (g / 1000)    // 円/kg（原価・税抜）
   });
