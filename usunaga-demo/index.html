@@ -386,7 +386,7 @@ function buildReport(m){
   {const F=feedCalc(m);if(F.entered<cfg().farms.length)C.push({s:'warn',t:`月末の飼料在庫が未入力：${F.rows.filter(r=>r.close==null).map(r=>r.b).join('、')}`})}
   {const nr=S.carcass.filter(r=>ym(r.date)===m&&num(r.received)==null);if(nr.length)C.push({s:'warn',t:`枝肉の入金額が未入力：${nr.length}頭`})}
   const noW=S.cattle.filter(x=>x.status==='出荷'&&ym(x.shipDate)===m&&!x.shipWeight);
-  if(noW.length) C.push({s:'warn',t:`出荷体重が未入力：${noW.length}頭`});
+  if(noW.length) C.push({s:'warn',t:`出荷体重が未入力：${noW.length}頭（${noW.map(x=>`${x.tagNo?x.tagNo+'・':''}${x.earTag||'番号なし'}（${jpD(x.shipDate)}出荷）`).join('、')}）※育成牛の記録で「直す」から入力できます`});
   const soon=c.next.filter(r=>r.due>=TODAY&&r.due<=addDays(TODAY,14));
   if(soon.length) C.push({s:'warn',t:`2週間以内に分娩予定：${soon.map(r=>`${r.cowId}（${jpD(r.due)}）`).join('、')}`});
   return {m,K,C,b,o,c,sm,ca,st,iv}}
@@ -589,7 +589,7 @@ V.invoice=()=>{
     <div class="grid">${stat('経費の合計（税込）',yen(iv.total))}${iv.oTotal?stat('経費に入れないもの',yen(iv.oTotal),'',oth.map(([c,v])=>`${esc(c)} ${yen(v)}`).join('・')):''}</div>
     ${iv.oTotal?`<p class="sub" style="margin:0">売上・雑収入・仕入・建物・設備など（区分「その他」の科目）は経費に入れていません。売上や雑収入は「枝肉・収入」タブで入れると損益に入ります。下の一覧の「収入に移す」でも移せます。</p>`:''}
     ${cats.length?`<div style="display:flex;flex-direction:column;gap:6px">${cats.map(([c,v])=>`<div style="display:grid;grid-template-columns:5.5em 1fr 7em;gap:8px;align-items:center;font-size:14px"><span>${esc(c)}</span><div class="bar"><i style="width:${v/mx*100}%"></i></div><span style="text-align:right">${yen(v)}</span></div>`).join('')}</div>`:''}
-    ${table(['請求日','請求元','費目','牛舎',{t:'金額',n:1},'確認',''],recs.map(r=>[jpD(r.date),esc(r.vendor),`${esc(normCat(r.category||'—'))}<span class="muted">（${costClass(r.category||'')}）</span>`,(r.barn?esc(r.barn):invBarn(r)?`${esc(invBarn(r))}<span class="muted">（宛名）</span>`:'<span class="muted">按分</span>'),yen(r.total),r.checked==='yes'?pill('good','確認済み'):`<button class="btn sm" data-chk="${r.id}">確認した</button>`,`<button class="btn sm" data-edit="invoices" data-id="${r.id}">直す</button>${INCOME_CATS.includes(normCat(r.category||''))?` <button class="btn sm" data-toinc="${r.id}">収入に移す</button>`:''}`]),'この月の請求書はありません')}</section>`};
+    ${table(['請求日','請求元','費目','牛舎',{t:'金額',n:1},'メモ','確認',''],recs.map(r=>[jpD(r.date),esc(r.vendor),`${esc(normCat(r.category||'—'))}<span class="muted">（${costClass(r.category||'')}）</span>`,(r.barn?esc(r.barn):invBarn(r)?`${esc(invBarn(r))}<span class="muted">（宛名）</span>`:'<span class="muted">按分</span>'),yen(r.total),r.memo?`<span class="muted" style="font-size:12px;white-space:normal" title="${esc(r.memo)}">${esc(r.memo.length>60?r.memo.slice(0,60)+'…':r.memo)}</span>`:'',r.checked==='yes'?pill('good','確認済み'):`<button class="btn sm" data-chk="${r.id}">確認した</button>`,`<button class="btn sm" data-edit="invoices" data-id="${r.id}">直す</button>${INCOME_CATS.includes(normCat(r.category||''))?` <button class="btn sm" data-toinc="${r.id}">収入に移す</button>`:''}`]),'この月の請求書はありません')}</section>`};
 V.invoice.bind=()=>{
   const p=$('#invPhoto');if(p)p.onclick=()=>photoRead('invoices');
   document.querySelectorAll('[data-chk]').forEach(b=>b.onclick=async()=>{const r=S.invoices.find(x=>x.id===b.dataset.chk);b.disabled=true;if(await save('invoices',r.id,{...strip(r),checked:'yes'}))toast('確認済みにしました')});
