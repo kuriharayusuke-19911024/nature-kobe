@@ -185,7 +185,7 @@ try{const t=localStorage.getItem('usn-tab'); if(t) tab=t;}catch(e){}
 if(location.hash&&/^#[a-z]+$/.test(location.hash)) tab=location.hash.slice(1);
 
 const DEF={fyStart:4,farms:['神出','平野','岩岡','小野','大分','淡路'],barns:['神出','平野','岩岡','小野','大分','淡路'],addrBarn:{'法人':'神出','芳輝':'平野','嘉彦':'岩岡'},costCenters:['受精卵'],categories:[{name:'飼料費',cls:'直接変動費'},{name:'水道光熱費',cls:'間接変動費'},{name:'消耗品費',cls:'間接変動費'},{name:'燃料費',cls:'間接変動費'},{name:'獣医費',cls:'間接変動費'},{name:'薬剤費',cls:'間接変動費'},{name:'診療費',cls:'間接変動費'},{name:'リース料',cls:'固定費'},{name:'修繕費',cls:'固定費'},{name:'修繕費（立替）',cls:'固定費'},{name:'削蹄費',cls:'固定費'},{name:'外注費',cls:'固定費'},{name:'広告宣伝費',cls:'固定費'},{name:'支払保険料',cls:'固定費'},{name:'支払利息',cls:'固定費'},{name:'支払手数料',cls:'固定費'},{name:'検査料',cls:'固定費'},{name:'租税公課',cls:'固定費'},{name:'立替金',cls:'固定費'},{name:'給料',cls:'固定費'},{name:'繁殖費',cls:'固定費'},{name:'肥料費',cls:'固定費'},{name:'諸会費',cls:'固定費'},{name:'貯蔵品',cls:'固定費'},{name:'車両費',cls:'固定費'},{name:'返金',cls:'固定費'},{name:'通信費',cls:'固定費'},{name:'運搬費',cls:'固定費'},{name:'雑費',cls:'固定費'},{name:'預託料',cls:'固定費'},{name:'仕入',cls:'その他'},{name:'仕入（営業外）',cls:'その他'},{name:'売上',cls:'その他'},{name:'建物',cls:'その他'},{name:'設備',cls:'その他'},{name:'雑収入',cls:'その他'},{name:'雑所得',cls:'その他'},{name:'預託牛',cls:'その他'}],
-  catAlias:{'光熱費':'水道光熱費','水道費':'水道光熱費','賃借料':'リース料','保険料':'支払保険料','薬品費':'薬剤費','資材費':'消耗品費','その他':'雑費'},office:'神戸うすなが牧場',owners:['法人','芳輝','嘉彦'],usefulLife:6,dailyCost:null,
+  catAlias:{'光熱費':'水道光熱費','水道費':'水道光熱費','賃借料':'リース料','保険料':'支払保険料','薬品費':'薬剤費','資材費':'消耗品費','その他':'雑費'},office:'神戸うすなが牧場',owners:['法人','芳輝','嘉彦'],usefulLife:6,dailyCost:null,staffCount:null,laborCats:['給料','業務委託費'],taxRate:8,
   targets:{conception:55,cultured:420,produced:200,freshET:90,calvingRate:90,carcassWeight:500,semenMin:5,
     growing:{}}};
 const GDEF={shipWeight:290,shipAge:280,dg:0.95,mortality:3};
@@ -252,7 +252,7 @@ const FORMS={
   carcass:{title:'枝肉成績',fields:()=>[
     {k:'date',l:'と畜日',t:'date',req:1,def:TODAY},{k:'earTag',l:'個体識別番号',req:1},{k:'owner',l:'所有者',t:'select',opts:cfg().owners},{k:'barn',l:'牛舎',t:'select',opts:cfg().barns,req:1},
     {k:'weight',l:'枝肉重量（kg）',t:'number',step:'0.1',req:1},{k:'grade',l:'格付',t:'select',opts:['A5','A4','A3','A2','B4','B3','B2']},
-    {k:'bms',l:'BMS',t:'number'},{k:'price',l:'単価（円/kg）',t:'number'},{k:'received',l:'実際の入金額（預託を引いた後・円）',t:'number'}]},
+    {k:'bms',l:'BMS',t:'number'},{k:'price',l:'単価（円/kg）',t:'number'},{k:'received',l:'実際の入金額（預託を引いた後・円）',t:'number'},{k:'otherSales',l:'その他売上（副産物など・税抜・円）',t:'number'}]},
   income:{title:'雑収入などの収入',fields:()=>[
     {k:'date',l:'入金日',t:'date',req:1,def:TODAY},{k:'category',l:'区分',t:'select',opts:['売上','雑収入','補助金・交付金','受取利息','その他']},{k:'payer',l:'入金元',req:1},
     {k:'amount',l:'金額（円）',t:'number',req:1},{k:'owner',l:'どの法人の収入か',t:'select',opts:[['','—']].concat(cfg().owners.map(o=>[o,o]))},{k:'memo',l:'内容・メモ',full:1}]},
@@ -398,7 +398,7 @@ function reportText(R){
   lines.push('',`■ 経費（請求書）`,`・合計 ${yen(R.iv.total)}`);
   Object.entries(R.iv.cats).sort((a,b)=>catIdx(a[0])-catIdx(b[0])).forEach(([c,v])=>lines.push(`　${c} ${yen(v)}`));
   if(R.iv.oTotal)lines.push(`・経費に入れないもの（売上・雑収入・仕入・設備など） ${yen(R.iv.oTotal)}`);
-  lines.push(`■ 枝肉売上（今月）${yen(R.ca.mo.sales)}（${R.ca.mo.n}頭）`+(R.ca.mo.recN?`　入金額 ${yen(R.ca.mo.received)}（預託など差引 ${yen(R.ca.mo.deduct)}）`:''));
+  lines.push(`■ 枝肉売上（今月）${yen(R.ca.mo.sales)}（${R.ca.mo.n}頭）`+(R.ca.mo.recN?`　入金額 ${yen(R.ca.mo.received)}`:''));
   {const inc=S.income.filter(r=>ym(r.date)===R.m);if(inc.length)lines.push(`■ 雑収入など（今月）${yen(sum(inc.map(r=>r.amount)))}（${inc.length}件）`)}
   {const F=feedCalc(R.m);lines.push(`■ 飼料（今月）請求書 ${yen(F.buy)}／実際に使った額 ${F.used==null?'在庫未入力':yen(F.used)}`);F.rows.forEach(r=>{if(r.used!=null)lines.push(`　${r.b} ${yen(r.used)}${r.per!=null?`（1頭1日 ${f0(r.per)}円）`:''}`)})}
   lines.push('','■ 確認事項');R.C.filter(c=>c.s!=='good').forEach(c=>lines.push('・'+c.t));
@@ -540,10 +540,10 @@ V.carcass=()=>{
   <h1 class="pg">枝肉・収入</h1>
   <section class="sec"><div class="sec-h"><h2>${jpM(M)}の成績</h2>${sample?'<button class="btn ai" id="carPhoto">肉牛精算書を写真で読む</button>':''}<button class="btn pri" data-add="carcass">＋ 成績を入れる</button></div>
     ${sample?'':'<p class="sub" style="margin:0">肉牛精算書の写真読み取りは、管理者がAIのキーを入れると使えるようになります。</p>'}
-    <div class="grid">${stat('出荷',ca.mo.n,'頭')}${stat('平均枝肉重量',f1(ca.mo.w),'kg',`目標 ${T.carcassWeight}kg`)}${stat('4・5等級の割合',f1(ca.mo.hi),'%')}${stat('枝肉売上',yen(ca.mo.sales),'',`平均単価 ${f0(ca.mo.price)}円/kg`)}${stat('実際の入金額',ca.mo.recN?yen(ca.mo.received):'—','',ca.mo.recN?`預託など差引 ${yen(ca.mo.deduct)}（${ca.mo.recN}/${ca.mo.n}頭入力済み）`:'まだ入力されていません')}</div>
+    <div class="grid">${stat('出荷',ca.mo.n,'頭')}${stat('平均枝肉重量',f1(ca.mo.w),'kg',`目標 ${T.carcassWeight}kg`)}${stat('4・5等級の割合',f1(ca.mo.hi),'%')}${stat('枝肉売上',yen(ca.mo.sales),'',`平均単価 ${f0(ca.mo.price)}円/kg`)}${stat('実際の入金額',ca.mo.recN?yen(ca.mo.received):'—','',ca.mo.recN?`${ca.mo.recN}/${ca.mo.n}頭入力済み`:'まだ入力されていません')}</div>
     ${table(['牛舎',{t:'今月 頭数',n:1},{t:'今月 平均重量',n:1},'',{t:'年度 頭数',n:1},{t:'年度 平均重量',n:1},{t:'年度 4・5等級',n:1}],ca.barns.map(x=>[esc(x.barn),x.mo.n,x.mo.n?f1(x.mo.w)+'kg':'—',x.mo.n?pill(judge(x.mo.w,T.carcassWeight,'up')):'',x.fy.n,x.fy.n?f1(x.fy.w)+'kg':'—',x.fy.n?f1(x.fy.hi)+'%':'—']))}</section>
   <section class="sec"><div class="sec-h"><h2>明細</h2></div>
-    ${table(['と畜日','個体番号','牛舎',{t:'枝肉重量',n:1},'格付',{t:'BMS',n:1},{t:'単価',n:1},{t:'売上',n:1},{t:'入金額',n:1},{t:'差引',n:1},''],recs.map(r=>[jpD(r.date),esc(r.earTag),esc(r.barn),f1(r.weight)+'kg',esc(r.grade||'—'),r.bms??'—',r.price?f0(r.price)+'円':'—',yen((r.weight||0)*(r.price||0)),num(r.received)!=null?yen(r.received):'<span class="pill p-warn">未入力</span>',num(r.received)!=null?yen((r.weight||0)*(r.price||0)-r.received):'—',`<button class="btn sm" data-edit="carcass" data-id="${r.id}">直す</button>`]),'この月の成績はありません')}</section>
+    ${table(['と畜日','個体番号','牛舎',{t:'枝肉重量',n:1},'格付',{t:'BMS',n:1},{t:'単価',n:1},{t:'売上',n:1},{t:'入金額',n:1},''],recs.map(r=>[jpD(r.date),esc(r.earTag),esc(r.barn),f1(r.weight)+'kg',esc(r.grade||'—'),r.bms??'—',r.price?f0(r.price)+'円':'—',yen((r.weight||0)*(r.price||0)),num(r.received)!=null?yen(r.received):'<span class="pill p-warn">未入力</span>',`<button class="btn sm" data-edit="carcass" data-id="${r.id}">直す</button>`]),'この月の成績はありません')}</section>
   <section class="sec"><div class="sec-h"><h2>${jpM(M)}の雑収入など</h2><span class="sub">枝肉売上とは別の収入</span><button class="btn pri" data-add="income">＋ 収入を入れる</button></div>
     ${(()=>{const inc=S.income.filter(r=>ym(r.date)===M).sort((a,b)=>a.date<b.date?1:-1);const fy=S.income.filter(r=>inFY(r.date,M));
       return `<div class="grid">${stat('今月の合計',yen(sum(inc.map(r=>r.amount))),'',`${inc.length}件`)}${stat('年度累計',yen(sum(fy.map(r=>r.amount))),'',`${fy.length}件`)}</div>`+
@@ -666,14 +666,31 @@ function rateAt(farm,date){const setD=num(cfg().dailyCost);if(setD!=null)return 
   const m=ym(date);const key=m+'|'+S.invoices.length+'|'+S.cattle.length;let bc=_rateCache[key];
   if(!bc){bc=_rateCache[key]=barnCost(fyStartM(m)+'-01',monthEnd(m))}
   const x=bc[farm];return x?{v:x.vPer,f:x.fPer,t:x.mgmt}:{v:null,f:null,t:null}}
+const laborCats=()=>{const l=cfg().laborCats;return (Array.isArray(l)&&l.length?l:['給料','業務委託費']).map(normCat)};
+const _rateExCache={};
+function rateExAt(farm,date){ // 人件費（給料・業務委託費）を除いた1頭1日コスト（年度累計）
+  const setD=num(cfg().dailyCost);if(setD!=null)return {d:null,i:null,o:null,t:setD};
+  const m=ym(date);const key=m+'|'+S.invoices.length+'|'+S.cattle.length+'|'+laborCats().join(',');let bc=_rateExCache[key];
+  if(!bc){bc=_rateExCache[key]=barnCost(fyStartM(m)+'-01',monthEnd(m),laborCats())}
+  const x=bc[farm];return x?{d:x.dPer,i:x.iPer,o:x.fPer,t:x.mgmt}:{d:null,i:null,o:null,t:null}}
+const taxK=()=>1+(num(cfg().taxRate)??8)/100;
 function salesOf(c){const k=tagKey(c.earTag);const car=S.carcass.filter(r=>tagKey(r.earTag)===k);
-  if(car.length)return sum(car.map(r=>num(r.received)!=null?num(r.received):(num(r.weight)||0)*(num(r.price)||0)));
-  return num(c.shipPrice)||0}
+  if(car.length){const cs=sum(car.map(r=>(num(r.weight)||0)*(num(r.price)||0))),ot=sum(car.map(r=>num(r.otherSales)||0));return {carcass:cs,other:ot,sales:(cs+ot)*taxK(),src:'枝肉'}}
+  const sp=num(c.shipPrice);return {carcass:0,other:0,sales:sp||0,src:sp?'出荷販売額':''}}
 function shippedRows(m,range,o,farm){
   const fs=fyStartM(m)+'-01',me=monthEnd(m),ms=m+'-01';
   return S.cattle.filter(c=>c.status==='出荷'&&c.shipDate&&ownOK(c,o)&&(!farm||c.farm===farm)&&(range==='all'||(range==='mo'?c.shipDate>=ms&&c.shipDate<=me:c.shipDate>=fs&&c.shipDate<=me)))
-    .map(c=>{const d=c.introDate?dayDiff(c.introDate,c.shipDate)+1:0;const r=rateAt(c.farm,c.shipDate);const p=num(c.introPrice)||0;const cost=(r.t||0)*d;const sales=salesOf(c);
-      return {c,d,r,p,cost,sales,profit:sales-p-cost}}).sort((a,b)=>a.c.shipDate<b.c.shipDate?1:-1)}
+    .map(c=>{const d=c.introDate?dayDiff(c.introDate,c.shipDate)+1:0;const r=rateExAt(c.farm,c.shipDate);const p=num(c.introPrice)||0;const S0=salesOf(c);const sales=S0.sales;
+      const feed=(r.d||0)*d,ind=(r.i||0)*d,oth=r.d==null&&r.i==null&&r.o==null?(r.t||0)*d:(r.o||0)*d;const cost=feed+ind+oth;const gross=sales-p,profit=gross-cost;
+      return {c,d,r,p,S:S0,sales,gross,feed,ind,oth,cost,profit,rate:sales?profit/sales*100:null,perDay:d?profit/d:null}}).sort((a,b)=>a.c.shipDate<b.c.shipDate?1:-1)}
+function laborOf(m){ // その月の人件費（請求書の費目で判定・牧場全体）
+  const L=laborCats(),by={};L.forEach(k=>by[k]=0);
+  S.invoices.filter(r=>ym(r.date)===m).forEach(r=>{const k=normCat(r.category||'');if(L.includes(k))by[k]+=num(r.total)||0});
+  return {by,total:sum(Object.values(by))}}
+function perPerson(m){ // 1人あたり利益＝（その月に出荷した牛の経常利益の合計−人件費）÷人数
+  const R=shippedRows(m,'mo','','');const lab=laborOf(m);const n=num(cfg().staffCount);
+  const T=k=>sum(R.map(x=>x[k]));const rest=T('profit')-lab.total;
+  return {m,n:R.length,sales:T('sales'),gross:T('gross'),cost:T('cost'),profit:T('profit'),lab,rest,staff:n,per:n?rest/n:null}}
 function cattleCsv(){const H=['個体識別番号','耳標番号','牛舎','所有者','区分','性別','出生日','導入日','導入価格','状態','出荷日','死亡日','備考'];
   const q=v=>{v=v==null?'':String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
   const rows=S.cattle.slice().sort((a,b)=>String(a.farm||'').localeCompare(String(b.farm||''),'ja')||String(a.tagNo||a.earTag).localeCompare(String(b.tagNo||b.earTag),'ja'))
@@ -686,11 +703,11 @@ const costClass=c=>(catList().find(x=>x.name===normCat(c))||{}).cls||'固定費'
 const catOrder=()=>catList().map(x=>x.name);
 const CLS_KEY={'直接変動費':'direct','間接変動費':'indirect','固定費':'fixed'};
 const invBarn=r=>r.barn||((cfg().addrBarn||{})[r.addressee])||'';
-function barnCost(from,to){ // 牛舎ごとの経費と延べ頭日（使用頭数×対象日数）
+function barnCost(from,to,excl){ // 牛舎ごとの経費と延べ頭日（使用頭数×対象日数）。excl：除く費目
   const barns=cfg().farms,res={};barns.forEach(b=>res[b]={hd:0,direct:0,indirect:0,fixed:0,cats:{}});
   S.cattle.forEach(c=>{const r=res[c.farm];if(r)r.hd+=daysIn(c,from,to)});
   const hdAll=sum(barns.map(b=>res[b].hd));const cc={};res.__cc=cc;res.__hdAll=hdAll;
-  S.invoices.filter(r=>r.date>=from&&r.date<=to).forEach(r=>{const amt=num(r.total)||0,cat=normCat(r.category||'雑費'),k=CLS_KEY[costClass(cat)];if(!k)return;
+  S.invoices.filter(r=>r.date>=from&&r.date<=to).forEach(r=>{const amt=num(r.total)||0,cat=normCat(r.category||'雑費'),k=CLS_KEY[costClass(cat)];if(!k||(excl&&excl.includes(cat)))return;
     const eb=invBarn(r);
     if(eb&&(cfg().costCenters||[]).includes(eb)){const x=cc[eb]=cc[eb]||{direct:0,indirect:0,fixed:0,cats:{}};x.cats[cat]=(x.cats[cat]||0)+amt;x[k]+=amt;return}
     const tg=eb&&res[eb]?[[eb,1]]:barns.map(b=>[b,hdAll?res[b].hd/hdAll:1/barns.length]);
@@ -756,7 +773,7 @@ V.asset=()=>{
     <div class="fld" style="margin-left:auto"><label for="ownSel">所有者で絞り込む</label><select id="ownSel"><option value="">全体</option>${c.owners.map(o=>`<option${o===OWN?' selected':''}>${esc(o)}</option>`).join('')}</select></div>
     <div class="fld"><label for="farmSel">牛舎で絞り込む</label><select id="farmSel"><option value="">すべての牛舎</option>${c.farms.map(b=>`<option${b===FARM?' selected':''}>${esc(b)}</option>`).join('')}</select></div></div>
   <section class="sec"><div class="sec-h"><h2>${jpM(M)}末の在庫</h2><span class="sub">導入・出荷・死亡の記録から自動で増減します</span><button class="btn" id="fnImport">CSV・Excelから取り込む</button><button class="btn" id="cattleCsv">在庫牛をCSVで出す</button><button class="btn pri" data-add="cattle">＋ 牛を登録</button></div>
-    <div class="grid">${stat('月末の頭数',tot.end,'頭',`育成・肥育 ${A.stock.length}頭／繁殖 ${A.breed.length}頭`)}${stat('牛の在庫評価額',yen(A.stockVal),'','取得価額＋1日コスト×飼養日数')}${stat('繁殖牛の簿価',yen(A.bookVal),'',`耐用年数${c.usefulLife}年・定額法`)}${stat('飼育管理費（全体平均）',A.dFy==null?'—':f0(A.dFy),'円/頭日',A.setD!=null?'設定値を使用中':'年度累計・牛舎ごとの値で評価')}</div>
+    <div class="grid">${stat('月末の頭数',tot.end,'頭',`育成・肥育 ${A.stock.length}頭／繁殖 ${A.breed.length}頭`)}${(()=>{const P=perPerson(M);return stat('1人あたり利益（今月）',P.per==null?'—':yen(P.per),'',P.staff?`出荷${P.n}頭の経常利益−人件費 ÷ ${P.staff}人`:'「目標・設定」で人数を入れると出ます')})()}${stat('牛の在庫評価額',yen(A.stockVal),'','取得価額＋1日コスト×飼養日数')}${stat('繁殖牛の簿価',yen(A.bookVal),'',`耐用年数${c.usefulLife}年・定額法`)}${stat('飼育管理費（全体平均）',A.dFy==null?'—':f0(A.dFy),'円/頭日',A.setD!=null?'設定値を使用中':'年度累計・牛舎ごとの値で評価')}</div>
     ${table(['区分',{t:'月初',n:1},{t:'導入',n:1},{t:'出荷',n:1},{t:'死亡',n:1},{t:'月末',n:1}],A.rows.map(r=>[r.k,r.start,r.inn?'+'+r.inn:0,r.ship?'−'+r.ship:0,r.dead?'−'+r.dead:0,`<b>${r.end}</b>`]).concat([['<b>合計</b>',tot.start,tot.inn?'+'+tot.inn:0,tot.ship?'−'+tot.ship:0,tot.dead?'−'+tot.dead:0,`<b>${tot.end}</b>`]]))}
     ${OWN?'':table(['所有者',{t:'頭数',n:1},{t:'在庫評価額',n:1},{t:'繁殖牛の簿価',n:1}],A.byOwner.map(x=>[esc(x.ow),x.n+'頭',yen(x.val),yen(x.book)]))}
     ${table(['牛舎',{t:'頭数',n:1},{t:'うち育成・肥育',n:1},{t:'うち繁殖',n:1},{t:'在庫評価額',n:1},{t:'1日の変動費',n:1},{t:'1日の固定費',n:1}],c.farms.map(b=>{const st=A.stock.filter(x=>x.c.farm===b),br=A.breed.filter(x=>x.c.farm===b),f=A.fy.bc[b];
@@ -769,12 +786,20 @@ V.asset=()=>{
   <section class="sec"><div class="sec-h"><h2>1頭ごとの資産価値（育成・肥育）</h2><span class="sub">${jpD(monthEnd(M))}時点</span></div>
     ${(()=>{const L=A.stock.filter(x=>!FARM||x.c.farm===FARM);const fb=b=>A.fy.bc[b]||{};
       return table(['個体番号','耳標','区分','所有者','牛舎','導入日',{t:'飼養日数',n:1},{t:'変動費/日',n:1},{t:'固定費/日',n:1},{t:'取得価額',n:1},{t:'かかったコスト',n:1},{t:'資産価値',n:1},''],L.map(x=>[esc(x.c.earTag),esc(x.c.tagNo||''),esc(x.c.kind||'育成'),esc(x.c.owner||'—'),esc(x.c.farm||'—'),jpD(x.c.introDate),x.d+'日',A.setD!=null?'—':fb(x.c.farm).vPer!=null?f0(fb(x.c.farm).vPer)+'円':'—',A.setD!=null?'—':fb(x.c.farm).fPer!=null?f0(fb(x.c.farm).fPer)+'円':'—',yen(x.p),yen(x.cost),`<b>${yen(x.val)}</b>`,`<button class="btn sm" data-edit="cattle" data-id="${x.c.id}">直す</button>`]),FARM?`${esc(FARM)}で飼っている育成・肥育牛はいません`:'この時点で飼っている育成・肥育牛はいません')})()}</section>
-  <section class="sec"><div class="sec-h"><h2>出荷済みの牛（1頭ごとの最終損益）</h2>
+  <section class="sec"><div class="sec-h"><h2>1人あたり利益（生産性）</h2><span class="sub">牧場全体・出荷した月で集計</span></div>
+    ${(()=>{const P=perPerson(M);const L=laborCats();
+      const ms=[];let k=fyStartM(M);while(k<=M){ms.push(k);k=monthAdd(k,1)}
+      const rows=ms.map(perPerson).reverse();
+      return `<div class="grid">${stat(jpM(M)+'の1人あたり利益',P.per==null?'—':yen(P.per),'',P.staff?`${P.staff}人で割った値`:'「目標・設定」で人数を入れると出ます')}${stat('経常利益の合計',yen(P.profit),'',`出荷${P.n}頭`)}${stat('人件費',yen(P.lab.total),'',L.map(x=>`${esc(x)} ${yen(P.lab.by[x])}`).join('／'))}${stat('人件費を引いた利益',yen(P.rest))}</div>`+
+      table(['月',{t:'出荷頭数',n:1},{t:'総売上',n:1},{t:'粗利の合計',n:1},{t:'総原価の合計',n:1},{t:'経常利益の合計',n:1}].concat(L.map(x=>({t:esc(x),n:1})),[{t:'人件費を引いた利益',n:1},{t:'人数',n:1},{t:'1人あたり利益',n:1}]),
+        rows.map(x=>[jpM(x.m),x.n+'頭',yen(x.sales),yen(x.gross),yen(x.cost),yen(x.profit)].concat(L.map(k=>yen(x.lab.by[k])),[yen(x.rest),x.staff?x.staff+'人':'—',`<b>${x.per==null?'—':yen(x.per)}</b>`])))})()}
+    <p class="sub" style="margin:0">1人あたり利益＝（その月に出荷した牛の経常利益の合計 − その月の${laborCats().map(esc).join('・')}）÷ 人数。${laborCats().map(esc).join('・')}は請求書画面の費目から集計します。人数と、人件費として引く費目は「目標・設定」で変えられます。人件費は1頭ごとの総原価には入れていないので、二重には引いていません。</p></section>
+  <section class="sec"><div class="sec-h"><h2>出荷済みの牛（1頭ごとの採算）</h2>
     <div class="fld" style="margin-left:auto"><label for="shipR">期間</label><select id="shipR">${[['mo','今月'],['fy','今年度'],['all','すべて']].map(([k,l])=>`<option value="${k}"${k===SHIPR?' selected':''}>${l}</option>`).join('')}</select></div></div>
-    ${(()=>{const R=shippedRows(M,SHIPR,OWN,FARM);const T=k=>sum(R.map(x=>x[k]));
-      return (R.length?`<div class="grid">${stat('出荷頭数',R.length,'頭')}${stat('売上合計',yen(T('sales')))}${stat('取得価額＋飼育コスト',yen(T('p')+T('cost')))}${stat('最終損益の合計',yen(T('profit')))}</div>`:'')+
-      table(['個体番号','耳標','所有者','牛舎','導入日','出荷日',{t:'飼養日数',n:1},{t:'1日コスト',n:1},{t:'取得価額',n:1},{t:'飼育コスト',n:1},{t:'売上（枝肉入金）',n:1},{t:'最終損益',n:1},''],R.map(x=>[esc(x.c.earTag),esc(x.c.tagNo||''),esc(x.c.owner||'—'),esc(x.c.farm||'—'),jpD(x.c.introDate),jpD(x.c.shipDate),x.d+'日',x.r.t!=null?f0(x.r.t)+'円':'—',yen(x.p),yen(x.cost),x.sales?yen(x.sales):'<span class="muted">未入力</span>',`<b>${yen(x.profit)}</b>`,`<button class="btn sm" data-edit="cattle" data-id="${x.c.id}">直す</button>`]),'この期間に出荷した牛はいません')})()}
-    <p class="sub" style="margin:0">「枝肉・収入」で枝肉成績を保存すると、同じ個体識別番号の牛が自動で出荷済みになり、と畜日が出荷日になります。飼育コストは、出荷した月までの年度累計の牛舎の1日コスト×飼養日数です。売上は枝肉の「実際の入金額」（なければ重量×単価）を使います。</p></section>
+    ${(()=>{const R=shippedRows(M,SHIPR,OWN,FARM);const T=k=>sum(R.map(x=>x[k]));const pc=v=>v==null?'—':f1(v)+'%';
+      return (R.length?`<div class="grid">${stat('出荷頭数',R.length,'頭')}${stat('総売上の合計',yen(T('sales')),'','税込')}${stat('粗利の合計',yen(T('gross')),'','総売上−導入金額')}${stat('総原価の合計',yen(T('cost')),'','1日の飼養管理費×在籍日数')}${stat('経常利益の合計',yen(T('profit')),'',`1頭平均 ${yen(T('profit')/R.length)}`)}</div>`:'')+
+      table(['個体番号','耳標','牛舎','導入日','出荷日',{t:'在籍日数',n:1},{t:'導入金額',n:1},{t:'総売上（税込）',n:1},{t:'粗利',n:1},{t:'飼料費',n:1},{t:'間接変動費',n:1},{t:'その他経費',n:1},{t:'総原価',n:1},{t:'経常利益',n:1},{t:'利益率',n:1},{t:'1日あたり利益',n:1},''],R.map(x=>[esc(x.c.earTag),esc(x.c.tagNo||''),esc(x.c.farm||'—'),jpD(x.c.introDate),jpD(x.c.shipDate),x.d+'日',yen(x.p),x.sales?yen(x.sales):'<span class="muted">未入力</span>',yen(x.gross),yen(x.feed),yen(x.ind),yen(x.oth),yen(x.cost),`<b>${yen(x.profit)}</b>`,pc(x.rate),x.perDay==null?'—':f0(x.perDay)+'円',`<button class="btn sm" data-edit="cattle" data-id="${x.c.id}">直す</button>`]),'この期間に出荷した牛はいません')})()}
+    <p class="sub" style="margin:0">総売上＝（枝肉重量×単価＋その他売上）×${f0(num(c.taxRate)??8)}%の消費税込み（枝肉の成績がない牛は「出荷時の販売額」）。粗利＝総売上−導入金額。総原価＝その牛舎の1頭1日あたりの飼料費・間接変動費・その他経費（請求書から年度累計で計算、${laborCats().map(esc).join('・')}は除く）×在籍日数。経常利益＝粗利−総原価。「枝肉・収入」で枝肉成績を保存すると、同じ個体識別番号の牛が自動で出荷済みになり、と畜日が出荷日になります。</p></section>
   <section class="sec"><div class="sec-h"><h2>繁殖牛（減価償却資産）</h2></div>
     ${table(['個体番号','所有者','取得日',{t:'取得価額',n:1},{t:'償却累計',n:1},{t:'簿価',n:1},''],A.breed.map(x=>[esc(x.c.earTag),esc(x.c.owner||'—'),esc(x.c.introDate||'—'),yen(num(x.c.introPrice)),yen(x.acc),`<b>${yen(x.book)}</b>`,`<button class="btn sm" data-edit="cattle" data-id="${x.c.id}">直す</button>`]),'繁殖牛が登録されていません（牛の登録で区分を「繁殖」にします）')}</section>
   <section class="sec"><div class="sec-h"><h2>損益計算書（試算）</h2><span class="sub">${esc(OWN||'全体')}</span></div>
@@ -826,7 +851,10 @@ V.goals=()=>{
     <div class="fld"><label for="s_owners">牛の所有者・請求書の宛名（読点で区切る）</label><input id="s_owners" value="${esc(c.owners.join('、'))}"></div>
     ${c.owners.map(o=>`<div class="fld"><label for="ab_${esc(o)}">「${esc(o)}」宛ての請求書の牛舎（請求書入力のときの標準。入力時に変えられます）</label><select id="ab_${esc(o)}" data-ab="${esc(o)}"><option value="">決めない（頭数×日数で按分）</option>${c.barns.map(b=>`<option${(c.addrBarn||{})[o]===b?' selected':''}>${esc(b)}</option>`).join('')}</select></div>`).join('')}
     <div class="fld"><label for="s_life">繁殖牛の耐用年数（年）</label><input id="s_life" type="number" inputmode="decimal" value="${c.usefulLife??''}"></div>
-    <div class="fld"><label for="s_daily">1頭1日コストを固定する（円・空欄なら牛舎ごとに自動計算）</label><input id="s_daily" type="number" inputmode="decimal" value="${c.dailyCost??''}"></div></div>
+    <div class="fld"><label for="s_daily">1頭1日コストを固定する（円・空欄なら牛舎ごとに自動計算）</label><input id="s_daily" type="number" inputmode="decimal" value="${c.dailyCost??''}"></div>
+    <div class="fld"><label for="s_staff">働いている人数（1人あたり利益の計算に使う）</label><input id="s_staff" type="number" inputmode="decimal" value="${c.staffCount??''}"></div>
+    <div class="fld"><label for="s_labor">人件費として引く費目（読点で区切る）</label><input id="s_labor" value="${esc(laborCats().join('、'))}"></div>
+    <div class="fld"><label for="s_tax">枝肉売上の消費税率（%）</label><input id="s_tax" type="number" inputmode="decimal" value="${c.taxRate??8}"></div></div>
     <div class="row"><button class="btn pri" id="saveGoals">目標・勘定科目・設定を保存</button></div></section>
   ${false?`<section class="sec"><div class="sec-h"><h2>サンプルデータ</h2></div><p class="sub" style="margin:0">今入っている記録の多くは、使い方を見るためのサンプルです。本番の入力を始める前に消してください（目標・設定は残ります）。</p><div class="row"><button class="btn dng" id="delSample">サンプルデータを全部消す</button></div></section>`:''}`};
 V.goals.bind=()=>{
@@ -841,7 +869,7 @@ V.goals.bind=()=>{
     const growing={};farms.forEach(f=>{const el=k=>document.getElementById(`g_${f}_${k}`);growing[f]=el('shipWeight')?{shipWeight:num(el('shipWeight').value),shipAge:num(el('shipAge').value),dg:num(el('dg').value),mortality:num(el('mortality').value)}:{...GDEF}});
     const owners=split($('#s_owners').value);
     const s={fyStart:Number($('#s_fy').value),farms:farms.length?farms:c.farms,barns:farms.length?farms:c.barns,office:$('#s_office').value.trim()||c.office,
-      categories:categories.length?categories:catList(),owners:owners.length?owners:c.owners,addrBarn:Object.fromEntries([...document.querySelectorAll('[data-ab]')].filter(e=>e.value).map(e=>[e.dataset.ab,e.value])),usefulLife:num($('#s_life').value)||c.usefulLife,dailyCost:num($('#s_daily').value),
+      categories:categories.length?categories:catList(),owners:owners.length?owners:c.owners,addrBarn:Object.fromEntries([...document.querySelectorAll('[data-ab]')].filter(e=>e.value).map(e=>[e.dataset.ab,e.value])),usefulLife:num($('#s_life').value)||c.usefulLife,dailyCost:num($('#s_daily').value),staffCount:num($('#s_staff').value),laborCats:split($('#s_labor').value).length?split($('#s_labor').value):laborCats(),taxRate:num($('#s_tax').value)??8,
       targets:{conception:g('t_conception'),calvingRate:g('t_calvingRate'),cultured:g('t_cultured'),produced:g('t_produced'),freshET:g('t_freshET'),carcassWeight:g('t_carcassWeight'),semenMin:g('t_semenMin'),growing}};
     if(await save('settings','main',s))toast('保存しました')};
   const ds=$('#delSample');if(ds)ds.onclick=async()=>{if(!ds.dataset.sure){ds.dataset.sure=1;ds.textContent='本当に消す（元に戻せません）';return}
