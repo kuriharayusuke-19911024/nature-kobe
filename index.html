@@ -105,6 +105,18 @@ hr.sep{border:0;border-top:1px solid var(--line);margin:14px 0}
 .cat>h3{font-family:'Noto Serif JP',serif;font-size:16px;border-left:4px solid var(--gold);padding-left:8px;margin-bottom:6px}
 .prod{background:#fff;border:1px solid var(--line);border-radius:12px;margin:8px 0;overflow:hidden}
 .prod.has{border-color:#9fbfae;box-shadow:0 0 0 1px #9fbfae}
+/* 入口ページ */
+.hub-lead{margin:18px 0 14px;font-size:17px;line-height:1.7}
+.hub{display:block;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:0 0 10px;text-decoration:none;color:var(--ink);transition:border-color .15s,transform .15s}
+.hub:hover{border-color:var(--g2);transform:translateY(-1px)}
+.hub.gold{border-color:#e6d3a8;background:var(--goldl)}
+.hub-t{display:flex;align-items:center;gap:8px;font-weight:700;font-size:17px;color:var(--g)}
+.hub-ar{margin-left:auto;color:var(--mut);font-weight:400}
+.hub-d{margin-top:4px;font-size:13px;color:var(--mut);line-height:1.6}
+.tagx{font-size:11px;font-weight:600;color:#6b5b3e;background:var(--goldl);border:1px solid #e6d3a8;border-radius:999px;padding:1px 8px}
+.hub.gold .tagx{background:#fff}
+.hub-staff{margin:22px 0 0;font-size:13px}
+.hub-staff a{color:var(--mut)}
 /* お歳暮セット */
 .prod.set .prow{align-items:flex-start}
 .prod.set .nm{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -1239,12 +1251,45 @@ function route() {
   const hs = location.hash.slice(1);
   if (hs.startsWith('shop')) return Shop.init();
   if (hs.startsWith('admin')) return Admin.init();
-  $('#app').innerHTML = `${DEMO ? '<div class="demo">プレビュー（デモデータ）</div>' : ''}<div class="brand"><div class="logo">NATURE <span>KOBE</span></div><div class="sub">但馬牛・神戸ビーフ</div></div>
-  <div class="wrap"><div class="card"><h3>画面を選んでください</h3>
-  ${DEMO ? `<p><a class="btn block pri" href="?e=e-demo-open">① お客さんの注文画面（QRコードの先）</a></p>` : ''}
-  <p><a class="btn block" href="#admin">${DEMO ? '② ' : ''}管理画面（栗原さん・牛尾さん）</a></p>
-  <p><a class="btn block" href="#shop">${DEMO ? '③ ' : ''}精肉店の発送画面</a></p>
-  ${DEMO ? '<p class="hint">デモのパスワード：管理 <b>demo</b>／精肉店 <b>demo-shop</b></p>' : ''}</div></div>`;
+  return renderHub();
+}
+/* ===== 入口ページ（パラメータなしで開いたとき）=====
+   お肉・お米お野菜・ブランド紹介への入口を1枚にまとめたもの。
+   以前はここが関係者向けの画面選択だったため、お客様が開くと
+   管理画面のパスワードを求められて戸惑う原因になっていた。2026-11-23 */
+const HUB = {
+  oseibo: { id: 'e20261116061609', until: '2026-12-04' },   // お歳暮2026
+  net: 'NET-ONLINE',                                        // 通年のネット販売
+  leaf: 'https://nature-kobe.noisy-sea-fc4c.workers.dev/'   // お米・お野菜（飲食店向け）
+};
+function renderHub() {
+  const today = new Date(Date.now() + 9 * 36e5).toISOString().slice(0, 10);
+  const oseiboOn = today <= HUB.oseibo.until;
+  $('#app').innerHTML = `${DEMO ? '<div class="demo">プレビュー（デモデータ）</div>' : ''}
+  <div class="brand"><div class="logo">NATURE <span>KOBE</span></div><div class="sub">但馬牛・神戸ビーフ</div></div>
+  <div class="wrap">
+    <p class="hub-lead">牛と土と作物がめぐる、神戸の食材。<br><span class="mut sm">但馬牛の堆肥を土に返し、その土で育った作物を食卓へお届けします。</span></p>
+
+    <a class="hub" href="?e=${encodeURIComponent(HUB.net)}">
+      <div class="hub-t">お肉のご注文<span class="hub-ar">→</span></div>
+      <div class="hub-d">但馬牛・神戸ビーフ。スライス・焼き肉・ステーキなど。</div></a>
+
+    ${oseiboOn ? `<a class="hub gold" href="?e=${encodeURIComponent(HUB.oseibo.id)}">
+      <div class="hub-t">お歳暮 2026<span class="tagx">${jdate(HUB.oseibo.until)}まで</span><span class="hub-ar">→</span></div>
+      <div class="hub-d">ご予算から選べるお歳暮セット。全国送料込み・のし無料。</div></a>` : ''}
+
+    <a class="hub" href="${HUB.leaf}">
+      <div class="hub-t">お米・お野菜<span class="tagx">飲食店の方</span><span class="hub-ar">→</span></div>
+      <div class="hub-d">同じ堆肥で育てたお米と野菜。月末まとめてのご請求です。</div></a>
+
+    <a class="hub" href="?page=info">
+      <div class="hub-t">NATURE KOBEについて<span class="hub-ar">→</span></div>
+      <div class="hub-d">いのちがつながる7つの循環、生産者のこと。</div></a>
+
+    <p class="hub-staff"><span class="mut sm">関係者の方：</span>
+      <a href="#admin">管理画面</a>　<a href="#shop">精肉店の発送画面</a>
+      ${DEMO ? '<br><span class="hint">デモのパスワード：管理 <b>demo</b>／精肉店 <b>demo-shop</b></span>' : ''}</p>
+  </div>`;
 }
 window.addEventListener('hashchange', route);
 
