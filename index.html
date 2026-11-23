@@ -508,14 +508,40 @@ const OSEIBO_SETS = [
     costPerKg: cost / (g / 1000)    // 円/kg（原価・税抜）
   });
 });
+/* ===== 岩津ねぎ（森下農園・2026シーズン）=====
+   仕入 1,100円/kg 税抜、売値 1,400円/kg 税抜。3kg単位（最低3kg）。
+   2L・Lサイズ混合で1kgあたり5〜6本。常温・森下農園から直送。
+   送料は住所から自動判定（関西1,000円／それ以外1,500円）。2026-11-23 */
+const NEGI_EVENT = 'e-negi-2026';   // ← 販売会を作ったら実IDに差し替える
+const NEGI_PRICE = 1400, NEGI_COST = 1100;
+const NEGI_SETS = [3, 6, 9].map(kg => ({
+  kg, g: kg * 1000, tier: NEGI_PRICE * kg,
+  head: `岩津ねぎ ${kg}kg`,
+  label: `2L・Lサイズ混合　約${kg * 5}〜${kg * 6}本`,
+  name: `岩津ねぎ ${kg}kg`,
+  price: NEGI_PRICE, costPerKg: NEGI_COST,
+  note: '税抜・送料別', unit: `${kg}kg`
+}));
 const OSEIBO_BY_NAME = {};
 OSEIBO_SETS.forEach(s => { OSEIBO_BY_NAME[s.name] = s; OSEIBO_BY_NAME['追加 ' + s.name] = s; });
+NEGI_SETS.forEach(s => { OSEIBO_BY_NAME[s.name] = s; OSEIBO_BY_NAME['追加 ' + s.name] = s; });
+COST_BY_EVENT[NEGI_EVENT] = Object.assign({}, COST_PER_KG);
+NEGI_SETS.forEach(s => { COST_BY_EVENT[NEGI_EVENT]['追加 ' + s.name] = s.costPerKg; });
 /* お歳暮の原価表（商品名→円/kg・税抜）。orderCostOf が参照する */
 COST_BY_EVENT[OSEIBO_EVENT] = Object.assign({}, COST_PER_KG);
 OSEIBO_SETS.forEach(s => { COST_BY_EVENT[OSEIBO_EVENT]['追加 ' + s.name] = s.costPerKg; });
 /* 商品がお歳暮セットなら、その定義を返す（違えば null） */
 /* 価格に送料が含まれている販売会（お客様から送料をいただかない） */
 const shipFreeEvent = eid => eid === OSEIBO_EVENT;
+/* 地域別の送料。住所の都道府県から決める（関西かそれ以外か） */
+const KANSAI_RX = /^(大阪府|兵庫県|京都府|滋賀県|奈良県|和歌山県)/;
+const REGION_SHIP = { [NEGI_EVENT]: { kansai: 1000, other: 1500 } };
+const regionShip = (eid, addr) => {
+  const t = REGION_SHIP[eid]; if (!t) return null;
+  return KANSAI_RX.test(String(addr || '').trim()) ? t.kansai : t.other;
+};
+/* 常温でお届けする販売会（お客様に冷凍・冷蔵を聞かない） */
+const roomTempEvent = eid => eid === NEGI_EVENT;
 /* お届け希望日に選べる範囲。発送まで1週間ほどかかるため最短は注文の7日後、
    年内は冷凍発送で指定日可能（碓永さん 2026-11-16） */
 const OSEIBO_HOPE_MAX = '2026-12-31';
@@ -1322,7 +1348,9 @@ const Customer = {
   totals() {
     const S = this.C.S, its = this.items();
     const sub = its.reduce((a, b) => a + b.amount, 0), rate = +S.taxRate || 10, srate = +S.shipTaxRate || 10;
-    const ship = shipFreeEvent(this.C.eid) ? 0 : (+S.shippingFee || 0); // お歳暮は送料込みの価格なので別途いただかない
+    const f = this.C.info, rs = regionShip(this.C.eid, f.shipOn ? f.shipAddress : f.address);
+    /* お歳暮は送料込み。岩津ねぎは地域別。商品が0点のときは送料も0にする（選ぶ前に送料だけ出ていた） */
+    const ship = (!its.length || shipFreeEvent(this.C.eid)) ? 0 : (rs != null ? rs : (+S.shippingFee || 0));
     const taxFood = Math.floor(sub * rate / 100), taxShip = Math.floor(ship * srate / 100), tax = taxFood + taxShip;
     return { sub, ship, rate, srate, taxFood, taxShip, tax, total: sub + ship + tax, count: its.length, variable: its.some(i => i.p.variable) };
   },
@@ -1344,16 +1372,26 @@ const Customer = {
   },
   head() {
     const ev = this.C.ev;
-    return `${DEMO ? '<div class="demo">プレビュー（デモデータ）：ここでの注文は保存されません</div>' : ''}${ev.net ? '<div class="netbar">🛒 ネット販売　※お振込みでのご注文</div>' : ''}<div class="brand"><div class="logo">NATURE <span>KOBE</span></div><div class="sub">但馬牛・神戸ビーフ ご注文</div></div>
-    <div class="wrap">${langBar()}<p class="news-link"><a href="?page=info&e=${encodeURIComponent(this.C.eid)}">📰 NATURE KOBEについて</a></p><h1 class="serif">${h(ev.name)}</h1><div class="mut sm"><span>${shipFreeEvent(this.C.eid) && ev.date ? '<span data-i18n="orderDeadline">ご注文締切</span> ' : ''}${h(jdate(ev.date))}</span>${ev.venue ? '　' + h(ev.venue) : ''}　<span>${shipFreeEvent(this.C.eid) ? '全国へお届けします' : ev.net ? 'ネットでのご注文' : 'ご参加の皆さま限定'}</span></div></div>`;
+    return `${DEMO ? '<div class="demo">プレビュー（デモデータ）：ここでの注文は保存されません</div>' : ''}${ev.net ? '<div class="netbar">🛒 ネット販売　※お振込みでのご注文</div>' : ''}<div class="brand"><div class="logo">NATURE <span>KOBE</span></div><div class="sub">${roomTempEvent(this.C.eid) ? '朝来市産 岩津ねぎ ご注文' : '但馬牛・神戸ビーフ ご注文'}</div></div>
+    <div class="wrap">${langBar()}<p class="news-link"><a href="?page=info&e=${encodeURIComponent(this.C.eid)}">📰 NATURE KOBEについて</a></p><h1 class="serif">${h(ev.name)}</h1><div class="mut sm"><span>${shipFreeEvent(this.C.eid) && ev.date ? '<span data-i18n="orderDeadline">ご注文締切</span> ' : ''}${h(jdate(ev.date))}</span>${ev.venue ? '　' + h(ev.venue) : ''}　<span>${shipFreeEvent(this.C.eid) || roomTempEvent(this.C.eid) ? '全国へお届けします' : ev.net ? 'ネットでのご注文' : 'ご参加の皆さま限定'}</span></div></div>`;
   },
   renderItems() {
     const C = this.C, cats = [];
+    if (C.eid === NEGI_EVENT) return this.renderNegi();
     if (C.eid === OSEIBO_EVENT || C.products.some(p => setOf(p))) return this.renderOseibo();
     C.products.forEach(p => { if (!cats.includes(p.cat)) cats.push(p.cat); });
     return `<p class="sm mut" style="margin:12px 0 0" data-i18n="intro">量（g）と個数を選ぶと金額が自動で計算されます。表示価格は<b>税抜・1kgあたり</b>です。<br>お肉は<b>300g単位</b>でお選びいただけます。</p>${parsePerks(C.ev.perks).length ? `<div class="card" style="background:var(--goldl);border-color:#e6d3a8;margin-top:10px"><div data-i18n="perks"><b>🍷 ご購入特典（税抜のお肉代の合計）</b></div><div class="sm">${parsePerks(C.ev.perks).map(p => `${yen(p.min)}以上 → ${yen(p.val)}相当のワイン`).join('<br>')}</div><div class="xs mut" data-i18n="perksNote">ワインは発送完了後、店頭でお渡しします。</div></div>` : ''}` +
       cats.map(cat => `<div class="cat"><h3>${h(cat)}</h3>${C.products.filter(p => p.cat === cat).map(p => this.prodHtml(p)).join('')}</div>`).join('') +
       `<p class="xs mut">${Customer.sellerLine()}<br>${+C.S.shippingFee ? '※送料は1回のご注文につき ' + yen(C.S.shippingFee) + '（税別）です。<br>' : ''}<span data-i18n="varNote">※<span class="var">価格変動</span>の商品は、部位・入荷状況により価格が変わる場合があります。確定額はメールでご連絡します。</span><br>※${h(C.S.deliveryNote || '')}</p>`;
+  },
+  /* 岩津ねぎ：3kg単位で選ぶだけ。送料は住所で決まるので、ここでは目安だけ出す */
+  renderNegi() {
+    const C = this.C, sets = C.products.map(p => ({ p, s: setOf(p) })).filter(x => x.s && x.s.kg);
+    return `<p class="sm mut" style="margin:12px 0 0" data-i18n="introNegi">冬だけの朝来市産<b>岩津ねぎ</b>。日本三大ねぎのひとつです。<br>但馬牛の堆肥で育てた土から、<b>2L・Lサイズに選別した太物</b>をお届けします。</p>
+      <p class="sm" style="margin:8px 0 0" data-i18n="negiNote">すき焼き・鍋・焼きねぎに。<b>常温</b>でお届けし、ご注文から<b>2日後の発送</b>です。<br>森下農園から直接お送りします。</p>
+      <div class="cat"><h3>ご注文は3kgから</h3>${sets.map(x => this.prodHtml(x.p)).join('')}</div>
+      <p class="xs mut"><span data-i18n="negiShip">※送料は関西1,000円、それ以外1,500円（いずれも税抜）。ご住所を入れると確定します。</span><br>
+      ${Customer.sellerLine()}</p>`;
   },
   /* お歳暮：ご予算ごとに「量重視／質重視」を並べる */
   renderOseibo() {
@@ -1369,9 +1407,9 @@ const Customer = {
     const l = (this.C.cart[p.id] || [])[0];
     return `<div class="prod set ${l ? 'has' : ''}" id="prod-${p.id}">
       <div class="prow"><div class="grow">
-        ${s.type ? `<div class="nm">${s.type === '量' ? '量重視' : '質重視'}<span class="stag">合計${s.g.toLocaleString()}g</span></div>` : `<div class="nm">${h(s.label)}<span class="stag">合計${s.g.toLocaleString()}g</span></div>`}
-        ${s.type ? `<div class="setc">${h(s.label)}</div>` : ''}
-        <div class="pr"><b>${yen(s.tier)}</b> <span class="mut xs">税抜・全国送料込み</span></div>
+        <div class="nm">${h(s.head || (s.type ? (s.type === '量' ? '量重視' : '質重視') : s.label))}<span class="stag">合計${s.g.toLocaleString()}g</span></div>
+        ${s.head || s.type ? `<div class="setc">${h(s.label)}</div>` : ''}
+        <div class="pr"><b>${yen(s.tier)}</b> <span class="mut xs">${s.note || '税抜・全国送料込み'}</span></div>
       </div>${l ? '' : `<button class="btn sm pri" onclick="Customer.add('${p.id}')">＋ 追加</button>`}</div>
       ${l ? `<div class="line"><span class="grow sm">個数</span><span class="stepper"><button onclick="Customer.cnt('${p.id}',0,-1)" aria-label="減らす">−</button><span>${l.count}</span><button onclick="Customer.cnt('${p.id}',0,1)" aria-label="増やす">＋</button></span><span class="amt num">${yen(s.tier * l.count)}</span><button class="del" onclick="Customer.del('${p.id}',0)">削除</button></div>` : ''}</div>`;
   },
@@ -1441,6 +1479,7 @@ const Customer = {
   renderInfo() {
     if (this.bankOnly()) this.C.info.payment = '振込';
     if (this.frozenOnly()) this.C.info.storage = '冷凍';
+    if (roomTempEvent(this.C.eid)) this.C.info.storage = '常温';
     const f = this.C.info;
     const inp = (k, label, opt = {}) => `<label class="f" for="f-${k}">${label}${opt.req === false ? '<span class="opt">任意</span>' : '<span class="req">必須</span>'}</label>
       <input class="in" id="f-${k}" type="${opt.type || 'text'}" ${opt.im ? `inputmode="${opt.im}"` : ''} ${opt.ac ? `autocomplete="${opt.ac}"` : ''} placeholder="${h(opt.ph || '')}" value="${h(f[k])}" oninput="Customer.set('${k}',this.value)">${opt.hint ? `<div class="hint">${opt.hint}</div>` : ''}`;
@@ -1461,7 +1500,7 @@ const Customer = {
         <div class="row"><input class="in" id="f-shipZip" style="max-width:180px" inputmode="numeric" placeholder="123-4567" value="${h(f.shipZip)}" oninput="Customer.set('shipZip',this.value)"><button class="btn" onclick="Customer.zip('shipZip','shipAddress')">住所を自動入力</button></div>
         ${inp('shipAddress', 'お届け先のご住所')}` : '<p class="hint" style="margin:0">上のご住所にお届けします</p>'}
     </div>
-    <div class="card"><h3>ご希望の保存状態<span class="req" style="font-size:11px;color:#fff;background:var(--red);padding:0 6px;border-radius:4px;margin-left:6px;vertical-align:2px">必須</span></h3>${this.frozenOnly() ? '<p class="hint" style="margin:0" data-i18n="frozenOnly"><b>冷凍</b>でのお届けとなります。</p>' : radio('storage', [['冷凍', '冷凍'], ['冷蔵', '冷蔵']])}</div>
+    <div class="card"><h3>ご希望の保存状態<span class="req" style="font-size:11px;color:#fff;background:var(--red);padding:0 6px;border-radius:4px;margin-left:6px;vertical-align:2px">必須</span></h3>${roomTempEvent(this.C.eid) ? '<p class="hint" style="margin:0" data-i18n="roomTemp"><b>常温</b>でのお届けとなります。</p>' : this.frozenOnly() ? '<p class="hint" style="margin:0" data-i18n="frozenOnly"><b>冷凍</b>でのお届けとなります。</p>' : radio('storage', [['冷凍', '冷凍'], ['冷蔵', '冷蔵']])}</div>
     <div class="card"><h3>お支払い方法<span class="req" style="font-size:11px;color:#fff;background:var(--red);padding:0 6px;border-radius:4px;margin-left:6px;vertical-align:2px">必須</span></h3>${this.bankOnly() ? '<p class="hint" style="margin:0" data-i18n="netPay"><b>銀行振込のみ</b>です。ご注文後に振込先をご案内します。ご注文から7日以内にお振込みください。</p>' : radio('payment', [['現金', '現金'], ['振込', '銀行振込']]) + '\n      <p class="hint">現金はこの場でスタッフにお支払いください。お支払いを確認後、領収書をメールでお送りします。</p><p class="hint">銀行振込を選んだ場合は、ご注文後に振込先をメールでご案内します。ご注文から7日以内にお振込みください。期限を過ぎた場合はキャンセル扱いとさせていただきます。</p>'}</div>
     ${shipFreeEvent(this.C.eid) ? `<div class="card"><h3>のし<span class="opt" style="margin-left:6px">無料</span></h3>
       <label class="tog"><input type="checkbox" ${f.noshi ? 'checked' : ''} onchange="Customer.setRe('noshi',this.checked)">のしを付ける</label>
