@@ -1377,7 +1377,7 @@ const Customer = {
   head() {
     const ev = this.C.ev;
     return `${DEMO ? '<div class="demo">プレビュー（デモデータ）：ここでの注文は保存されません</div>' : ''}${ev.net ? '<div class="netbar">🛒 ネット販売　※お振込みでのご注文</div>' : ''}<div class="brand"><div class="logo">NATURE <span>KOBE</span></div><div class="sub">${roomTempEvent(this.C.eid) ? '朝来市産 岩津ねぎ ご注文' : '但馬牛・神戸ビーフ ご注文'}</div></div>
-    <div class="wrap">${langBar()}<p class="news-link"><a href="?page=info&e=${encodeURIComponent(this.C.eid)}">📰 NATURE KOBEについて</a></p><h1 class="serif">${h(ev.name)}</h1><div class="mut sm"><span>${shipFreeEvent(this.C.eid) && ev.date ? '<span data-i18n="orderDeadline">ご注文締切</span> ' : ''}${h(jdate(ev.date))}</span>${ev.venue ? '　' + h(ev.venue) : ''}　<span>${shipFreeEvent(this.C.eid) || roomTempEvent(this.C.eid) ? '全国へお届けします' : ev.net ? 'ネットでのご注文' : 'ご参加の皆さま限定'}</span></div></div>`;
+    <div class="wrap">${langBar()}<p class="news-link"><a href="?page=info&e=${encodeURIComponent(this.C.eid)}">📰 NATURE KOBEについて</a></p><h1 class="serif">${h(ev.name)}</h1><div class="mut sm"><span>${(shipFreeEvent(this.C.eid) || roomTempEvent(this.C.eid)) && ev.date ? '<span data-i18n="orderDeadline">ご注文締切</span> ' : ''}${h(jdate(ev.date))}</span>${ev.venue ? '　' + h(ev.venue) : ''}　<span>${shipFreeEvent(this.C.eid) || roomTempEvent(this.C.eid) ? '全国へお届けします' : ev.net ? 'ネットでのご注文' : 'ご参加の皆さま限定'}</span></div></div>`;
   },
   renderItems() {
     const C = this.C, cats = [];
