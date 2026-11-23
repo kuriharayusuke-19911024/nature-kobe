@@ -512,7 +512,7 @@ const OSEIBO_SETS = [
    仕入 1,100円/kg 税抜、売値 1,400円/kg 税抜。3kg単位（最低3kg）。
    2L・Lサイズ混合で1kgあたり5〜6本。常温・森下農園から直送。
    送料は住所から自動判定（関西1,000円／それ以外1,500円）。2026-11-23 */
-const NEGI_EVENT = 'e-negi-2026';   // ← 販売会を作ったら実IDに差し替える
+const NEGI_EVENT = 'e20261123202303'; // 販売会「岩津ねぎ 2026」
 const NEGI_PRICE = 1400, NEGI_COST = 1100;
 const NEGI_SETS = [3, 6, 9].map(kg => ({
   kg, g: kg * 1000, tier: NEGI_PRICE * kg,
@@ -1307,6 +1307,10 @@ function renderHub() {
     <a class="hub" href="${HUB.leaf}">
       <div class="hub-t">お米・お野菜<span class="tagx">飲食店の方</span><span class="hub-ar">→</span></div>
       <div class="hub-d">同じ堆肥で育てたお米と野菜。月末まとめてのご請求です。</div></a>
+
+    <a class="hub" href="?e=${encodeURIComponent(NEGI_EVENT)}">
+      <div class="hub-t">岩津ねぎ<span class="tagx">冬だけ</span><span class="hub-ar">→</span></div>
+      <div class="hub-d">朝来市産・日本三大ねぎ。2L・Lサイズに選別した太物を3kgから。</div></a>
 
     <a class="hub" href="?page=info">
       <div class="hub-t">NATURE KOBEについて<span class="hub-ar">→</span></div>
