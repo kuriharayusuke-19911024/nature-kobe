@@ -1738,7 +1738,7 @@ const Admin = {
   /* ---- 注文の編集 ---- */
   newOrder() {
     const A = this.A, ev = A.ev !== 'all' ? A.ev : (A.events[0] || {}).id;
-    this.E = { id: '', eventId: ev, source: 'スタッフ', name: '', email: '', phone: '', zip: '', address: '', shipTo: { on: false }, storage: '', payment: '', receipt: false, receiptTo: '', note: '', items: [], extras: [], status: '受付', paid: false, paidAt: '', mail: { confirm: false, ship: false }, checks: '', memo: '', shipDate: '', carrier: 'ヤマト運輸', tracking: '', markup: this.evMarkup(ev) };
+    this.E = { id: '', eventId: ev, source: 'スタッフ', name: '', email: '', phone: '', zip: '', address: '', shipTo: { on: false }, storage: roomTempEvent(ev) ? '常温' : '', payment: '', receipt: false, receiptTo: '', note: '', items: [], extras: [], status: '受付', paid: false, paidAt: '', mail: { confirm: false, ship: false }, checks: '', memo: '', shipDate: '', carrier: 'ヤマト運輸', tracking: '', markup: this.evMarkup(ev) };
     this.addItem(true); this.renderEdit();
   },
   open(id) { this.E = clone(this.A.orders.find(o => o.id === id)); this.E.shipTo = this.E.shipTo || { on: false }; this.E.mail = this.E.mail || { confirm: false, ship: false }; this.renderEdit(); },
@@ -1785,7 +1785,7 @@ const Admin = {
         <div class="g2"><div>${fld('zip', '郵便番号')}</div><div><label class="f">&nbsp;</label><button class="btn" onclick="Admin.zipE('zip','address')">住所を自動入力</button></div></div>${fld('address', 'ご住所')}
         <label class="tog"><input type="checkbox" ${E.shipTo.on ? 'checked' : ''} onchange="Admin.setE('shipTo.on',this.checked,1)">別の住所に送る</label>
         ${E.shipTo.on ? `${fld('shipTo.name', 'お届け先のお名前')}${fld('shipTo.phone', 'お届け先の電話')}${fld('shipTo.zip', 'お届け先の郵便番号')}${fld('shipTo.address', 'お届け先の住所')}` : ''}
-        <label class="f">保存状態</label>${segE('storage', ['冷凍', '冷蔵'])}
+        <label class="f">保存状態</label>${segE('storage', roomTempEvent(E.eventId) ? ['常温'] : ['冷凍', '冷蔵'])}
         <label class="tog"><input type="checkbox" ${E.receipt ? 'checked' : ''} onchange="Admin.setE('receipt',this.checked,1)">領収書が必要</label>
         <label class="tog"><input type="checkbox" ${E.noBack ? 'checked' : ''} onchange="Admin.setE('noBack',this.checked,1)">販売店バックなし（個人販売）</label>
         ${E.receipt ? fld('receiptTo', '領収書の宛名', { ph: E.name }) : ''}
